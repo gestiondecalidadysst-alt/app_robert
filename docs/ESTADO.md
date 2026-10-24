@@ -9,7 +9,9 @@
 - [x] Proyecto Laravel 13 + Filament 5 copiado en `Escritorio\APP`.
 
 ## Pendiente / bloqueos
-- [ ] Subir el código a GitHub y desplegarlo en Easypanel (falta el usuario de GitHub).
+- [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción. Pasos de Easypanel en `README.md`.
+- [ ] Subir el repositorio a GitHub: el repo git local ya tiene el commit inicial, falta la conexión con GitHub.
+- [ ] Desplegar en Easypanel.
 - [ ] Configurar el correo (SMTP) para la recuperación de contraseñas.
 - [ ] Código fuente del legado: reglas exactas del FUEC (se necesitan en el módulo 4).
 

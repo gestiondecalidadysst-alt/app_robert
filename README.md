@@ -21,11 +21,38 @@ La clave de los usuarios demo es `Ruta2026*`.
 ## Pruebas
 `php artisan test`
 
-## Producción (Easypanel)
-- Variables:
-  - `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://su-dominio`.
-  - Conexión a MySQL: `DB_CONNECTION=mysql` y las demás `DB_*`.
-  - `NIXPACKS_PHP_ROOT_DIR=/app/public` y `NIXPACKS_PHP_FALLBACK_PATH=/index.php`.
-- Comando posterior al despliegue: `php artisan migrate --force && php artisan db:seed --class=CatalogosSeeder --force && php artisan db:seed --class=PermisosSeeder --force && php artisan filament:optimize && php artisan storage:link`.
-- Volumen persistente montado en `storage/app`.
-- Segundo servicio (*worker*) con `php artisan queue:work` y `php artisan schedule:work`.
+## Producción (Easypanel, con Dockerfile)
+1. **Base de datos:** en el proyecto de Easypanel, cree un servicio **MySQL** (por ejemplo `ruta-db`).
+2. **Aplicación web:**
+   - Cree un servicio **App** con origen GitHub, que apunte a este repositorio (rama `main`).
+   - En *Build* elija **Dockerfile**.
+   - En *Domains*, el puerto interno es **80**.
+3. **Variables de entorno** (*Environment*):
+   ```
+   APP_NAME="Ruta"
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_KEY=base64:...            # php artisan key:generate --show
+   APP_URL=https://su-dominio
+   DB_CONNECTION=mysql
+   DB_HOST=<host interno de MySQL en Easypanel>
+   DB_PORT=3306
+   DB_DATABASE=<base>
+   DB_USERNAME=<usuario>
+   DB_PASSWORD=<clave>
+   SUPERADMIN_EMAIL=<su correo>
+   SUPERADMIN_PASSWORD=<clave de 8 o más caracteres>
+   SEED_DEMO=true                # opcional: empresa de demostración
+   ```
+4. **Volumen** (*Mounts*): monte un volumen en `/var/www/html/storage/app`, para que los logos y documentos no se pierdan entre despliegues.
+5. **Worker:** cree un segundo servicio desde el mismo repositorio, con las mismas variables y `CONTAINER_ROLE=worker`. Procesa las colas y las tareas programadas (alertas). Este servicio no necesita dominio.
+
+**Qué hace el contenedor web al arrancar:**
+- Espera a que la base de datos responda y aplica las migraciones.
+- Carga los catálogos y los permisos.
+- Crea el superadministrador si todavía no existe.
+- Optimiza la aplicación y sirve la web con Apache en el puerto 80.
+
+El estado de salud se consulta en `/up`.
+
+Con `SEED_DEMO=true` se crean los usuarios demo con la clave pública `Ruta2026*`. Úselo solo para probar y después cámbielo a `false`.
