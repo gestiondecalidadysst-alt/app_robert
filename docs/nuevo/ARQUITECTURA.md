@@ -1,19 +1,20 @@
 # Arquitectura del rediseño
 
 ## Stack
-- **Backend:** Laravel (última versión estable), PHP 8.3+.
-- **Panel:** Filament (Livewire + Alpine.js + Tailwind CSS), compilado con Vite.
-- **Base de datos:** MySQL 8 (o MariaDB 10.11+). En desarrollo y pruebas se puede usar SQLite.
-- **Colas y caché:** driver `database` al inicio; Redis opcional en producción.
+- **Backend:** Laravel 13, PHP 8.3+.
+- **Panel:** Filament 5 (Livewire + Alpine.js + Tailwind CSS). El tema propio es CSS puro (`resources/css/ruta.css`), sin compilación.
+- **Base de datos:** MySQL 8 (o MariaDB 10.11+). En desarrollo y pruebas se usa SQLite.
+- **Colas y caché:** driver `database`; Redis es opcional más adelante.
 - **Paquetes previstos:**
   - `spatie/laravel-permission` con *teams*, donde el team es la empresa.
   - `spatie/laravel-activitylog` para auditoría.
   - Generador de PDF (dompdf o spatie/laravel-pdf), que se decide en el módulo Operación.
-- **Despliegue:** VPS con Easypanel, desde un repositorio de GitHub.
-  - Servicio **web**.
-  - Servicio **worker** con `queue:work` + `schedule:work`.
-  - MySQL.
-  - Volumen persistente para `storage/app`.
+- **Despliegue:** VPS con Easypanel, desde el repositorio de GitHub `solucionesappcontact-jpg/app_operation` (rama `main`) con el `Dockerfile` del proyecto (PHP 8.3 + Apache, puerto 80). Pasos y variables en `README.md`.
+  - Servicio **web** (`CONTAINER_ROLE=web`): al arrancar, `docker/entrypoint.sh` espera la base de datos, migra, carga catálogos y permisos, crea el superadmin (`SUPERADMIN_*`), carga la demo si `SEED_DEMO=true` y optimiza. Salud: `/up`.
+  - Servicio **worker** (`CONTAINER_ROLE=worker`): `queue:work` + `schedule:work`.
+  - MySQL. Sesión, caché y colas usan la base de datos, sin Redis.
+  - Volumen persistente en `/var/www/html/storage/app`.
+  - Pruebas automáticas en GitHub Actions (`.github/workflows/tests.yml`).
 
 ## Multiempresa
 - **Una sola base de datos.** Toda tabla de negocio lleva `empresa_id`.
@@ -62,7 +63,7 @@ tests/Feature/<Modulo>/
 composer install
 cp .env.example .env && php artisan key:generate
 php artisan migrate --seed
-npm install && npm run dev
+php artisan storage:link
 php artisan serve
 ```
-Se completa con usuario y clave de demostración cuando exista el seeder.
+Usuarios demo (clave `Ruta2026*`): `superadmin@ruta.test` (/admin), `admin@demo.test`, `gerencia@demo.test`, `auxiliar@demo.test` (/app). Pruebas: `php artisan test`.

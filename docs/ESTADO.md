@@ -6,21 +6,14 @@
 - [x] Relevamiento del legado (`legado/`), decisiones (`DECISIONES.md`) y arquitectura (`nuevo/ARQUITECTURA.md`).
 - [x] Propuesta visual aprobada: estilo flonext; pantalla principal = tablero de gerencia.
 - [x] **Módulo 1 – Configuración:** construido y con 22 pruebas en verde. Detalle en `nuevo/modulos/configuracion.md`.
-- [x] Proyecto Laravel 13 + Filament 5 copiado en `Escritorio\APP`.
+- [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
+- [x] Código en GitHub: `solucionesappcontact-jpg/app_operation` (rama `main`). Es la fuente oficial; `Escritorio\APP` es una copia local con el mismo historial.
 
 ## Pendiente / bloqueos
-- [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción. Pasos de Easypanel en `README.md`.
-- [x] Código en GitHub: https://github.com/solucionesappcontact-jpg/app_operation (rama `main`). Es la fuente oficial del código.
-- [ ] Desplegar en Easypanel.
+- [ ] **Desplegar en Easypanel** (pasos y variables en `README.md`). La imagen Docker no se pudo construir en el entorno de Claude porque Docker Hub está bloqueado; el primer despliegue es la prueba real.
 - [ ] Configurar el correo (SMTP) para la recuperación de contraseñas.
 - [ ] Código fuente del legado: reglas exactas del FUEC (se necesitan en el módulo 4).
 
 ## Siguiente paso
-Desplegar en Easypanel desde el repo (pasos en `README.md`). Luego:
-
-Módulo 2 – Flota:
-- Propietarios y vehículos.
-- Documentos con historial.
-- Estados del vehículo.
-
-Antes de empezar, agregar sus permisos en `app/Support/Permisos.php`.
+1. Desplegar en Easypanel. Hace falta la dirección del panel y saber si se usará un dominio propio.
+2. Módulo 2 – Flota: propietarios, vehículos, documentos con historial y estados. Antes de empezar, agregar sus permisos en `app/Support/Permisos.php`.
