@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Filament\Compartido;
+
+use App\Models\TipoIdentificacion;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+
+/**
+ * Campos de los datos de una empresa: usados por el superadministrador (/admin)
+ * y por la propia empresa en "Mi empresa" (/app).
+ */
+final class FormularioEmpresa
+{
+    public static function componentes(): array
+    {
+        return [
+            Section::make('Identificación')
+                ->columnSpanFull()
+                ->icon('heroicon-o-identification')
+                ->columns(['default' => 1, 'md' => 6])
+                ->schema([
+                    Select::make('tipo_identificacion_id')
+                        ->label('Tipo de identificación')
+                        ->options(fn () => TipoIdentificacion::query()->activos()->orderBy('nombre')->pluck('nombre', 'id'))
+                        ->default(fn () => TipoIdentificacion::firstWhere('codigo', 'NIT')?->id)
+                        ->columnSpan(['md' => 2]),
+                    ...array_map(
+                        fn ($campo) => $campo->columnSpan(['md' => $campo->getName() === 'dv' ? 1 : 3]),
+                        CamposComunes::nit(),
+                    ),
+                    TextInput::make('razon_social')
+                        ->label('Razón social')
+                        ->required()
+                        ->maxLength(255)
+                        ->columnSpan(['md' => 3]),
+                    TextInput::make('nombre_comercial')
+                        ->label('Nombre comercial')
+                        ->helperText('Es el nombre que se muestra en la plataforma.')
+                        ->maxLength(255)
+                        ->columnSpan(['md' => 3]),
+                ]),
+
+            Section::make('Contacto')
+                ->columnSpanFull()
+                ->icon('heroicon-o-map-pin')
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    CamposComunes::municipio(),
+                    TextInput::make('direccion')->label('Dirección')->maxLength(255),
+                    TextInput::make('telefono')->label('Teléfono')->tel()->maxLength(30),
+                    TextInput::make('email')->label('Correo electrónico')->email()->maxLength(255),
+                ]),
+
+            Grid::make(['default' => 1, 'lg' => 2])->columnSpanFull()->schema([
+                Section::make('Representante legal')
+                    ->icon('heroicon-o-user')
+                    ->schema([
+                        TextInput::make('representante_legal')->label('Nombre completo')->maxLength(255),
+                        TextInput::make('representante_documento')->label('Documento')->maxLength(20),
+                    ]),
+                Section::make('Habilitación como transportador')
+                    ->icon('heroicon-o-document-check')
+                    ->schema([
+                        TextInput::make('resolucion_habilitacion')->label('Resolución de habilitación')->maxLength(255),
+                        Grid::make(2)->schema([
+                            TextInput::make('anio_habilitacion')->label('Año')->numeric()->minValue(1950)->maxValue(2100),
+                            TextInput::make('codigo_territorial')->label('Código territorial')->maxLength(10),
+                        ]),
+                    ]),
+            ]),
+
+            Section::make('Logo')
+                ->columnSpanFull()
+                ->icon('heroicon-o-photo')
+                ->schema([
+                    FileUpload::make('logo_path')
+                        ->label('Logo de la empresa')
+                        ->image()
+                        ->disk('public')
+                        ->directory('logos')
+                        ->maxSize(1024)
+                        ->helperText('PNG o JPG, máximo 1 MB. Aparece en los documentos y en el selector de empresa.'),
+                ]),
+        ];
+    }
+}

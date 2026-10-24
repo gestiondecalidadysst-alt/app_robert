@@ -1,0 +1,130 @@
+/*
+ * Tema "Ruta" sobre Filament (sin compilación): menú lateral azul petróleo,
+ * acento naranja, barra superior blanca. Ver docs/DECISIONES.md.
+ */
+:root {
+    --ruta-sidebar: #1b2b3a;
+    --ruta-sidebar-hover: #233749;
+    --ruta-sidebar-activo: #2a3e51;
+    --ruta-sidebar-texto: #c9d3e0;
+    --ruta-sidebar-tenue: #8a99ae;
+    --ruta-acento: #ea6a2c;
+    --ruta-fondo: #f3f5f8;
+}
+
+/* Fondo general */
+.fi-body { background-color: var(--ruta-fondo); }
+.dark .fi-body { background-color: #0f1720; }
+
+/* Menú lateral oscuro en ambos modos */
+.fi-sidebar,
+.fi-sidebar-header,
+.fi-sidebar-nav,
+.fi-sidebar-footer {
+    background-color: var(--ruta-sidebar) !important;
+}
+.fi-sidebar { border-inline-end: 0 !important; }
+.fi-sidebar-header { box-shadow: none !important; border-bottom: 1px solid #22344a !important; }
+
+.fi-sidebar-group-label {
+    color: var(--ruta-sidebar-tenue) !important;
+    font-size: .6875rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+.fi-sidebar-group-collapse-btn, .fi-sidebar-group-btn .fi-icon { color: var(--ruta-sidebar-tenue) !important; }
+
+.fi-sidebar-item-btn { border-radius: .625rem !important; position: relative; }
+.fi-sidebar-item-label { color: var(--ruta-sidebar-texto) !important; font-weight: 500; }
+.fi-sidebar-item-icon { color: var(--ruta-sidebar-tenue) !important; }
+.fi-sidebar-item-btn:hover,
+.fi-sidebar-item-btn:focus-visible { background-color: var(--ruta-sidebar-hover) !important; }
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn { background-color: var(--ruta-sidebar-activo) !important; }
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn::before {
+    content: "";
+    position: absolute;
+    inset-block: .45rem;
+    inset-inline-start: 0;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--ruta-acento);
+}
+.fi-sidebar-item.fi-active .fi-sidebar-item-label { color: #ffffff !important; font-weight: 600; }
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon { color: var(--ruta-acento) !important; }
+.fi-sidebar-item-grouped-border-part { background-color: #3a4e6b !important; }
+
+.fi-sidebar .fi-tenant-menu-trigger,
+.fi-sidebar .fi-dropdown-trigger { color: #e6ebf2; }
+
+.ruta-sidebar-footer {
+    padding: .75rem 1.25rem 1rem;
+    border-top: 1px solid #22344a;
+    color: var(--ruta-sidebar-tenue);
+    font-size: .75rem;
+}
+
+/* Marca */
+.ruta-logo { font-weight: 800; font-size: 1.6rem; letter-spacing: -.04em; line-height: 1; color: #ffffff; }
+.ruta-logo span { color: var(--ruta-acento); }
+.fi-simple-layout .ruta-logo, .fi-topbar .ruta-logo { color: #1b2b3a; }
+.dark .fi-simple-layout .ruta-logo, .dark .fi-topbar .ruta-logo { color: #ffffff; }
+
+/* Barra superior blanca */
+.fi-topbar { background-color: #ffffff; box-shadow: 0 1px 0 #e2e7ee; }
+.dark .fi-topbar { background-color: #111b26; box-shadow: 0 1px 0 #22344a; }
+
+/* Tarjetas y secciones más redondeadas */
+.fi-section, .fi-ta-ctn, .fi-wi-stats-overview-stat { border-radius: 1rem !important; }
+
+/* Placa de vehículo (se usará en Flota) */
+.ruta-placa {
+    display: inline-block;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 700;
+    letter-spacing: .06em;
+    background: #ffd23f;
+    color: #111111;
+    border: 2px solid #111111;
+    border-radius: 6px;
+    padding: 1px 8px;
+}
+
+/* Selector de empresa en el menú lateral (texto claro sobre fondo oscuro) */
+.fi-sidebar .fi-tenant-menu-trigger-current-tenant-label { color: var(--ruta-sidebar-tenue) !important; }
+.fi-sidebar .fi-tenant-menu-trigger-tenant-name { color: #ffffff !important; font-weight: 700; }
+.fi-sidebar .fi-tenant-menu-trigger .fi-icon { color: var(--ruta-sidebar-tenue) !important; }
+.fi-sidebar .fi-tenant-menu-trigger:hover { background-color: var(--ruta-sidebar-hover) !important; }
+
+/* Barra superior: empresa activa junto al logo y rol junto al usuario */
+.ruta-topbar-empresa {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    margin-inline-start: 1.25rem;
+    padding-inline-start: 1.25rem;
+    border-inline-start: 1px solid #e2e7ee;
+    min-width: 0;
+}
+@media (min-width: 1024px) { .ruta-topbar-empresa { display: flex; } }
+.ruta-topbar-etiqueta { font-size: 10px; font-weight: 700; letter-spacing: .22em; color: #5b6576; }
+.ruta-topbar-nombre { font-size: 15px; font-weight: 800; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dark .ruta-topbar-nombre { color: #ffffff; }
+.dark .ruta-topbar-empresa { border-color: #22344a; }
+.ruta-topbar-rol { display: none; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #374151; margin-inline-end: .75rem; }
+@media (min-width: 768px) { .ruta-topbar-rol { display: inline; } }
+.dark .ruta-topbar-rol { color: #e5e7eb; }
+
+/* Accesos rápidos del inicio */
+.ruta-acceso {
+    display: flex; flex-direction: column; gap: .25rem; padding: 1rem;
+    border-radius: .875rem; border: 1px solid #e2e7ee; text-decoration: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.ruta-acceso:hover { border-color: #ea6a2c; box-shadow: 0 0 0 3px #fdeee6; }
+.dark .ruta-acceso { border-color: #22344a; }
+.ruta-acceso-titulo { font-weight: 700; color: #111827; }
+.ruta-acceso-detalle { font-size: 13px; color: #5b6576; }
+.dark .ruta-acceso-titulo { color: #ffffff; }
+.dark .ruta-acceso-detalle { color: #9aa7b8; }

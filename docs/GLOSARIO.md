@@ -1,0 +1,24 @@
+# Glosario
+
+- **Extracto / FUEC**: Formato Único de Extracto de Contrato; documento obligatorio por cada servicio de transporte especial. Tiene número de control (interno) y número de extracto (legal).
+- **Operador**: conductor del vehículo.
+- **Propietario / afiliado**: dueño del vehículo vinculado a la cooperativa; paga cuota de administración.
+- **Administración**: cuota periódica que paga cada vehículo afiliado; su valor depende de la clase del vehículo.
+- **Vinculación de flota / Convenio empresarial**: formas de vincular un vehículo (propio de la cooperativa o vía convenio con otra empresa afiliada).
+- **Número interno**: número del vehículo dentro de la empresa.
+- **Tarjeta de operación**: permiso del Ministerio de Transporte para operar el vehículo en servicio especial.
+- **SOAT**: seguro obligatorio de accidentes de tránsito.
+- **Póliza RC-RCE**: pólizas de responsabilidad civil contractual y extracontractual.
+- **Técnico-mecánica (anual)**: revisión técnico-mecánica y de gases.
+- **Técnico bimensual / preventiva**: revisión preventiva cada dos meses exigida a transporte especial.
+- **Alistamiento / preoperacional**: checklist diario que hace el conductor antes de operar.
+- **Inspección mensual PESV**: inspección de seguridad del Plan Estratégico de Seguridad Vial.
+- **PESV**: Plan Estratégico de Seguridad Vial.
+- **Planilla**: registro de despacho de un viaje de un vehículo desde una oficina, con sus deducciones.
+- **Tiquete**: venta de un puesto a un pasajero dentro de una planilla.
+- **Despacho / oficina**: sede desde donde se venden tiquetes y se despachan vehículos.
+- **Enturnar**: asignar a un vehículo su turno de salida.
+- **Liquidar vehículo**: calcular lo producido por un vehículo en un periodo menos deducciones.
+- **Contrato eventual**: contrato de transporte puntual con un cliente (empresa, estudiantes, turistas…).
+- **Comparendo**: multa de tránsito.
+- **N8**: integración externa (por confirmar; posiblemente n8n).
