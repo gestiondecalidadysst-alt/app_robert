@@ -10,12 +10,14 @@
 
 ## Pendiente / bloqueos
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción. Pasos de Easypanel en `README.md`.
-- [ ] Subir el repositorio a GitHub: el repo git local ya tiene el commit inicial, falta la conexión con GitHub.
+- [x] Código en GitHub: https://github.com/solucionesappcontact-jpg/app_operation (rama `main`). Es la fuente oficial del código.
 - [ ] Desplegar en Easypanel.
 - [ ] Configurar el correo (SMTP) para la recuperación de contraseñas.
 - [ ] Código fuente del legado: reglas exactas del FUEC (se necesitan en el módulo 4).
 
 ## Siguiente paso
+Desplegar en Easypanel desde el repo (pasos en `README.md`). Luego:
+
 Módulo 2 – Flota:
 - Propietarios y vehículos.
 - Documentos con historial.
