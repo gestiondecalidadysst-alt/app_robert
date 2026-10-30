@@ -26,4 +26,9 @@
 | 2026-10-30 | Días de aviso "por vencer" globales (`DIAS_AVISO_VENCIMIENTO`, 30 por defecto). | Simple para empezar. | Configurable por empresa. |
 | 2026-10-30 | Selectores de fecha no nativos con formato `dd/mm/aaaa` en toda la app. | El selector nativo cambia de formato según el idioma del navegador. | Selector nativo. |
 | 2026-10-30 | Hoja de vida del vehículo = página Ver (resumen + documentos + novedades); Editar solo datos. Ficha técnica en JSON. | Una sola vista por vehículo, como se planeó; la ficha técnica no se consulta por campos. | Columnas por cada dato técnico. |
+| 2026-10-30 | Lógica de documentos con vencimiento compartida entre vehículos y conductores: contrato `TipoDocumento` + traits `TieneDocumentosConVencimiento` y `EsDocumentoConVencimiento`. Tablas separadas por dueño. | Misma regla de vigencia y semáforo; consultas simples. | Tabla polimórfica única de documentos. |
+| 2026-10-30 | Días de aviso "por vencer" por tipo de documento (`diasAviso()`): planilla de seguridad social 5, revisión preventiva 10, el resto 30. | Con 30 días, los documentos mensuales o bimestrales estarían siempre en amarillo. | Un solo valor global. |
+| 2026-10-30 | Conductor: licencia y seguridad social bloquean el FUEC (como el legado); examen médico, manejo defensivo y contrato solo semáforo. Licencia que no sea categoría C también bloquea. | Reglas del legado + exigencia de licencia de servicio público. | Bloquear con todos los documentos. |
+| 2026-10-30 | Comparendos como dato manual con fecha de consulta del SIMIT; avisan pero no bloquean. | El legado no bloqueaba; falta confirmar con el usuario. | Bloquear con cobro coactivo o embargo. |
+| 2026-10-30 | Asignación conductor ↔ vehículo explícita con historial (`asignaciones_vehiculo`) y un solo conductor principal por vehículo. El retiro del conductor termina sus asignaciones. | Recomendación del relevamiento; la usará el FUEC para sugerir conductor. | Relación implícita en extractos. |
 

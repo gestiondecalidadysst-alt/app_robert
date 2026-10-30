@@ -2,15 +2,13 @@
 
 namespace App\Models;
 
-use App\Enums\EstadoDocumento;
 use App\Enums\TipoDocumentoVehiculo;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\EsDocumentoConVencimiento;
 use App\Models\Concerns\PerteneceAEmpresa;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Documento de un vehículo (SOAT, técnico-mecánica, pólizas…). Cada renovación es un
@@ -18,10 +16,12 @@ use Illuminate\Support\Facades\Storage;
  */
 class DocumentoVehiculo extends Model
 {
-    use Auditable, PerteneceAEmpresa, SoftDeletes;
+    use Auditable, EsDocumentoConVencimiento, PerteneceAEmpresa, SoftDeletes;
 
-    /** Disco privado: los archivos solo se descargan desde la app, con permiso. */
+    /** Disco privado: los archivos solo se abren desde la app, con enlace firmado. */
     public const DISCO = 'local';
+
+    public const COLUMNA_DUENO = 'vehiculo_id';
 
     protected $table = 'documentos_vehiculo';
 
@@ -57,46 +57,8 @@ class DocumentoVehiculo extends Model
         return $this->belongsTo(Aseguradora::class);
     }
 
-    public function estado(?\DateTimeInterface $hoy = null): EstadoDocumento
-    {
-        return EstadoDocumento::paraVencimiento($this->fecha_vencimiento, $hoy);
-    }
-
-    /** Días que faltan para el vencimiento (negativo si ya venció). */
-    public function diasParaVencer(): int
-    {
-        return (int) now()->startOfDay()->diffInDays($this->fecha_vencimiento->copy()->startOfDay(), false);
-    }
-
     public function emisor(): ?string
     {
         return $this->aseguradora?->nombre ?? $this->entidad;
-    }
-
-    public function tieneArchivo(): bool
-    {
-        return filled($this->archivo_path) && Storage::disk(self::DISCO)->exists($this->archivo_path);
-    }
-
-    /**
-     * Solo el documento vigente de cada tipo por vehículo (sin el historial).
-     * Vigente = el de vencimiento más lejano; ante empate, el registrado de último.
-     */
-    public function scopeVigentes(Builder $query): Builder
-    {
-        $tabla = $this->getTable();
-
-        return $query->whereNotExists(function ($sub) use ($tabla) {
-            $sub->selectRaw('1')
-                ->from("{$tabla} as posterior")
-                ->whereColumn('posterior.vehiculo_id', "{$tabla}.vehiculo_id")
-                ->whereColumn('posterior.tipo', "{$tabla}.tipo")
-                ->whereNull('posterior.deleted_at')
-                ->where(fn ($q) => $q
-                    ->whereColumn('posterior.fecha_vencimiento', '>', "{$tabla}.fecha_vencimiento")
-                    ->orWhere(fn ($q) => $q
-                        ->whereColumn('posterior.fecha_vencimiento', "{$tabla}.fecha_vencimiento")
-                        ->whereColumn('posterior.id', '>', "{$tabla}.id")));
-        });
     }
 }

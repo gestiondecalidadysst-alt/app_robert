@@ -31,6 +31,10 @@ final class Permisos
         'vehiculos' => ['Vehículos', 'Flota', ['ver', 'crear', 'editar', 'eliminar']],
         'documentos_vehiculo' => ['Documentos de vehículos', 'Flota', ['ver', 'crear', 'editar', 'eliminar']],
         'novedades_vehiculo' => ['Novedades y estado de vehículos', 'Flota', ['ver', 'crear']],
+        'conductores' => ['Conductores', 'Conductores', ['ver', 'crear', 'editar', 'eliminar']],
+        'documentos_conductor' => ['Documentos de conductores', 'Conductores', ['ver', 'crear', 'editar', 'eliminar']],
+        'novedades_conductor' => ['Novedades y estado de conductores', 'Conductores', ['ver', 'crear']],
+        'asignaciones_vehiculo' => ['Asignación de vehículos', 'Conductores', ['ver', 'crear', 'editar']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -82,8 +86,15 @@ final class Permisos
                 'ver_vehiculos', 'crear_vehiculos', 'editar_vehiculos',
                 'ver_documentos_vehiculo', 'crear_documentos_vehiculo', 'editar_documentos_vehiculo',
                 'ver_novedades_vehiculo',
+                'ver_conductores', 'crear_conductores', 'editar_conductores',
+                'ver_documentos_conductor', 'crear_documentos_conductor', 'editar_documentos_conductor',
+                'ver_novedades_conductor',
+                'ver_asignaciones_vehiculo', 'crear_asignaciones_vehiculo', 'editar_asignaciones_vehiculo',
             ],
-            Rol::MANTENIMIENTO => ['ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo'],
+            Rol::MANTENIMIENTO => [
+                'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',
+                'ver_conductores', 'ver_asignaciones_vehiculo',
+            ],
             Rol::CONDUCTOR => [],
         ];
     }

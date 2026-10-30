@@ -35,8 +35,11 @@ enum EstadoDocumento: string implements HasColor, HasLabel
         };
     }
 
-    /** Estado de un documento que vence en $vencimiento, visto en la fecha $hoy (por defecto hoy). */
-    public static function paraVencimiento(?\DateTimeInterface $vencimiento, ?\DateTimeInterface $hoy = null): self
+    /**
+     * Estado de un documento que vence en $vencimiento, visto en la fecha $hoy (por defecto hoy).
+     * $diasAviso: días antes del vencimiento en que pasa a "por vencer" (por defecto la configuración).
+     */
+    public static function paraVencimiento(?\DateTimeInterface $vencimiento, ?\DateTimeInterface $hoy = null, ?int $diasAviso = null): self
     {
         if ($vencimiento === null) {
             return self::Faltante;
@@ -47,9 +50,14 @@ enum EstadoDocumento: string implements HasColor, HasLabel
 
         return match (true) {
             $vence->lt($hoy) => self::Vencido,
-            $vence->lte($hoy->copy()->addDays((int) config('ruta.dias_aviso_vencimiento', 30))) => self::PorVencer,
+            $vence->lte($hoy->copy()->addDays($diasAviso ?? self::diasAvisoPorDefecto())) => self::PorVencer,
             default => self::Vigente,
         };
+    }
+
+    public static function diasAvisoPorDefecto(): int
+    {
+        return (int) config('ruta.dias_aviso_vencimiento', 30);
     }
 
     /** Gravedad para ordenar: el peor estado de varios documentos es el de mayor gravedad. */

@@ -45,6 +45,7 @@ Queda para otros módulos: historial de mantenimientos en la hoja de vida (módu
 - `.../Vehiculos/Acciones/CambiarEstadoAction.php`: modal "Cambiar estado".
 - `.../Vehiculos/RelationManagers/DocumentosRelationManager.php`: historial agrupado por tipo, "Reemplazado" para los no vigentes, Renovar, ver archivo (URL firmada de 10 min).
 - `.../Vehiculos/RelationManagers/NovedadesRelationManager.php`: solo lectura.
+- `.../Vehiculos/RelationManagers/ConductoresRelationManager.php`: conductores asignados (módulo 3).
 - `.../Vehiculos/Pages/*`: Listar (subtítulo con conteo por estado), Crear, Ver, Editar.
 - `app/Filament/App/Resources/Propietarios/PropietarioResource.php` (+ `campos()` reutilizado para crear propietario desde el vehículo).
 - `app/Filament/App/Resources/Vencimientos/VencimientoResource.php` + `Widgets/ResumenVencimientos.php`.
@@ -63,7 +64,7 @@ Queda para otros módulos: historial de mantenimientos en la hoja de vida (módu
 ## Reglas implementadas
 - **Placa:** se guarda sin espacios ni guiones y en mayúsculas; formato `ABC123` (o `ABC12D` para motos); única por empresa. El número interno también es único por empresa.
 - **Documentos:** renovar = registro nuevo; el anterior queda como "Reemplazado". Vigente = el de vencimiento más lejano. Los 6 tipos son obligatorios para operar.
-- **Semáforo:** vencido si la fecha ya pasó; por vencer si vence en los próximos `DIAS_AVISO_VENCIMIENTO` días (30 por defecto, `config/ruta.php`); sin registrar si no existe.
+- **Semáforo:** vencido si la fecha ya pasó; por vencer si vence en los próximos días de aviso del tipo (revisión preventiva 10; el resto `DIAS_AVISO_VENCIMIENTO`, 30 por defecto); sin registrar si no existe. La lógica es compartida con Conductores (ver `conductores.md`, sección Compartido).
 - **Archivos de documentos:** en disco privado (`storage/app/private/documentos-vehiculo/{empresa}`), solo PDF o imagen de hasta 5 MB; se abren con enlace firmado temporal.
 - **Estado:** no se edita en el formulario; solo con "Cambiar estado", que exige observación y deja historial (estado anterior, nuevo, fecha, reactivación prevista, usuario).
 - **Desvinculados:** no aparecen por defecto en el listado ni en Vencimientos.

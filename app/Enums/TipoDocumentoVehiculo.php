@@ -2,13 +2,13 @@
 
 namespace App\Enums;
 
-use Filament\Support\Contracts\HasLabel;
+use App\Enums\Contratos\TipoDocumento;
 
 /**
  * Documentos que se controlan por vehículo. Todos son obligatorios para operar
  * en transporte especial; cada renovación es un registro nuevo (historial).
  */
-enum TipoDocumentoVehiculo: string implements HasLabel
+enum TipoDocumentoVehiculo: string implements TipoDocumento
 {
     case Soat = 'soat';
     case Tecnomecanica = 'tecnomecanica';
@@ -69,9 +69,19 @@ enum TipoDocumentoVehiculo: string implements HasLabel
         };
     }
 
+    public function obligatorio(): bool
+    {
+        return true;
+    }
+
+    public function diasAviso(): ?int
+    {
+        return $this === self::RevisionPreventiva ? 10 : null;
+    }
+
     /** @return list<self> */
     public static function obligatorios(): array
     {
-        return self::cases();
+        return array_values(array_filter(self::cases(), fn (self $t) => $t->obligatorio()));
     }
 }

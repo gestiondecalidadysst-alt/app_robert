@@ -24,3 +24,25 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 ### `novedades_vehiculo`
 - `vehiculo_id`, `tipo` (suspension | taller | desvinculacion | reactivacion | vinculacion), `fecha`, `estado_anterior`, `estado_nuevo`, `fecha_reactivacion`, `observacion`, `user_id`.
 - Legado `Novedad vehículo`: idsnovedad SUSPENDER SERVICIO→suspension, TALLERES→taller, DESVINCULACION→desvinculacion; fecha_activar→fecha_reactivacion.
+
+## Módulo 3 – Conductores (`2026_10_30_200001_create_conductores.php`)
+
+### `conductores`
+- `tipo_identificacion_id`, `documento` (único por empresa), `nombres`, `apellidos`, `fecha_nacimiento`, `genero`, `grupo_sanguineo`, `telefono`, `email`, `direccion`, `municipio_id`, `foto_path`, `nivel_academico_id`, `oficina_id`, `fecha_ingreso`.
+- Seguridad social: `eps_id`, `arl_id`, `fondo_pensiones` (texto).
+- Emergencia: `contacto_emergencia`, `telefono_emergencia`.
+- Comparendos: `comparendos_estado` (sin_comparendos | pendiente | acuerdo_pago | cobro_coactivo | embargo), `comparendos_cantidad`, `comparendos_consultado_el`.
+- `estado` (activo | suspendido | retirado), `estado_desde`, `user_id` (portal del conductor, módulo 9), `observaciones`, *soft delete*.
+- Legado `Operador`: documento→documento, idgeneros→genero, numcel→telefono, foto→foto_path. `Documentos operador`: comparendo SI/NO + estado comparendo→comparendos_estado (NO→sin_comparendos), can_comparedo→comparendos_cantidad.
+
+### `documentos_conductor` (historial)
+- `conductor_id`, `tipo` (licencia | seguridad_social | examen_medico | manejo_defensivo | contrato), `numero`, `categoria_licencia_id` (solo licencia), `entidad`, `fecha_expedicion`, `fecha_vencimiento`, `archivo_path`, `archivo_nombre`, `observacion`, *soft delete*.
+- Legado `Documentos operador`: licencia_vence + idcategorias + nombre_organismo→fila tipo licencia (categoría y entidad); vence_salud→fila tipo seguridad_social. `idservicios` (particular/público) no se migra: lo define la categoría (C = público).
+
+### `novedades_conductor`
+- Igual que `novedades_vehiculo`, con `tipo` suspension | retiro | reactivacion | reintegro.
+- Legado `Novedad operador`: RETIRO→retiro, SUSPENDER SERVICIO→suspension, fecha_activar→fecha_reactivacion.
+
+### `asignaciones_vehiculo` (nueva, no existía en el legado)
+- `conductor_id`, `vehiculo_id`, `fecha_desde`, `fecha_hasta` (vacía = vigente), `principal`, `observacion`.
+

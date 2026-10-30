@@ -27,6 +27,7 @@ class VerVehiculo extends ViewRecord
         return parent::resolveRecord($key)->load([
             'marca', 'linea', 'claseVehiculo', 'carroceria', 'combustible', 'tipoServicio',
             'organismoTransito.departamento', 'propietario', 'empresaConvenio', 'documentos',
+            'asignacionesVigentes.conductor',
         ]);
     }
 
@@ -42,7 +43,7 @@ class VerVehiculo extends ViewRecord
     #[On('documentos-actualizados')]
     public function refrescar(): void
     {
-        $this->getRecord()->refresh()->load('documentos');
+        $this->getRecord()->refresh()->load('documentos', 'asignacionesVigentes.conductor');
     }
 
     public function getContentTabLabel(): ?string

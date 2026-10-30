@@ -46,7 +46,7 @@ class VencimientoResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $total = self::consultaBase()->whereDate('fecha_vencimiento', '<', today())->count();
+        $total = self::consultaBase()->vencidos()->count();
 
         return $total > 0 ? (string) $total : null;
     }
@@ -78,8 +78,6 @@ class VencimientoResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $dias = (int) config('ruta.dias_aviso_vencimiento');
-
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['vehiculo', 'aseguradora']))
             ->defaultSort('fecha_vencimiento')
@@ -106,16 +104,16 @@ class VencimientoResource extends Resource
                     ->label('Estado')
                     ->options([
                         EstadoDocumento::Vencido->value => 'Vencidos',
-                        EstadoDocumento::PorVencer->value => "Por vencer ({$dias} días)",
+                        EstadoDocumento::PorVencer->value => 'Por vencer',
                         'atencion' => 'Vencidos y por vencer',
                         EstadoDocumento::Vigente->value => 'Vigentes',
                     ])
                     ->default('atencion')
                     ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
-                        EstadoDocumento::Vencido->value => $query->whereDate('fecha_vencimiento', '<', today()),
-                        EstadoDocumento::PorVencer->value => $query->whereDate('fecha_vencimiento', '>=', today())->whereDate('fecha_vencimiento', '<=', today()->addDays($dias)),
-                        'atencion' => $query->whereDate('fecha_vencimiento', '<=', today()->addDays($dias)),
-                        EstadoDocumento::Vigente->value => $query->whereDate('fecha_vencimiento', '>', today()->addDays($dias)),
+                        EstadoDocumento::Vencido->value => $query->vencidos(),
+                        EstadoDocumento::PorVencer->value => $query->porVencer(),
+                        'atencion' => $query->enAtencion(),
+                        EstadoDocumento::Vigente->value => $query->alDia(),
                         default => $query,
                     }),
                 SelectFilter::make('tipo')->label('Documento')->options(TipoDocumentoVehiculo::class)->multiple(),

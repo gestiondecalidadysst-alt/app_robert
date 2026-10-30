@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use App\Enums\EstadoDocumento;
 use App\Enums\EstadoVehiculo;
 use App\Enums\TipoDocumentoVehiculo;
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
+use App\Models\Concerns\TieneDocumentosConVencimiento;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Collection;
 
 /**
  * Vehículo de la flota de una empresa.
@@ -22,7 +21,7 @@ use Illuminate\Support\Collection;
  */
 class Vehiculo extends Model
 {
-    use Auditable, PerteneceAEmpresa, SoftDeletes;
+    use Auditable, PerteneceAEmpresa, SoftDeletes, TieneDocumentosConVencimiento;
 
     /** Campos de la ficha técnica (columna JSON ficha_tecnica). */
     public const FICHA_TECNICA = [
@@ -139,39 +138,21 @@ class Vehiculo extends Model
         return $this->hasMany(NovedadVehiculo::class);
     }
 
-    // Documentos
-
-    /**
-     * Documento vigente de cada tipo (el de vencimiento más lejano), indexado por tipo.
-     * Usa la relación cargada si existe, para no repetir consultas en listados.
-     *
-     * @return Collection<string, DocumentoVehiculo>
-     */
-    public function documentosVigentes(): Collection
+    public function asignaciones(): HasMany
     {
-        return $this->documentos
-            ->sortByDesc(fn (DocumentoVehiculo $d) => $d->fecha_vencimiento->format('Ymd') . str_pad((string) $d->id, 10, '0', STR_PAD_LEFT))
-            ->unique(fn (DocumentoVehiculo $d) => $d->tipo->value)
-            ->keyBy(fn (DocumentoVehiculo $d) => $d->tipo->value);
+        return $this->hasMany(AsignacionVehiculo::class);
     }
 
-    public function documentoVigente(TipoDocumentoVehiculo $tipo): ?DocumentoVehiculo
+    public function asignacionesVigentes(): HasMany
     {
-        return $this->documentosVigentes()->get($tipo->value);
+        return $this->asignaciones()->whereNull('fecha_hasta');
     }
 
-    public function estadoDocumento(TipoDocumentoVehiculo $tipo, ?\DateTimeInterface $fecha = null): EstadoDocumento
-    {
-        return EstadoDocumento::paraVencimiento($this->documentoVigente($tipo)?->fecha_vencimiento, $fecha);
-    }
+    // Documentos (ver Concerns\TieneDocumentosConVencimiento)
 
-    /** Peor estado entre los documentos obligatorios (semáforo general del vehículo). */
-    public function estadoDocumental(?\DateTimeInterface $fecha = null): EstadoDocumento
+    public static function tiposDocumento(): string
     {
-        return collect(TipoDocumentoVehiculo::obligatorios())
-            ->map(fn (TipoDocumentoVehiculo $tipo) => $this->estadoDocumento($tipo, $fecha))
-            ->sortByDesc(fn (EstadoDocumento $estado) => $estado->gravedad())
-            ->first() ?? EstadoDocumento::Vigente;
+        return TipoDocumentoVehiculo::class;
     }
 
     /**
@@ -185,21 +166,10 @@ class Vehiculo extends Model
         $bloqueos = [];
 
         if ($this->estado !== EstadoVehiculo::Operando) {
-            $bloqueos[] = "El vehículo está " . mb_strtolower($this->estado->getLabel()) . ".";
+            $bloqueos[] = 'El vehículo está ' . mb_strtolower($this->estado->getLabel()) . '.';
         }
 
-        foreach (TipoDocumentoVehiculo::obligatorios() as $tipo) {
-            $documento = $this->documentoVigente($tipo);
-            $estado = EstadoDocumento::paraVencimiento($documento?->fecha_vencimiento, $fecha);
-
-            if ($estado === EstadoDocumento::Faltante) {
-                $bloqueos[] = "{$tipo->getLabel()}: sin registrar.";
-            } elseif ($estado === EstadoDocumento::Vencido) {
-                $bloqueos[] = "{$tipo->getLabel()}: vencido el {$documento->fecha_vencimiento->format('d/m/Y')}.";
-            }
-        }
-
-        return $bloqueos;
+        return [...$bloqueos, ...$this->bloqueosDocumentales($fecha)];
     }
 
     public function puedeOperar(?\DateTimeInterface $fecha = null): bool

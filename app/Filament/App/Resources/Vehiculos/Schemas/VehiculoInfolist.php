@@ -57,6 +57,14 @@ final class VehiculoInfolist
                             TextEntry::make('propietario.nombre_completo')
                                 ->label('Propietario')
                                 ->helperText(fn (Vehiculo $record) => $record->propietario?->telefono),
+                            TextEntry::make('conductores')
+                                ->label('Conductores')
+                                ->state(fn (Vehiculo $record) => $record->asignacionesVigentes
+                                    ->sortByDesc('principal')
+                                    ->map(fn ($a) => $a->conductor?->nombre_completo . ($a->principal ? ' (principal)' : ''))
+                                    ->implode(', '))
+                                ->placeholder('Sin asignar')
+                                ->columnSpan(2),
                         ]),
                 ]),
 

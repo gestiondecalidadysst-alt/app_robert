@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Widgets;
 
+use App\Filament\App\Resources\Conductores\ConductorResource;
 use App\Filament\App\Resources\Oficinas\OficinaResource;
 use App\Filament\App\Resources\Roles\RolResource;
 use App\Filament\App\Resources\Propietarios\PropietarioResource;
@@ -29,6 +30,7 @@ class Bienvenida extends Widget
             ['Vehículos', 'Flota, hoja de vida y estado', VehiculoResource::getUrl(), 'ver_vehiculos'],
             ['Vencimientos', 'Documentos vencidos y por vencer', VencimientoResource::getUrl(), 'ver_documentos_vehiculo'],
             ['Propietarios', 'Dueños de los vehículos', PropietarioResource::getUrl(), 'ver_propietarios'],
+            ['Conductores', 'Licencias, seguridad social y vehículos', ConductorResource::getUrl(), 'ver_conductores'],
             ['Mi empresa', 'Datos, logo y habilitación', Filament::getTenantProfileUrl(), 'ver_empresa'],
             ['Usuarios', 'Personas con acceso y su rol', UsuarioResource::getUrl(), 'ver_usuarios'],
             ['Roles y permisos', 'Qué puede hacer cada rol', RolResource::getUrl(), 'ver_roles'],

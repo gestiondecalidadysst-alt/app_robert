@@ -18,18 +18,16 @@ class ResumenVencimientos extends StatsOverviewWidget
     protected function getStats(): array
     {
         $dias = (int) config('ruta.dias_aviso_vencimiento');
-        $vencidos = VencimientoResource::consultaBase()->whereDate('fecha_vencimiento', '<', today())->count();
-        $porVencer = VencimientoResource::consultaBase()
-            ->whereDate('fecha_vencimiento', '>=', today())
-            ->whereDate('fecha_vencimiento', '<=', today()->addDays($dias))
-            ->count();
+        $vencidos = VencimientoResource::consultaBase()->vencidos()->count();
+        $porVencer = VencimientoResource::consultaBase()->porVencer()->count();
         $vehiculosBloqueados = VehiculoResource::conDocumentosVencidosOFaltantes(Vehiculo::query()->enFlota())->count();
 
         return [
             Stat::make('Documentos vencidos', $vencidos)
                 ->color($vencidos ? 'danger' : 'success')
                 ->icon('heroicon-o-exclamation-circle'),
-            Stat::make("Por vencer en {$dias} días", $porVencer)
+            Stat::make('Por vencer', $porVencer)
+                ->description("{$dias} días antes (10 la preventiva)")
                 ->color($porVencer ? 'warning' : 'success')
                 ->icon('heroicon-o-clock'),
             Stat::make('Vehículos sin poder operar por documentos', $vehiculosBloqueados)

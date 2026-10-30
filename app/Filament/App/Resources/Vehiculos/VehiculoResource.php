@@ -2,7 +2,6 @@
 
 namespace App\Filament\App\Resources\Vehiculos;
 
-use App\Enums\EstadoDocumento;
 use App\Enums\EstadoVehiculo;
 use App\Enums\TipoDocumentoVehiculo;
 use App\Filament\App\Resources\Vehiculos\Acciones\CambiarEstadoAction;
@@ -10,6 +9,7 @@ use App\Filament\App\Resources\Vehiculos\Pages\CrearVehiculo;
 use App\Filament\App\Resources\Vehiculos\Pages\EditarVehiculo;
 use App\Filament\App\Resources\Vehiculos\Pages\ListarVehiculos;
 use App\Filament\App\Resources\Vehiculos\Pages\VerVehiculo;
+use App\Filament\App\Resources\Vehiculos\RelationManagers\ConductoresRelationManager;
 use App\Filament\App\Resources\Vehiculos\RelationManagers\DocumentosRelationManager;
 use App\Filament\App\Resources\Vehiculos\RelationManagers\NovedadesRelationManager;
 use App\Filament\App\Resources\Vehiculos\Schemas\VehiculoForm;
@@ -97,7 +97,7 @@ class VehiculoResource extends Resource
                     ->label('Documentos')
                     ->badge()
                     ->state(fn (Vehiculo $record) => $record->estadoDocumental())
-                    ->description(fn (Vehiculo $record) => self::resumenDocumentos($record)),
+                    ->description(fn (Vehiculo $record) => $record->resumenDocumentos()),
             ])
             ->filters([
                 SelectFilter::make('estado')
@@ -113,8 +113,7 @@ class VehiculoResource extends Resource
                     ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
                         'con_problemas' => self::conDocumentosVencidosOFaltantes($query),
                         'por_vencer' => $query->whereHas('documentos', fn (Builder $d) => $d->vigentes()
-                            ->whereDate('fecha_vencimiento', '>=', today())
-                            ->whereDate('fecha_vencimiento', '<=', today()->addDays((int) config('ruta.dias_aviso_vencimiento')))),
+                            ->porVencer()),
                         default => $query,
                     }),
                 SelectFilter::make('clase_vehiculo_id')
@@ -136,22 +135,6 @@ class VehiculoResource extends Resource
             ]);
     }
 
-    /** "2 vencidos · 1 por vencer" para la columna de documentos. */
-    private static function resumenDocumentos(Vehiculo $vehiculo): ?string
-    {
-        $conteo = collect(TipoDocumentoVehiculo::obligatorios())
-            ->map(fn (TipoDocumentoVehiculo $tipo) => $vehiculo->estadoDocumento($tipo))
-            ->countBy(fn (EstadoDocumento $e) => $e->value);
-
-        $partes = array_filter([
-            ($n = $conteo[EstadoDocumento::Vencido->value] ?? 0) ? "{$n} vencido" . ($n > 1 ? 's' : '') : null,
-            ($n = $conteo[EstadoDocumento::Faltante->value] ?? 0) ? "{$n} sin registrar" : null,
-            ($n = $conteo[EstadoDocumento::PorVencer->value] ?? 0) ? "{$n} por vencer" : null,
-        ]);
-
-        return $partes ? implode(' · ', $partes) : null;
-    }
-
     /** Vehículos con algún documento obligatorio vencido o sin registrar. */
     public static function conDocumentosVencidosOFaltantes(Builder $query): Builder
     {
@@ -171,6 +154,7 @@ class VehiculoResource extends Resource
     {
         return [
             DocumentosRelationManager::class,
+            ConductoresRelationManager::class,
             NovedadesRelationManager::class,
         ];
     }

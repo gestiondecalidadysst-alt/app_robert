@@ -18,7 +18,6 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Documentos del vehículo con su historial: renovar = registrar uno nuevo del mismo tipo.
@@ -94,7 +93,7 @@ class DocumentosRelationManager extends RelationManager
                     ->icon('heroicon-o-paper-clip')
                     ->color('gray')
                     ->visible(fn (DocumentoVehiculo $r) => $r->tieneArchivo())
-                    ->url(fn (DocumentoVehiculo $r) => Storage::disk(DocumentoVehiculo::DISCO)->temporaryUrl($r->archivo_path, now()->addMinutes(10)))
+                    ->url(fn (DocumentoVehiculo $r) => $r->urlArchivo())
                     ->openUrlInNewTab(),
                 Action::make('renovar')
                     ->label('Renovar')
