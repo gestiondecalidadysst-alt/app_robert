@@ -96,6 +96,26 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         return $this->hasMany(EmpresaConvenio::class);
     }
 
+    public function propietarios(): HasMany
+    {
+        return $this->hasMany(Propietario::class);
+    }
+
+    public function vehiculos(): HasMany
+    {
+        return $this->hasMany(Vehiculo::class);
+    }
+
+    public function documentosVehiculo(): HasMany
+    {
+        return $this->hasMany(DocumentoVehiculo::class);
+    }
+
+    public function novedadesVehiculo(): HasMany
+    {
+        return $this->hasMany(NovedadVehiculo::class);
+    }
+
     public function actividades(): HasMany
     {
         return $this->hasMany(Actividad::class);

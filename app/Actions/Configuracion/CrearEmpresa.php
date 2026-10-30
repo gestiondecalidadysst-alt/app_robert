@@ -57,8 +57,16 @@ class CrearEmpresa
         });
     }
 
-    /** Crea (o completa) los roles por defecto de una empresa con sus permisos. */
-    public function crearRoles(Empresa $empresa): void
+    /**
+     * Crea (o completa) los roles por defecto de una empresa.
+     *
+     * - Un rol que se crea ahora recibe todos sus permisos por defecto.
+     * - Un rol que ya existía conserva los ajustes que haya hecho la empresa: solo se le
+     *   agregan los permisos por defecto que estén en $nuevos (los de un módulo recién agregado).
+     *
+     * @param  list<string>  $nuevos
+     */
+    public function crearRoles(Empresa $empresa, array $nuevos = []): void
     {
         $registrar = app(PermissionRegistrar::class);
         $equipoAnterior = $registrar->getPermissionsTeamId();
@@ -68,7 +76,12 @@ class CrearEmpresa
             $rol = Rol::query()->deEmpresa($empresa)->firstOrCreate(
                 ['name' => $nombre, 'guard_name' => 'web', 'empresa_id' => $empresa->id],
             );
-            $rol->syncPermissions($permisos);
+
+            if ($rol->wasRecentlyCreated) {
+                $rol->syncPermissions($permisos);
+            } elseif ($agregar = array_values(array_intersect($permisos, $nuevos))) {
+                $rol->givePermissionTo($agregar);
+            }
         }
 
         $registrar->setPermissionsTeamId($equipoAnterior);

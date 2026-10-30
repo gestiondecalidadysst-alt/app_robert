@@ -86,5 +86,7 @@ class DemoSeeder extends Seeder
                 'password' => self::CLAVE,
             ]);
         }
+
+        $this->call(DemoFlotaSeeder::class);
     }
 }

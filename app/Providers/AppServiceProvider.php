@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Fechas siempre como dd/mm/aaaa, sin depender del idioma del navegador.
+        DatePicker::configureUsing(fn (DatePicker $campo) => $campo->native(false)->displayFormat('d/m/Y')->firstDayOfWeek(1));
+
         Carbon::setLocale(config('app.locale'));
 
         // Detecta errores comunes durante el desarrollo (carga perezosa, atributos inexistentes).

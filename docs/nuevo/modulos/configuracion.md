@@ -106,4 +106,4 @@ La clave de todos los usuarios demo es `Ruta2026*`.
 
 ## Pendientes / ideas
 - Recuperación de contraseña por correo: la pantalla existe, pero falta configurar el SMTP en `.env`.
-- Al construir el módulo 2, agregar sus permisos en `Permisos.php`.
+- Los permisos de Flota ya están en `Permisos.php`. Cada módulo nuevo agrega los suyos ahí; al desplegar, los roles existentes reciben solo los permisos nuevos.

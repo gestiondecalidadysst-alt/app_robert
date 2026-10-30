@@ -91,6 +91,9 @@
     padding: 1px 8px;
 }
 
+/* Campo de placa en formularios */
+.ruta-placa-input { text-transform: uppercase; font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; letter-spacing: .06em; }
+
 /* Selector de empresa en el menú lateral (texto claro sobre fondo oscuro) */
 .fi-sidebar .fi-tenant-menu-trigger-current-tenant-label { color: var(--ruta-sidebar-tenue) !important; }
 .fi-sidebar .fi-tenant-menu-trigger-tenant-name { color: #ffffff !important; font-weight: 700; }

@@ -49,6 +49,7 @@
 ```
 app/
   Actions/<Modulo>/            # reglas de negocio
+  Enums/                       # estados y tipos con etiqueta y color (Filament HasLabel/HasColor)
   Filament/Admin/Resources/    # panel superadmin
   Filament/App/Resources/      # panel empresa, agrupados por módulo
   Models/ (+ Concerns/PerteneceAEmpresa.php)
@@ -66,4 +67,4 @@ php artisan migrate --seed
 php artisan storage:link
 php artisan serve
 ```
-Usuarios demo (clave `Ruta2026*`): `superadmin@ruta.test` (/admin), `admin@demo.test`, `gerencia@demo.test`, `auxiliar@demo.test` (/app). Pruebas: `php artisan test`.
+Usuarios demo (clave `Ruta2026*`; flota demo con placas `DMO101`…`DMO106`): `superadmin@ruta.test` (/admin), `admin@demo.test`, `gerencia@demo.test`, `auxiliar@demo.test` (/app). Pruebas: `php artisan test`.
