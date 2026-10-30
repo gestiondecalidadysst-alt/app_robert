@@ -87,6 +87,6 @@ class DemoSeeder extends Seeder
             ]);
         }
 
-        $this->call([DemoFlotaSeeder::class, DemoConductoresSeeder::class]);
+        $this->call([DemoFlotaSeeder::class, DemoConductoresSeeder::class, DemoOperacionSeeder::class]);
     }
 }

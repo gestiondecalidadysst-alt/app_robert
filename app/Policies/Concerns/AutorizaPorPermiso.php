@@ -53,6 +53,12 @@ trait AutorizaPorPermiso
         return $this->puede($user, 'eliminar');
     }
 
+    /** Anular (contratos, FUEC): no se borran, se anulan. */
+    public function anular(User $user, Model $model): bool
+    {
+        return $this->puede($user, 'anular');
+    }
+
     public function forceDelete(User $user, Model $model): bool
     {
         return false;

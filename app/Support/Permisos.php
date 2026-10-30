@@ -16,6 +16,7 @@ final class Permisos
         'crear' => 'Crear',
         'editar' => 'Editar',
         'eliminar' => 'Eliminar',
+        'anular' => 'Anular',
     ];
 
     /** recurso => [etiqueta, módulo, acciones permitidas] */
@@ -35,6 +36,10 @@ final class Permisos
         'documentos_conductor' => ['Documentos de conductores', 'Conductores', ['ver', 'crear', 'editar', 'eliminar']],
         'novedades_conductor' => ['Novedades y estado de conductores', 'Conductores', ['ver', 'crear']],
         'asignaciones_vehiculo' => ['Asignación de vehículos', 'Conductores', ['ver', 'crear', 'editar']],
+        'clientes' => ['Clientes', 'Operación', ['ver', 'crear', 'editar', 'eliminar']],
+        'contratos' => ['Contratos', 'Operación', ['ver', 'crear', 'editar', 'anular']],
+        'pagos_contrato' => ['Pagos de contratos', 'Operación', ['ver', 'crear', 'eliminar']],
+        'fuecs' => ['FUEC (extractos)', 'Operación', ['ver', 'crear', 'anular']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -90,6 +95,10 @@ final class Permisos
                 'ver_documentos_conductor', 'crear_documentos_conductor', 'editar_documentos_conductor',
                 'ver_novedades_conductor',
                 'ver_asignaciones_vehiculo', 'crear_asignaciones_vehiculo', 'editar_asignaciones_vehiculo',
+                'ver_clientes', 'crear_clientes', 'editar_clientes',
+                'ver_contratos', 'crear_contratos', 'editar_contratos',
+                'ver_pagos_contrato', 'crear_pagos_contrato',
+                'ver_fuecs', 'crear_fuecs',
             ],
             Rol::MANTENIMIENTO => [
                 'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',

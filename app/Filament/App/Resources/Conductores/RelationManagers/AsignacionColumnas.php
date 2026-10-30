@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Conductores\RelationManagers;
 
+use App\Filament\Compartido\ErroresDeNegocio;
 use App\Actions\Conductores\AsignarVehiculo;
 use App\Models\AsignacionVehiculo;
 use Closure;
@@ -54,8 +55,8 @@ final class AsignacionColumnas
             ->schema([
                 DatePicker::make('fecha_hasta')->label('Hasta')->default(now())->required(),
             ])
-            ->action(function (AsignacionVehiculo $r, array $data) use ($despues): void {
-                app(AsignarVehiculo::class)->terminar($r, Carbon::parse($data['fecha_hasta']));
+            ->action(function (AsignacionVehiculo $r, array $data, Action $action) use ($despues): void {
+                ErroresDeNegocio::intentar($action, fn () => app(AsignarVehiculo::class)->terminar($r, Carbon::parse($data['fecha_hasta'])));
                 $despues && $despues();
             })
             ->successNotificationTitle('Asignación terminada');

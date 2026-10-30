@@ -46,3 +46,25 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 ### `asignaciones_vehiculo` (nueva, no existía en el legado)
 - `conductor_id`, `vehiculo_id`, `fecha_desde`, `fecha_hasta` (vacía = vigente), `principal`, `observacion`.
 
+## Módulo 4 – Operación (`2026_10_30_300001_create_operacion.php`)
+
+### `clientes`
+- `tipo_identificacion_id`, `documento` (único por empresa), `dv` (solo NIT, calculado), `nombre`, `expedicion_municipio_id`, `direccion`, `municipio_id`, `telefono`, `email`, `contacto`, `activo`, *soft delete*.
+- Legado `Contratante`: cc_contratante→documento, cc_expedida→expedicion_municipio_id, nom_contratante→nombre, direc→direccion, cell→telefono.
+
+### `contratos`
+- `numero` (consecutivo por empresa, único), `cliente_id`, `objeto` (escolar | empresarial | salud | turismo | grupo_especifico), `descripcion_objeto`, `fecha_inicio`, `fecha_fin`, `hora_inicio`, `hora_fin`, `origen_municipio_id`, `destino_municipio_id`, `recorrido`, `disposicion_total`, `zonas_disposicion`, `cantidad_vehiculos`, `cantidad_pasajeros`.
+- Responsable: `responsable_nombre`, `responsable_documento`, `responsable_telefono`, `responsable_direccion`.
+- Valor: `valor`, `forma_pago` (contado | credito), `fecha_limite_pago`. `oficina_id`, `user_id`, `observaciones`.
+- Anulación: `anulado_at`, `motivo_anulacion`, `anulado_por` (no se borran).
+- Legado `Contrato eventual`: consecutivo→numero, finicial/fvence→fechas, hora_inicio/hora_fin, recoridos→recorrido, cant_pasajeros→cantidad_pasajeros, contratante→cliente_id, responsable→responsable_*, valcontrato→valor, id_pagos CONTADO/CREDITO→forma_pago, IdContratos/objetoc→objeto/descripcion_objeto (mapear tipos 1. Estudiantes→escolar, 2. Empresarial→empresarial, 3. Turistas→turismo…), usuario→user_id, oficina→oficina_id. `mivalor` (valor pagado al crear) → un registro en `pagos_contrato`. Placas del contrato: no se guardan en el contrato; viven en cada FUEC.
+
+### `pagos_contrato`
+- `contrato_id`, `fecha`, `valor`, `metodo` (efectivo | transferencia | tarjeta | otro), `referencia`, `observacion`, `user_id`.
+- Legado `Pago de contrato`: fecha_pago→fecha, valorPagado→valor, codMetodo (EFECTIVO, TRANSFERENCIAS, TARJETA DE CRÉDITO)→metodo, obspago→observacion.
+
+### `fuecs`
+- `contrato_id`, `consecutivo` (por contrato, único), `numero` (21 dígitos), `vehiculo_id`, `fecha_inicio`, `fecha_fin`, `origen_municipio_id`, `destino_municipio_id`, `recorrido`, `empresa_convenio_id`, `datos` (JSON: copia de empresa, contrato, vehículo, conductores, origen, destino y convenio al expedir), `codigo_verificacion` (único, QR), `oficina_id`, `user_id`, anulación (`anulado_at`, `motivo_anulacion`, `anulado_por`).
+- `fuec_conductor`: `fuec_id`, `conductor_id`, `orden` (1–3).
+- Legado `Extracto`: número control→id interno; número extracto→`numero`; contrato, fecha_inicio, fecha_fin, placa→vehiculo_id, idorigen/iddestino→municipios, recorridos→recorrido, idconductor1/idconductor2→fuec_conductor (orden 1 y 2), usuario, oficina. Al migrar, los extractos históricos conservan su número original y se reconstruye `datos` con lo disponible; nombre_pdf no se migra (el PDF se genera).
+

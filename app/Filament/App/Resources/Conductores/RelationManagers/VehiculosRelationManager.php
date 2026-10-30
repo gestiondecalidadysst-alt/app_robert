@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Conductores\RelationManagers;
 
+use App\Filament\Compartido\ErroresDeNegocio;
 use App\Actions\Conductores\AsignarVehiculo;
 use App\Filament\App\Resources\Vehiculos\VehiculoResource;
 use App\Models\AsignacionVehiculo;
@@ -77,13 +78,13 @@ class VehiculosRelationManager extends RelationManager
                         Toggle::make('principal')->label('Conductor principal del vehículo'),
                         TextInput::make('observacion')->label('Observación')->maxLength(255),
                     ])
-                    ->using(fn (array $data) => app(AsignarVehiculo::class)(
+                    ->using(fn (array $data, CreateAction $action) => ErroresDeNegocio::intentar($action, fn () => app(AsignarVehiculo::class)(
                         $this->getOwnerRecord(),
                         Vehiculo::findOrFail($data['vehiculo_id']),
                         Carbon::parse($data['fecha_desde']),
                         (bool) ($data['principal'] ?? false),
                         $data['observacion'] ?? null,
-                    ))
+                    )))
                     ->after(fn () => $this->dispatch('documentos-actualizados')),
             ])
             ->recordActions([AsignacionColumnas::terminar(fn () => $this->dispatch('documentos-actualizados'))]);

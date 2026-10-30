@@ -3,6 +3,8 @@
 namespace App\Filament\App\Widgets;
 
 use App\Filament\App\Resources\Conductores\ConductorResource;
+use App\Filament\App\Resources\Contratos\ContratoResource;
+use App\Filament\App\Resources\Fuecs\FuecResource;
 use App\Filament\App\Resources\Oficinas\OficinaResource;
 use App\Filament\App\Resources\Roles\RolResource;
 use App\Filament\App\Resources\Propietarios\PropietarioResource;
@@ -27,6 +29,8 @@ class Bienvenida extends Widget
     protected function getViewData(): array
     {
         $accesos = collect([
+            ['Expedir FUEC', 'Extracto del contrato con validación', FuecResource::getUrl('create'), 'crear_fuecs'],
+            ['Contratos', 'Clientes, contratos y pagos', ContratoResource::getUrl(), 'ver_contratos'],
             ['Vehículos', 'Flota, hoja de vida y estado', VehiculoResource::getUrl(), 'ver_vehiculos'],
             ['Vencimientos', 'Documentos vencidos y por vencer', VencimientoResource::getUrl(), 'ver_documentos_vehiculo'],
             ['Propietarios', 'Dueños de los vehículos', PropietarioResource::getUrl(), 'ver_propietarios'],

@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Conductores\Acciones;
 
+use App\Filament\Compartido\ErroresDeNegocio;
 use App\Actions\Conductores\CambiarEstadoConductor;
 use App\Enums\TipoNovedadConductor;
 use App\Models\Conductor;
@@ -43,14 +44,14 @@ final class CambiarEstadoConductorAction
                     ->visible(fn (Get $get) => TipoNovedadConductor::tryFrom((string) $get('tipo'))?->pideReactivacion() ?? false),
                 Textarea::make('observacion')->label('Observación')->required()->rows(3)->maxLength(2000),
             ])
-            ->action(function (Conductor $record, array $data): void {
-                $novedad = app(CambiarEstadoConductor::class)(
+            ->action(function (Conductor $record, array $data, Action $action): void {
+                $novedad = ErroresDeNegocio::intentar($action, fn () => app(CambiarEstadoConductor::class)(
                     $record,
                     TipoNovedadConductor::from($data['tipo']),
                     $data['observacion'],
                     Carbon::parse($data['fecha']),
                     filled($data['fecha_reactivacion'] ?? null) ? Carbon::parse($data['fecha_reactivacion']) : null,
-                );
+                ));
 
                 Notification::make()
                     ->title("{$record->nombre_completo}: {$novedad->estado_nuevo->getLabel()}")

@@ -81,6 +81,23 @@ trait TieneDocumentosConVencimiento
         return $bloqueos;
     }
 
+    /**
+     * Documentos obligatorios vigentes hoy que vencen antes de $fecha, indexados por tipo
+     * (sirve para saber hasta qué fecha puede ir un FUEC).
+     *
+     * @return Collection<string, Model>
+     */
+    public function vencenAntesDe(\DateTimeInterface $fecha): Collection
+    {
+        $tipos = array_map(fn (TipoDocumento $t) => $t->value, static::tiposObligatorios());
+
+        $limite = \Illuminate\Support\Carbon::instance($fecha)->startOfDay();
+
+        // filter por clave (no only(): en colecciones de modelos, only() filtra por id).
+        return $this->documentosVigentes()
+            ->filter(fn (Model $d, string $tipo) => in_array($tipo, $tipos, true) && $d->fecha_vencimiento->lt($limite));
+    }
+
     /** "2 vencidos · 1 por vencer", para listados. */
     public function resumenDocumentos(): ?string
     {

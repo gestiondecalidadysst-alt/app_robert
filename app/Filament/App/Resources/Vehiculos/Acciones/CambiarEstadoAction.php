@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Vehiculos\Acciones;
 
+use App\Filament\Compartido\ErroresDeNegocio;
 use App\Actions\Flota\CambiarEstadoVehiculo;
 use App\Enums\TipoNovedadVehiculo;
 use App\Models\NovedadVehiculo;
@@ -52,14 +53,14 @@ final class CambiarEstadoAction
                     ->rows(3)
                     ->maxLength(2000),
             ])
-            ->action(function (Vehiculo $record, array $data): void {
-                $novedad = app(CambiarEstadoVehiculo::class)(
+            ->action(function (Vehiculo $record, array $data, Action $action): void {
+                $novedad = ErroresDeNegocio::intentar($action, fn () => app(CambiarEstadoVehiculo::class)(
                     $record,
                     TipoNovedadVehiculo::from($data['tipo']),
                     $data['observacion'],
                     Carbon::parse($data['fecha']),
                     filled($data['fecha_reactivacion'] ?? null) ? Carbon::parse($data['fecha_reactivacion']) : null,
-                );
+                ));
 
                 Notification::make()
                     ->title("{$record->placa}: {$novedad->estado_nuevo->getLabel()}")

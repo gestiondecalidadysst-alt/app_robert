@@ -136,6 +136,36 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         return $this->hasMany(AsignacionVehiculo::class);
     }
 
+    public function clientes(): HasMany
+    {
+        return $this->hasMany(Cliente::class);
+    }
+
+    public function contratos(): HasMany
+    {
+        return $this->hasMany(Contrato::class);
+    }
+
+    public function pagosContrato(): HasMany
+    {
+        return $this->hasMany(PagoContrato::class);
+    }
+
+    public function fuecs(): HasMany
+    {
+        return $this->hasMany(Fuec::class);
+    }
+
+    /** Datos de habilitación que exige el número del FUEC (art. 4 Res. 6652/2019) que faltan. */
+    public function faltantesHabilitacion(): array
+    {
+        return array_keys(array_filter([
+            'código de la dirección territorial' => blank($this->codigo_territorial),
+            'número de la resolución de habilitación' => blank($this->resolucion_habilitacion),
+            'año de habilitación' => blank($this->anio_habilitacion),
+        ]));
+    }
+
     public function actividades(): HasMany
     {
         return $this->hasMany(Actividad::class);
