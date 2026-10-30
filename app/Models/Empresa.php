@@ -160,7 +160,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     public function faltantesHabilitacion(): array
     {
         return array_keys(array_filter([
-            'código de la dirección territorial' => blank($this->codigo_territorial),
+            'dirección territorial' => blank($this->codigo_territorial),
             'número de la resolución de habilitación' => blank($this->resolucion_habilitacion),
             'año de habilitación' => blank($this->anio_habilitacion),
         ]));

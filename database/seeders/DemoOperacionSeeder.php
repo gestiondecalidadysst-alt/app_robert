@@ -31,7 +31,7 @@ class DemoOperacionSeeder extends Seeder
         }
 
         $empresa->forceFill([
-            'codigo_territorial' => $empresa->codigo_territorial ?: '423',
+            'codigo_territorial' => $empresa->codigo_territorial ?: '223', // Córdoba - Sucre
             'resolucion_habilitacion' => $empresa->resolucion_habilitacion ?: '0123',
             'anio_habilitacion' => $empresa->anio_habilitacion ?: 2015,
             'representante_legal' => $empresa->representante_legal ?: 'Gerente Demo',

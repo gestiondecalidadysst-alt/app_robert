@@ -41,11 +41,15 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
   - `fechaMaxima(...)`: primer vencimiento de documentos dentro de la vigencia pedida.
   - Copia en `datos`: empresa, contrato, vehículo (con tarjeta de operación), conductores (con licencia), origen, destino y convenio.
 - `app/Actions/Operacion/AnularFuec.php`: motivo obligatorio; el número no se reutiliza.
-- `app/Support/Pdf/PdfFuec.php` + `resources/views/pdf/fuec.blade.php`: PDF carta (dompdf, fuentes con subconjunto, ~35 KB) con QR (chillerlan/php-qrcode, PNG por GD); marca "ANULADO" si aplica.
+- `app/Support/Pdf/PdfFuec.php` + `resources/views/pdf/fuec.blade.php`: PDF carta de 2 páginas con el **formato oficial** (ficha técnica anexa a la Res. 1069 de 2015, mantenida por la 6652 de 2019):
+  - **Anverso**: Ministerio de Transporte + logo de la empresa; título con el número; razón social y NIT; contrato No.; contratante y NIT/CC; objeto; origen-destino describiendo el recorrido; convenio / consorcio / unión temporal con; vigencia del contrato (día, mes, año inicial y de vencimiento); características del vehículo (placa, modelo, marca, clase, número interno, tarjeta de operación); datos del conductor 1, 2 y 3 (nombres y apellidos, cédula, licencia, vigencia); responsable del contratante (nombres, cédula, teléfono, dirección); dirección, teléfono y correo de la empresa; firma y sello del gerente. Se agrega un QR de verificación pequeño en el pie.
+  - **Reverso**: instructivo para la determinación del número consecutivo, tabla de códigos de las Direcciones Territoriales y el ejemplo oficial.
+  - dompdf con subconjunto de fuentes (~40 KB), QR con chillerlan/php-qrcode por GD; marca "ANULADO" si aplica.
+- `app/Support/DireccionesTerritoriales.php`: los 20 códigos oficiales (Córdoba - Sucre = 223). «Mi empresa» los ofrece en un selector y `ExpedirFuec` rechaza un código que no esté en la tabla.
 - `app/Http/Controllers/VerificarFuecController.php` + `resources/views/fuec/verificar.blade.php` + ruta `fuec.verificar` en `routes/web.php`.
 
 ### Reglas al expedir (`ExpedirFuec::validar`)
-1. La empresa tiene código territorial (3 dígitos), resolución y año de habilitación ("Mi empresa").
+1. La empresa tiene dirección territorial (código de la tabla oficial), resolución y año de habilitación ("Mi empresa").
 2. El contrato existe, no está anulado y la vigencia del FUEC está dentro de la del contrato.
 3. El FUEC no inicia en el pasado.
 4. El vehículo puede operar **al iniciar** (`Vehiculo::bloqueosOperacion`).
@@ -66,7 +70,7 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
 
 ### Base de datos
 - `database/migrations/2026_10_30_300001_create_operacion.php`: `clientes`, `contratos`, `pagos_contrato`, `fuecs`, `fuec_conductor` (esquema en `nuevo/datos.md`).
-- `database/seeders/DemoOperacionSeeder.php`: completa datos de habilitación ficticios de la empresa demo (423 / 0123 / 2015), 2 clientes, 2 contratos (escolar a crédito con abono, empresarial pagado) y 1 FUEC.
+- `database/seeders/DemoOperacionSeeder.php`: completa datos de habilitación ficticios de la empresa demo (223 Córdoba-Sucre / 0123 / 2015), 2 clientes, 2 contratos (escolar a crédito con abono, empresarial pagado) y 1 FUEC.
 - Dependencias nuevas: `barryvdh/laravel-dompdf`, `chillerlan/php-qrcode`. Se actualizó `symfony/mime` (CVE-2026-45070).
 
 ### Pruebas

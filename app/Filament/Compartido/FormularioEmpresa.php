@@ -3,6 +3,7 @@
 namespace App\Filament\Compartido;
 
 use App\Models\TipoIdentificacion;
+use App\Support\DireccionesTerritoriales;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -65,10 +66,15 @@ final class FormularioEmpresa
                 Section::make('Habilitación como transportador')
                     ->icon('heroicon-o-document-check')
                     ->schema([
-                        TextInput::make('resolucion_habilitacion')->label('Resolución de habilitación')->maxLength(255),
+                        Select::make('codigo_territorial')
+                            ->label('Dirección territorial que otorgó la habilitación')
+                            ->options(DireccionesTerritoriales::opciones())
+                            ->searchable()
+                            ->helperText('Su código son los 3 primeros dígitos del número del FUEC.'),
                         Grid::make(2)->schema([
-                            TextInput::make('anio_habilitacion')->label('Año')->numeric()->minValue(1950)->maxValue(2100),
-                            TextInput::make('codigo_territorial')->label('Código territorial')->maxLength(10),
+                            TextInput::make('resolucion_habilitacion')->label('No. de resolución de habilitación')->maxLength(20)
+                                ->helperText('Solo el número, por ejemplo 0155.'),
+                            TextInput::make('anio_habilitacion')->label('Año de habilitación')->numeric()->minValue(1950)->maxValue(2100),
                         ]),
                     ]),
             ]),

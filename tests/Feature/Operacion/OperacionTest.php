@@ -99,10 +99,11 @@ class OperacionTest extends ConfiguracionTestCase
 
     public function test_numero_del_fuec_segun_la_resolucion_6652(): void
     {
-        // territorial 423 + resolución 0123 + año habilitación 15 + año expedición + contrato 0045 + consecutivo 0003
-        $this->demo->forceFill(['codigo_territorial' => '423', 'resolucion_habilitacion' => 'Res. 123', 'anio_habilitacion' => 2015]);
+        // Ejemplo oficial del instructivo (reverso del formato): Dirección Territorial Cundinamarca (425),
+        // resolución 0155 de 2012, primer extracto de 2015 del contrato 255.
+        $this->demo->forceFill(['codigo_territorial' => '425', 'resolucion_habilitacion' => '155', 'anio_habilitacion' => 2012]);
+        $this->assertSame('425015512201502550001', ExpedirFuec::numero($this->demo, 2015, 255, 1));
 
-        $this->assertSame('423012315202600450003', ExpedirFuec::numero($this->demo, 2026, 45, 3));
         $this->assertSame(21, strlen(ExpedirFuec::numero($this->demo, 2026, 123456, 98765)));
         $this->assertStringEndsWith('34568765', ExpedirFuec::numero($this->demo, 2026, 123456, 98765), 'Toma los últimos 4 dígitos.');
     }
@@ -175,6 +176,10 @@ class OperacionTest extends ConfiguracionTestCase
             'vehiculo_id' => $dmo102->id,
             'fecha_fin' => today()->addDays(20)->toDateString(),
         ]))->isSameDay(today()->addDays(12)));
+
+        // Código territorial que no es de una Dirección Territorial.
+        $this->demo->forceFill(['codigo_territorial' => '999'])->save();
+        $this->assertStringContainsString('no es de una Dirección Territorial', implode(' ', $expedir->validar($this->demo->refresh(), $this->datosFuec())['contrato_id']));
 
         // Empresa sin datos de habilitación.
         $this->demo->forceFill(['codigo_territorial' => null])->save();

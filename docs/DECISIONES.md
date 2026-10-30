@@ -39,4 +39,6 @@
 | 2026-10-30 | Verificación pública del FUEC por código QR (`/verificar/fuec/{codigo}`), con el documento de los conductores parcialmente oculto. | Permite a autoridades y clientes comprobar el documento; minimiza datos personales expuestos. | Sin verificación. |
 | 2026-10-30 | Nueva acción de permiso `anular` (contratos y FUEC); el auxiliar puede expedir pero no anular. | Separar quién expide de quién corrige. | Usar `eliminar`. |
 | 2026-10-30 | PDF con dompdf (fuentes con subconjunto) y QR con chillerlan/php-qrcode por GD. | Sin servicios externos; GD ya está en el Dockerfile. | wkhtmltopdf/Chromium (más pesado en el contenedor). |
+| 2026-10-30 | El PDF del FUEC reproduce la ficha técnica oficial (anverso con los recuadros del formato y reverso con el instructivo y los códigos territoriales). El código territorial se elige de la tabla oficial. | El extracto tiene un formato definido por la norma (pedido del usuario); un código mal escrito daría números de FUEC inválidos. | Diseño propio con el contenido mínimo; código territorial libre. |
+| 2026-10-30 | El encabezado muestra "MINISTERIO DE TRANSPORTE" como texto, sin el logo oficial en imagen. | No se cuenta con el archivo oficial del logo ni con autorización expresa de uso. | Incluir el escudo/logo del Ministerio. |
 

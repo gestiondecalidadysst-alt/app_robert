@@ -10,6 +10,7 @@ use App\Models\EmpresaConvenio;
 use App\Models\Fuec;
 use App\Models\Municipio;
 use App\Models\Vehiculo;
+use App\Support\DireccionesTerritoriales;
 use App\Support\Nit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -99,8 +100,8 @@ class ExpedirFuec
 
         if ($faltan = $empresa->faltantesHabilitacion()) {
             $agregar('contrato_id', 'Complete en «Mi empresa»: ' . implode(', ', $faltan) . '. Son parte del número del FUEC.');
-        } elseif (strlen(preg_replace('/\D/', '', (string) $empresa->codigo_territorial)) > 3) {
-            $agregar('contrato_id', 'El código de la dirección territorial debe tener 3 dígitos (por ejemplo 425).');
+        } elseif (! array_key_exists((string) $empresa->codigo_territorial, DireccionesTerritoriales::CODIGOS)) {
+            $agregar('contrato_id', "El código territorial «{$empresa->codigo_territorial}» no es de una Dirección Territorial del Ministerio. Corríjalo en «Mi empresa».");
         }
 
         $inicio = filled($datos['fecha_inicio'] ?? null) ? Carbon::parse($datos['fecha_inicio'])->startOfDay() : null;
