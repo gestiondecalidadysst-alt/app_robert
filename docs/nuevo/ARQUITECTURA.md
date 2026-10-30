@@ -9,7 +9,7 @@
   - `spatie/laravel-permission` con *teams*, donde el team es la empresa.
   - `spatie/laravel-activitylog` para auditoría.
   - Generador de PDF (dompdf o spatie/laravel-pdf), que se decide en el módulo Operación.
-- **Despliegue:** VPS con Easypanel, desde el repositorio de GitHub `solucionesappcontact-jpg/app_operation` (rama `main`) con el `Dockerfile` del proyecto (PHP 8.3 + Apache, puerto 80). Pasos y variables en `README.md`.
+- **Despliegue:** VPS con Easypanel, desde el repositorio de GitHub `gestiondecalidadysst-alt/app_robert` (rama `main`) con el `Dockerfile` del proyecto (PHP 8.3 + Apache, puerto 80). Pasos y variables en `README.md`.
   - Servicio **web** (`CONTAINER_ROLE=web`): al arrancar, `docker/entrypoint.sh` espera la base de datos, migra, carga catálogos y permisos, crea el superadmin (`SUPERADMIN_*`), carga la demo si `SEED_DEMO=true` y optimiza. Salud: `/up`.
   - Servicio **worker** (`CONTAINER_ROLE=worker`): `queue:work` + `schedule:work`.
   - MySQL. Sesión, caché y colas usan la base de datos, sin Redis.
