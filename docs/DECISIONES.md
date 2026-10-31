@@ -41,4 +41,5 @@
 | 2026-10-30 | PDF con dompdf (fuentes con subconjunto) y QR con chillerlan/php-qrcode por GD. | Sin servicios externos; GD ya está en el Dockerfile. | wkhtmltopdf/Chromium (más pesado en el contenedor). |
 | 2026-10-30 | El PDF del FUEC reproduce la ficha técnica oficial (anverso con los recuadros del formato y reverso con el instructivo y los códigos territoriales). El código territorial se elige de la tabla oficial. | El extracto tiene un formato definido por la norma (pedido del usuario); un código mal escrito daría números de FUEC inválidos. | Diseño propio con el contenido mínimo; código territorial libre. |
 | 2026-10-30 | El encabezado muestra "MINISTERIO DE TRANSPORTE" como texto, sin el logo oficial en imagen. | No se cuenta con el archivo oficial del logo ni con autorización expresa de uso. | Incluir el escudo/logo del Ministerio. |
+| 2026-10-31 | El encabezado del FUEC lleva el sello "Vigilado SuperTransporte" (imagen entregada por el usuario) bajo "MINISTERIO DE TRANSPORTE". | Las empresas vigiladas deben mostrarlo en sus documentos; lo pidió el usuario. | Solo texto. |
 

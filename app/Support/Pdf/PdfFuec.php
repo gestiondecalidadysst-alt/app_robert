@@ -24,6 +24,7 @@ final class PdfFuec
             'fuec' => $fuec,
             'd' => $datos,
             'qr' => self::qr($fuec->urlVerificacion()),
+            'vigilado' => self::imagen(resource_path('images/vigilado-supertransporte.png')),
             'logo' => $logo && Storage::disk('public')->exists($logo)
                 ? 'data:' . Storage::disk('public')->mimeType($logo) . ';base64,' . base64_encode(Storage::disk('public')->get($logo))
                 : null,
@@ -38,6 +39,12 @@ final class PdfFuec
     public static function nombreArchivo(Fuec $fuec): string
     {
         return "FUEC-{$fuec->numero}.pdf";
+    }
+
+    /** Imagen local embebida (data URI): dompdf no carga archivos remotos. */
+    private static function imagen(string $ruta): string
+    {
+        return 'data:image/png;base64,' . base64_encode(file_get_contents($ruta));
     }
 
     /** QR como imagen PNG embebida (data URI). */

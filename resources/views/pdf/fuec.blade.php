@@ -37,7 +37,8 @@
     .caja { display: inline-block; border: 1px solid #000; width: 12px; height: 10px; text-align: center; line-height: 10px; font-size: 8px; }
     .esp { height: 5px; border: none; }
     .ministerio { font-weight: bold; font-size: 10px; letter-spacing: .5px; line-height: 1.3; }
-    .logo { max-height: 54px; max-width: 170px; }
+    .logo { max-height: 62px; max-width: 170px; }
+    .vigilado { height: 30px; }
     .pagina2 { page-break-before: always; }
     .anulado { position: fixed; top: 330px; left: 30px; font-size: 92px; color: rgba(200, 0, 0, .2); transform: rotate(-30deg); font-weight: bold; }
     .instructivo p { margin: 0 0 6px; line-height: 1.45; font-size: 9px; text-align: justify; }
@@ -52,9 +53,10 @@
 {{-- ===================== ANVERSO ===================== --}}
 <table>
     <tr>
-        <td style="width: 50%; height: 62px" class="centro">
+        <td style="width: 50%; height: 70px" class="centro">
             <div class="ministerio">MINISTERIO DE TRANSPORTE</div>
-            <div style="font-size: 7.5px">República de Colombia</div>
+            <div style="font-size: 7.5px; margin-bottom: 4px">República de Colombia</div>
+            <img class="vigilado" src="{{ $vigilado }}" alt="Vigilado SuperTransporte">
         </td>
         <td style="width: 50%" class="centro">
             @if ($logo)
