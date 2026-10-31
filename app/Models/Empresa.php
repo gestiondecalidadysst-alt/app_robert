@@ -27,9 +27,18 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     protected $fillable = [
         'slug', 'tipo_identificacion_id', 'nit', 'dv', 'razon_social', 'nombre_comercial',
         'municipio_id', 'direccion', 'telefono', 'email', 'representante_legal',
-        'representante_documento', 'resolucion_habilitacion', 'anio_habilitacion',
-        'codigo_territorial', 'logo_path', 'activa',
+        'representante_documento', 'representante_expedicion', 'sitio_web', 'resolucion_habilitacion',
+        'anio_habilitacion', 'codigo_territorial', 'logo_path', 'firma_representante_path', 'pie_documentos_path',
+        'activa',
+        // Integraciones (pantalla Configuración → Integraciones)
+        'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual',
+        'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
     ];
+
+    /** Credenciales: nunca se envían al navegador ni a la auditoría. */
+    protected $hidden = ['onurix_cliente', 'onurix_clave'];
+
+    protected array $noAuditar = ['onurix_cliente', 'onurix_clave'];
 
     protected function casts(): array
     {
@@ -37,7 +46,41 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
             'activa' => 'boolean',
             'dv' => 'integer',
             'anio_habilitacion' => 'integer',
+            'sms_habilitado' => 'boolean',
+            'onurix_cliente' => 'encrypted',
+            'onurix_clave' => 'encrypted',
+            'sms_limite_mensual' => 'integer',
+            'firma_envio_automatico' => 'boolean',
+            'firma_dias_enlace' => 'integer',
+            'firma_dias_recordatorio' => 'integer',
         ];
+    }
+
+    /** Tiene SMS listo para usar (activado y con credenciales). */
+    public function smsConfigurado(): bool
+    {
+        return $this->sms_habilitado && filled($this->onurix_cliente) && filled($this->onurix_clave);
+    }
+
+    public function plantillasContrato(): HasMany
+    {
+        return $this->hasMany(PlantillaContrato::class);
+    }
+
+    public function documentosContrato(): HasMany
+    {
+        return $this->hasMany(DocumentoContrato::class);
+    }
+
+    public function enviosMensaje(): HasMany
+    {
+        return $this->hasMany(EnvioMensaje::class);
+    }
+
+    /** Versión vigente de la plantilla de contrato (la de número mayor). */
+    public function plantillaContratoVigente(): ?PlantillaContrato
+    {
+        return PlantillaContrato::query()->deEmpresa($this)->orderByDesc('version')->first();
     }
 
     protected static function booted(): void

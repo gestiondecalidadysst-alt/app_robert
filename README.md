@@ -45,7 +45,8 @@ La clave de los usuarios demo es `Ruta2026*`.
    SEED_DEMO=true                # opcional: empresa de demostración
    ```
 4. **Volumen** (*Mounts*): monte un volumen en `/var/www/html/storage/app`, para que los logos y documentos no se pierdan entre despliegues.
-5. **Worker:** cree un segundo servicio desde el mismo repositorio, con las mismas variables y `CONTAINER_ROLE=worker`. Procesa las colas y las tareas programadas (alertas). Este servicio no necesita dominio.
+5. **Correo (SMTP)** en *Environment* (`MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`): lo usan la recuperación de contraseñas y la firma de contratos. Los SMS (Onurix) se configuran dentro de la app, en Configuración → Integraciones de cada empresa.
+6. **Worker:** cree un segundo servicio desde el mismo repositorio, con las mismas variables y `CONTAINER_ROLE=worker`. Procesa las colas y las tareas programadas (alertas). Este servicio no necesita dominio.
 
 **Qué hace el contenedor web al arrancar:**
 - Espera a que la base de datos responda y aplica las migraciones.

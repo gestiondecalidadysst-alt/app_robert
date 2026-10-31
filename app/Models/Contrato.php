@@ -81,6 +81,19 @@ class Contrato extends Model
         return $this->hasMany(Fuec::class);
     }
 
+    public function documentos(): HasMany
+    {
+        return $this->hasMany(DocumentoContrato::class)->latest('id');
+    }
+
+    /** Documento emitido vigente (no anulado), si lo hay. */
+    public function documentoActivo(): ?DocumentoContrato
+    {
+        return $this->relationLoaded('documentos')
+            ? $this->documentos->first(fn (DocumentoContrato $d) => ! $d->anulado())
+            : $this->documentos()->activos()->first();
+    }
+
     // Estado y saldo
 
     public function anulado(): bool

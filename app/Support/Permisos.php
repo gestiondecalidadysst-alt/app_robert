@@ -28,6 +28,8 @@ final class Permisos
         'valores_administracion' => ['Valor de administración', 'Configuración', ['ver', 'crear', 'editar', 'eliminar']],
         'empresas_convenio' => ['Empresas en convenio', 'Configuración', ['ver', 'crear', 'editar', 'eliminar']],
         'auditoria' => ['Auditoría', 'Configuración', ['ver']],
+        'plantillas_contrato' => ['Plantilla de contrato', 'Configuración', ['ver', 'crear']],
+        'integraciones' => ['Integraciones (SMS y firma)', 'Configuración', ['ver', 'editar']],
         'propietarios' => ['Propietarios', 'Flota', ['ver', 'crear', 'editar', 'eliminar']],
         'vehiculos' => ['Vehículos', 'Flota', ['ver', 'crear', 'editar', 'eliminar']],
         'documentos_vehiculo' => ['Documentos de vehículos', 'Flota', ['ver', 'crear', 'editar', 'eliminar']],
@@ -40,6 +42,7 @@ final class Permisos
         'contratos' => ['Contratos', 'Operación', ['ver', 'crear', 'editar', 'anular']],
         'pagos_contrato' => ['Pagos de contratos', 'Operación', ['ver', 'crear', 'eliminar']],
         'fuecs' => ['FUEC (extractos)', 'Operación', ['ver', 'crear', 'anular']],
+        'documentos_contrato' => ['Contratos: emisión y firma', 'Operación', ['ver', 'crear', 'anular']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -80,7 +83,8 @@ final class Permisos
     public static function porRol(): array
     {
         $todos = self::todos();
-        $soloVer = array_values(array_filter($todos, fn (string $p) => str_starts_with($p, 'ver_')));
+        // Gerencia ve todo menos las integraciones (credenciales).
+        $soloVer = array_values(array_filter($todos, fn (string $p) => str_starts_with($p, 'ver_') && $p !== 'ver_integraciones'));
 
         return [
             Rol::ADMINISTRADOR => $todos,
@@ -99,6 +103,7 @@ final class Permisos
                 'ver_contratos', 'crear_contratos', 'editar_contratos',
                 'ver_pagos_contrato', 'crear_pagos_contrato',
                 'ver_fuecs', 'crear_fuecs',
+                'ver_plantillas_contrato', 'ver_documentos_contrato', 'crear_documentos_contrato',
             ],
             Rol::MANTENIMIENTO => [
                 'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',

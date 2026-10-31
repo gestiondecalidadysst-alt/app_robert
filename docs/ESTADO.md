@@ -1,6 +1,6 @@
 # Estado del proyecto – Rediseño COOTRASEC (multiempresa)
 
-Última actualización: 2026-10-30
+Última actualización: 2026-10-31
 
 ## Hecho
 - [x] Relevamiento del legado (`legado/`), decisiones (`DECISIONES.md`) y arquitectura (`nuevo/ARQUITECTURA.md`).
@@ -11,15 +11,20 @@
 - [x] Corregido: los despliegues ya no borran los ajustes de roles de cada empresa.
 - [x] **Módulo 3 – Conductores:** hoja de vida, seguridad social, comparendos, documentos con historial, estados con novedades, asignación a vehículos y vencimientos de conductores. 41 pruebas en verde. Detalle en `nuevo/modulos/conductores.md`.
 - [x] **Módulo 4 – Operación:** clientes, contratos con pagos y saldo, expedición del FUEC (Res. 6652/2019) con revisión en vivo, PDF con QR y verificación pública, anulación. 50 pruebas en verde. Detalle en `nuevo/modulos/operacion.md`.
+- [x] FUEC con el formato oficial (anverso y reverso) y sello Vigilado SuperTransporte.
+- [x] **Contratos: plantilla editable y firma electrónica** (enlace + código por SMS con Onurix, correo de respaldo, certificado de evidencias, verificación pública). 61 pruebas en verde. Detalle en `nuevo/modulos/contratos-firma.md`.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
 ## Pendiente / bloqueos
 - [ ] Redesplegar en Easypanel para publicar los módulos 2, 3 y 4 (las migraciones corren solas al arrancar). En «Mi empresa» completar código territorial, resolución y año de habilitación: sin ellos no se expide FUEC.
 - [ ] Confirmar con el usuario: campos extra del registro de operadores en la app actual y si algún estado de comparendos debe bloquear el FUEC.
-- [ ] Configurar el correo (SMTP) para la recuperación de contraseñas.
+- [ ] Configurar el correo (SMTP) en Easypanel: recuperación de contraseñas y correos de firma (enlace, código, copia firmada).
+- [ ] Crear la cuenta de Onurix, poner sus credenciales en Configuración → Integraciones y probar con "Enviar SMS de prueba" (la URL del API no está verificada con documentación oficial).
+- [ ] Confirmar la finalidad del tratamiento de datos (cláusula 19 del contrato) y revisar con el abogado las correcciones del texto y la cláusula de firma electrónica.
+- [ ] En «Mi empresa»: subir la firma escaneada del representante, la cédula "expedida en", el sitio web y la imagen del pie (certificaciones).
 - [ ] FUEC electrónico por RUNT (Decreto 1048 de 2026): pendiente de reglamentación del Ministerio.
 
 ## Siguiente paso
-1. Redesplegar, completar los datos de habilitación en «Mi empresa» y expedir un FUEC de prueba en el servidor.
-2. Módulo 5 – PESV: alistamiento diario (checklist del conductor con firma) e inspección mensual configurables, informes y el **informe preoperacional en PDF** del legado. Al terminar, agregar "alistamiento del día" como validación en `ExpedirFuec`. Antes, agregar sus permisos en `app/Support/Permisos.php`.
+1. Redesplegar (web y worker), completar Mi empresa e Integraciones, y firmar un contrato de prueba desde un celular.
+2. Módulo 5 – PESV: alistamiento diario (checklist del conductor con firma) e inspección mensual configurables, informes y el **informe preoperacional en PDF** del legado. Reutilizar la firma dibujada (`FirmaManuscrita`) y la mensajería (`Mensajero`). Al terminar, agregar "alistamiento del día" como validación en `ExpedirFuec`.

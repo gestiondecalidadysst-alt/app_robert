@@ -4,10 +4,6 @@ namespace App\Support\Pdf;
 
 use App\Models\Fuec;
 use Barryvdh\DomPDF\Facade\Pdf;
-use chillerlan\QRCode\Output\QROutputInterface;
-use chillerlan\QRCode\QRCode;
-use chillerlan\QRCode\QROptions;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Genera el PDF del FUEC a partir de la copia de datos guardada al expedirlo,
@@ -23,11 +19,9 @@ final class PdfFuec
         $html = view('pdf.fuec', [
             'fuec' => $fuec,
             'd' => $datos,
-            'qr' => self::qr($fuec->urlVerificacion()),
-            'vigilado' => self::imagen(resource_path('images/vigilado-supertransporte.png')),
-            'logo' => $logo && Storage::disk('public')->exists($logo)
-                ? 'data:' . Storage::disk('public')->mimeType($logo) . ';base64,' . base64_encode(Storage::disk('public')->get($logo))
-                : null,
+            'qr' => Imagenes::qr($fuec->urlVerificacion()),
+            'vigilado' => Imagenes::deArchivo(resource_path('images/vigilado-supertransporte.png')),
+            'logo' => Imagenes::deDisco($logo, 'public'),
         ])->render();
 
         return Pdf::loadHTML($html)
@@ -39,24 +33,5 @@ final class PdfFuec
     public static function nombreArchivo(Fuec $fuec): string
     {
         return "FUEC-{$fuec->numero}.pdf";
-    }
-
-    /** Imagen local embebida (data URI): dompdf no carga archivos remotos. */
-    private static function imagen(string $ruta): string
-    {
-        return 'data:image/png;base64,' . base64_encode(file_get_contents($ruta));
-    }
-
-    /** QR como imagen PNG embebida (data URI). */
-    private static function qr(string $url): string
-    {
-        $opciones = new QROptions([
-            'outputType' => QROutputInterface::GDIMAGE_PNG,
-            'scale' => 4,
-            'outputBase64' => true,
-            'quietzoneSize' => 1,
-        ]);
-
-        return (new QRCode($opciones))->render($url);
     }
 }

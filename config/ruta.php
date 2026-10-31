@@ -11,4 +11,9 @@ return [
 
     // Días antes del vencimiento en que un documento pasa a "por vencer" (semáforo amarillo).
     'dias_aviso_vencimiento' => (int) env('DIAS_AVISO_VENCIMIENTO', 30),
+
+    // Onurix (SMS). Las credenciales son de cada empresa (Configuración → Integraciones).
+    'onurix' => [
+        'url' => env('ONURIX_URL', 'https://www.onurix.com/api/v1'),
+    ],
 ];

@@ -16,11 +16,17 @@ trait Auditable
 {
     use LogsActivity;
 
+    // Un modelo puede declarar `protected array $noAuditar = [...]` con campos que nunca deben
+    // quedar en la auditoría (credenciales, rutas de archivos privados…).
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logAll()
-            ->logExcept(['password', 'remember_token', 'updated_at', 'created_at'])
+            ->logExcept([
+                'password', 'remember_token', 'updated_at', 'created_at',
+                ...(property_exists($this, 'noAuditar') ? $this->noAuditar : []),
+            ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName(class_basename(static::class));

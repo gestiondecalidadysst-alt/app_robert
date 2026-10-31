@@ -40,7 +40,7 @@ class VerContrato extends ViewRecord
                 ->icon('heroicon-o-document-plus')
                 ->visible(fn () => ! $contrato->anulado() && $contrato->fecha_fin->gte(today()) && auth()->user()->can('create', Fuec::class))
                 ->url(fn () => FuecResource::getUrl('create', ['contrato' => $contrato->getKey()])),
-            EditAction::make()->visible(fn () => ! $contrato->anulado()),
+            EditAction::make()->visible(fn () => ! $contrato->anulado() && ! $contrato->documentoActivo()),
             Action::make('anular')
                 ->label('Anular')
                 ->icon('heroicon-o-x-circle')

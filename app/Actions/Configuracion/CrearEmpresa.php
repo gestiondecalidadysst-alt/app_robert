@@ -4,6 +4,8 @@ namespace App\Actions\Configuracion;
 
 use App\Models\Empresa;
 use App\Models\Oficina;
+use App\Models\PlantillaContrato;
+use App\Support\Contratos\PlantillaBase;
 use App\Models\Rol;
 use App\Models\User;
 use App\Support\Permisos;
@@ -53,8 +55,27 @@ class CrearEmpresa
 
             (new AsignarRol)($usuario, $empresa, Rol::ADMINISTRADOR);
 
+            self::crearPlantillaContrato($empresa);
+
             return $empresa;
         });
+    }
+
+    /** Versión 1 de la plantilla de contrato con el texto base, si la empresa no tiene. */
+    public static function crearPlantillaContrato(Empresa $empresa): void
+    {
+        if (PlantillaContrato::query()->deEmpresa($empresa)->exists()) {
+            return;
+        }
+
+        $plantilla = new PlantillaContrato([
+            'version' => 1,
+            'titulo' => PlantillaBase::TITULO,
+            'contenido' => PlantillaBase::contenido(),
+            'notas_cambio' => 'Texto base del sistema.',
+        ]);
+        $plantilla->empresa_id = $empresa->id;
+        $plantilla->save();
     }
 
     /**

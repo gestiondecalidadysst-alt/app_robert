@@ -81,4 +81,4 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
 - Validar pago de administración y alistamiento del día antes de expedir (módulos 5 y 7; el legado los validaba).
 - Comparendos: no bloquean (pendiente que el usuario confirme si cobro coactivo o embargo deben bloquear).
 - Firma digital del gerente en el PDF (art. 8 permite firma digital).
-- Plantilla del contrato en PDF y recibo de pago (el legado los tenía).
+- ~~Plantilla del contrato en PDF~~: hecho, con firma electrónica (ver `contratos-firma.md`). Falta el recibo de pago.

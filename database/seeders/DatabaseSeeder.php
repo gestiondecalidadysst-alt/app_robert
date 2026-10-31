@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CatalogosSeeder::class,
             PermisosSeeder::class,
+            PlantillasContratoSeeder::class,
         ]);
 
         if (! app()->isProduction()) {

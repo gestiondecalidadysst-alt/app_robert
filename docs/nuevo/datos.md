@@ -68,3 +68,13 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 - `fuec_conductor`: `fuec_id`, `conductor_id`, `orden` (1–3).
 - Legado `Extracto`: número control→id interno; número extracto→`numero`; contrato, fecha_inicio, fecha_fin, placa→vehiculo_id, idorigen/iddestino→municipios, recorridos→recorrido, idconductor1/idconductor2→fuec_conductor (orden 1 y 2), usuario, oficina. Al migrar, los extractos históricos conservan su número original y se reconstruye `datos` con lo disponible; nombre_pdf no se migra (el PDF se genera).
 
+## Contratos: plantilla y firma (`2026_10_31_100001_create_contratos_firma.php`)
+- `empresas` (nuevas): `representante_expedicion`, `sitio_web`, `firma_representante_path` (privada), `pie_documentos_path`, `sms_habilitado`, `onurix_cliente` y `onurix_clave` (cifradas), `sms_limite_mensual`, `firma_envio_automatico`, `firma_dias_enlace` (7), `firma_dias_recordatorio` (2).
+- `plantillas_contrato`: `version` (única por empresa; vigente = mayor), `codigo_formato`, `titulo`, `contenido` (HTML con merge tags), `notas_cambio`, `user_id`.
+- `documentos_contrato`: `contrato_id`, `plantilla_contrato_id`, `version_plantilla`, `codigo_formato`, `contenido` (congelado), `datos` (valores, encabezado, archivos), `huella_contenido`, `firma_contratista_path`, `estado`, `codigo_verificacion`, `token_hash`, `token_cifrado`, `token_expira_at`, firmante (`nombre`, `documento`, `celular`, `email`), evidencias (`enviado_at`, `visto_at`, `firmado_at`, `firma_path`, `firma_ip`, `firma_user_agent`, `firma_canal_codigo`, `firma_destino_codigo`), `pdf_firmado_path`, `huella_pdf`, `recordatorio_enviado_at`, `vencimiento_avisado_at`, anulación.
+- `codigos_firma`: `canal`, `destino` (enmascarado), `codigo_hash` (HMAC), `expira_at`, `intentos`, `usado_at`, `ip`.
+- `eventos_documento_contrato`: `evento`, `ip`, `user_agent`, `detalle`, `user_id`, `created_at` (solo se agregan).
+- `envios_mensaje`: `tipo`, `canal`, `destino` (enmascarado), `estado` (pendiente | enviado | fallido | omitido), `proveedor`, `referencia_proveedor`, `error`, `intentos`, `enviado_at`. No guarda el contenido.
+- `notifications`: notificaciones del panel (Laravel).
+- Legado: el contrato era un documento diligenciado a mano (plantilla Word/PDF); no hay datos que migrar a estas tablas.
+

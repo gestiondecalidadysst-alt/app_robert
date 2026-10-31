@@ -8,6 +8,7 @@ use App\Filament\App\Resources\Contratos\Pages\CrearContrato;
 use App\Filament\App\Resources\Contratos\Pages\EditarContrato;
 use App\Filament\App\Resources\Contratos\Pages\ListarContratos;
 use App\Filament\App\Resources\Contratos\Pages\VerContrato;
+use App\Filament\App\Resources\Contratos\RelationManagers\DocumentosRelationManager;
 use App\Filament\App\Resources\Contratos\RelationManagers\FuecsRelationManager;
 use App\Filament\App\Resources\Contratos\RelationManagers\PagosRelationManager;
 use App\Filament\App\Resources\Contratos\Schemas\ContratoForm;
@@ -68,7 +69,7 @@ class ContratoResource extends Resource
         $pesos = fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.');
 
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('cliente.tipoIdentificacion')->withSum('pagos', 'valor')->withCount(['fuecs' => fn ($q) => $q->noAnulados()]))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['cliente.tipoIdentificacion', 'documentos'])->withSum('pagos', 'valor')->withCount(['fuecs' => fn ($q) => $q->noAnulados()]))
             ->defaultSort('numero', 'desc')
             ->recordUrl(fn (Contrato $record) => static::getUrl('view', ['record' => $record]))
             ->columns([
@@ -85,6 +86,12 @@ class ContratoResource extends Resource
                     ->color(fn (Contrato $record) => $record->saldo() > 0 ? 'danger' : 'success'),
                 TextColumn::make('fuecs_count')->label('FUEC')->badge()->color('gray')->alignCenter()->visibleFrom('md'),
                 TextColumn::make('estado')->badge()->state(fn (Contrato $record) => $record->estado()),
+                TextColumn::make('firma')
+                    ->label('Firma')
+                    ->badge()
+                    ->state(fn (Contrato $record) => $record->documentoActivo()?->estadoFirma())
+                    ->placeholder('Sin emitir')
+                    ->visibleFrom('md'),
             ])
             ->filters([
                 SelectFilter::make('estado')
@@ -119,13 +126,14 @@ class ContratoResource extends Resource
             ])
             ->recordActions([
                 ViewAction::make()->label('Ver'),
-                EditAction::make()->visible(fn (Contrato $record) => ! $record->anulado()),
+                EditAction::make()->visible(fn (Contrato $record) => ! $record->anulado() && ! $record->documentoActivo()),
             ]);
     }
 
     public static function getRelations(): array
     {
         return [
+            DocumentosRelationManager::class,
             FuecsRelationManager::class,
             PagosRelationManager::class,
         ];

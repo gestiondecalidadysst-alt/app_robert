@@ -54,6 +54,8 @@ final class FormularioEmpresa
                     TextInput::make('direccion')->label('Dirección')->maxLength(255),
                     TextInput::make('telefono')->label('Teléfono')->tel()->maxLength(30),
                     TextInput::make('email')->label('Correo electrónico')->email()->maxLength(255),
+                    TextInput::make('sitio_web')->label('Sitio web')->maxLength(255)->placeholder('www.suempresa.co')
+                        ->helperText('Se cita en la cláusula de tratamiento de datos del contrato.'),
                 ]),
 
             Grid::make(['default' => 1, 'lg' => 2])->columnSpanFull()->schema([
@@ -61,7 +63,19 @@ final class FormularioEmpresa
                     ->icon('heroicon-o-user')
                     ->schema([
                         TextInput::make('representante_legal')->label('Nombre completo')->maxLength(255),
-                        TextInput::make('representante_documento')->label('Documento')->maxLength(20),
+                        Grid::make(2)->schema([
+                            TextInput::make('representante_documento')->label('Cédula')->maxLength(20),
+                            TextInput::make('representante_expedicion')->label('Expedida en')->maxLength(100),
+                        ]),
+                        FileUpload::make('firma_representante_path')
+                            ->label('Firma escaneada')
+                            ->image()
+                            ->disk('local')
+                            ->visibility('private')
+                            ->directory(fn () => 'firmas-representante/' . (filament()->getTenant()?->getKey() ?? 'plataforma'))
+                            ->acceptedFileTypes(['image/png', 'image/jpeg'])
+                            ->maxSize(512)
+                            ->helperText('PNG con fondo transparente o blanco. Es privada: solo se estampa en los contratos emitidos.'),
                     ]),
                 Section::make('Habilitación como transportador')
                     ->icon('heroicon-o-document-check')
@@ -79,7 +93,7 @@ final class FormularioEmpresa
                     ]),
             ]),
 
-            Section::make('Logo')
+            Section::make('Logo e imágenes de los documentos')
                 ->columnSpanFull()
                 ->icon('heroicon-o-photo')
                 ->schema([
@@ -90,6 +104,13 @@ final class FormularioEmpresa
                         ->directory('logos')
                         ->maxSize(1024)
                         ->helperText('PNG o JPG, máximo 1 MB. Aparece en los documentos y en el selector de empresa.'),
+                    FileUpload::make('pie_documentos_path')
+                        ->label('Imagen del pie de página de los contratos')
+                        ->image()
+                        ->disk('public')
+                        ->directory('pies-documento')
+                        ->maxSize(1024)
+                        ->helperText('Franja con certificaciones y sellos (ICONTEC, Vigilado SuperTransporte…). Se ajusta al ancho de la página.'),
                 ]),
         ];
     }

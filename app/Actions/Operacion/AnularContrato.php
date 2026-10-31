@@ -2,6 +2,7 @@
 
 namespace App\Actions\Operacion;
 
+use App\Actions\Contratos\AnularDocumentoContrato;
 use App\Models\Contrato;
 use Illuminate\Validation\ValidationException;
 
@@ -25,6 +26,11 @@ class AnularContrato
             throw ValidationException::withMessages([
                 'motivo' => "El contrato tiene {$activos} FUEC sin anular. Anúlelos primero.",
             ]);
+        }
+
+        // El documento del contrato (si lo hay) también queda anulado: su enlace de firma deja de servir.
+        foreach ($contrato->documentos()->activos()->get() as $documento) {
+            app(AnularDocumentoContrato::class)($documento, 'Contrato anulado: ' . trim($motivo));
         }
 
         $contrato->forceFill([

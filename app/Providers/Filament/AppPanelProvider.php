@@ -40,6 +40,8 @@ class AppPanelProvider extends PanelProvider
             ->profile(isSimple: false)
             ->tenant(Empresa::class, slugAttribute: 'slug', ownershipRelationship: 'empresa')
             ->tenantProfile(EditarEmpresa::class)
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('60s')
             ->searchableTenantMenu()
             ->tenantMiddleware([
                 PrepararEmpresaActiva::class,
