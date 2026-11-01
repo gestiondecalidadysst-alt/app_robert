@@ -372,4 +372,49 @@ class PesvTest extends ConfiguracionTestCase
         $pdf = PdfInspeccion::informe($vehiculo, today()->subDays(10), today(), $inspecciones, ['razon_social' => 'Demo', 'nit' => '1']);
         $this->assertStringStartsWith('%PDF', $pdf);
     }
+
+    public function test_crear_usuario_con_rol_conductor_eligiendo_el_conductor(): void
+    {
+        $conductor = Conductor::query()->deEmpresa($this->demo)->where('id', '!=', $this->conductor()->id)->whereNull('user_id')->firstOrFail();
+        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $this->entrarComo('admin@demo.test');
+
+        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+            ->fillForm(['rol_id' => $rol->id])
+            ->assertFormFieldIsVisible('conductor_id')
+            ->fillForm(['conductor_id' => $conductor->id])
+            ->assertFormSet(['name' => $conductor->nombre_completo, 'documento' => $conductor->documento])
+            ->fillForm(['password' => 'Temporal2026'])
+            ->call('create')
+            ->assertHasNoFormErrors()
+            ->assertNotified();
+
+        $usuario = $conductor->refresh()->usuario;
+        $this->assertNotNull($usuario);
+        $this->assertNull($usuario->email);
+        $this->assertTrue($usuario->debe_cambiar_clave);
+        $this->assertTrue($this->demo->usuarios()->whereKey($usuario->id)->exists());
+        $this->assertSame(\App\Models\Rol::CONDUCTOR, \App\Actions\Configuracion\AsignarRol::rolActual($usuario, $this->demo)->name);
+        // Solo portal del conductor: no entra al panel de la empresa.
+        $this->assertTrue($usuario->empresasDisponibles()->isEmpty());
+        auth()->logout();
+
+        $this->post('/conductor/ingresar', ['documento' => $conductor->documento, 'clave' => 'Temporal2026'])->assertRedirect();
+        $this->get('/conductor')->assertRedirect(route('conductor.clave'));
+
+        // Acceso desactivado en Usuarios: ya no entra al portal.
+        $this->demo->usuarios()->updateExistingPivot($usuario->id, ['activo' => false]);
+        $this->get('/conductor/clave')->assertRedirect(route('conductor.ingresar'));
+    }
+
+    public function test_usuario_conductor_sin_elegir_conductor_no_se_crea(): void
+    {
+        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $this->entrarComo('admin@demo.test');
+
+        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+            ->fillForm(['rol_id' => $rol->id, 'name' => 'Sin conductor'])
+            ->call('create')
+            ->assertHasFormErrors(['conductor_id' => 'required']);
+    }
 }

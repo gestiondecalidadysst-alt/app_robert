@@ -11,6 +11,7 @@ use App\Models\Inspeccion;
 use App\Models\User;
 use App\Models\Vehiculo;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Lo que ve el conductor en el portal: sus servicios (FUEC vigentes y programados en los que va
@@ -28,6 +29,8 @@ final class ServiciosConductor
             ->whereNull('deleted_at')
             ->where('user_id', $usuario->id)
             ->where('estado', '!=', EstadoConductor::Retirado->value)
+            // Acceso desactivado en Configuración → Usuarios de esa empresa.
+            ->whereNotIn('empresa_id', DB::table('empresa_user')->where('user_id', $usuario->id)->where('activo', false)->select('empresa_id'))
             ->with('empresa')
             ->get();
     }

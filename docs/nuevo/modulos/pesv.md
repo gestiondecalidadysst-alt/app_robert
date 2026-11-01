@@ -1,6 +1,6 @@
 # Módulo 5 – PESV (preoperacional e inspecciones) y portal del conductor
 
-Estado: **construido y probado** (13 pruebas propias; 75 en total en verde en SQLite y MySQL). Fecha: 2026-10-31.
+Estado: **construido y probado** (15 pruebas propias; 77 en total en verde en SQLite y MySQL). Fecha: 2026-11-01.
 
 ## Qué resuelve
 Reemplaza en la app anterior "Alistamiento diario", "No realizadas", "Alistamiento día (admin)", "Inspección mensual PESV", "Informe alistamiento diario" e "Informe preoperacional PDF" (ver `legado/modulos/inspecciones.md`).
@@ -54,6 +54,7 @@ Hecho en Blade, pensado para celular, sin Filament. Es instalable como app (`pub
 | `items-chequeo` | Ítems por tipo (pestañas), agrupados, ordenables arrastrando, con interruptores de crítico y activo. | `*_items_chequeo` |
 | Conductor → **Editar → Firma** | Dibujar la firma o subirla en PNG o JPG. | `editar_conductores` |
 | Conductor → hoja de vida | Pestaña **Firma y portal**: la firma y el estado del acceso. Acción **Acceso al portal / Restablecer clave**. | `crear_portal_conductor` |
+| Configuración → **Usuarios → Nuevo usuario** con el rol **Conductor** | El rol va primero. Al elegir Conductor:<br>• Aparece **Conductor** para elegir uno de los ya registrados.<br>• Se copian su nombre, documento, teléfono, correo y oficina.<br>• El correo es opcional.<br>• La clave es temporal: la que se escriba o una generada, que se muestra una sola vez.<br>• Crea el mismo acceso que la hoja de vida. | `crear_usuarios` |
 
 ## Archivos clave
 ### Modelos y reglas
@@ -88,7 +89,11 @@ Hecho en Blade, pensado para celular, sin Filament. Es instalable como app (`pub
   - El usuario no tiene correo.
   - Genera una clave temporal de 8 caracteres fácil de dictar, con `debe_cambiar_clave`.
   - Rechaza a los conductores retirados.
-  - El usuario del conductor no entra al panel `/app`, porque no está vinculado a la empresa.
+  - Vincula el usuario a la empresa con el rol **Conductor**, para que aparezca en Configuración → Usuarios:
+    - Ese rol **no da acceso al panel `/app`**, porque `User::empresasDisponibles()` excluye las empresas donde el usuario es Conductor.
+    - Si se desactiva el acceso en Usuarios, el conductor pierde el portal para esa empresa.
+    - Si se lo quita de la empresa, se desvincula del conductor.
+  - Lo usan la hoja de vida del conductor y la creación de usuarios con el rol Conductor (`Usuarios/Pages/CrearUsuario`). Acepta una clave inicial opcional.
 - `app/Support/Pesv/ServiciosConductor.php`: arma lo que ve el conductor (sus FUEC, la tarjeta con la regla del extracto, los vehículos asignados) y revisa a qué vehículos puede hacerles preoperacional.
 
 ### PDF

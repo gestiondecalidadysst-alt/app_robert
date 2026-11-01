@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -60,6 +61,23 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         return $this->hasMany(Conductor::class, 'user_id')->withoutGlobalScopes()->whereNull('conductores.deleted_at');
     }
 
+    /**
+     * Empresas donde el usuario tiene el rol Conductor: solo usa el portal del conductor, no el panel.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public function empresasComoConductor(): Collection
+    {
+        $tabla = config('permission.table_names.model_has_roles');
+
+        return DB::table($tabla)
+            ->join('roles', 'roles.id', '=', "{$tabla}.role_id")
+            ->where("{$tabla}.model_type", $this->getMorphClass())
+            ->where("{$tabla}.model_id", $this->getKey())
+            ->where('roles.name', Rol::CONDUCTOR)
+            ->pluck("{$tabla}.empresa_id");
+    }
+
     public function ultimaEmpresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class, 'ultima_empresa_id');
@@ -80,6 +98,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         return $this->empresas()
             ->where('empresas.activa', true)
             ->wherePivot('activo', true)
+            ->whereNotIn('empresas.id', $this->empresasComoConductor())
             ->orderBy('razon_social')
             ->get();
     }

@@ -2,8 +2,11 @@
 
 namespace App\Actions\Pesv;
 
+use App\Actions\Configuracion\AsignarRol;
 use App\Enums\EstadoConductor;
 use App\Models\Conductor;
+use App\Models\Empresa;
+use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,14 +20,17 @@ use Illuminate\Validation\ValidationException;
  */
 class CrearAccesoConductor
 {
-    /** @return array{usuario: User, clave: string, nuevo: bool} */
-    public function __invoke(Conductor $conductor): array
+    /**
+     * @param  string|null  $clave  Clave inicial (si no, se genera una). Siempre es temporal: se cambia al entrar.
+     * @return array{usuario: User, clave: string, nuevo: bool}
+     */
+    public function __invoke(Conductor $conductor, ?string $clave = null): array
     {
         if ($conductor->estado === EstadoConductor::Retirado) {
             throw ValidationException::withMessages(['conductor' => 'El conductor está retirado: no puede tener acceso al portal.']);
         }
 
-        $clave = self::claveTemporal();
+        $clave = filled($clave) ? $clave : self::claveTemporal();
 
         return DB::transaction(function () use ($conductor, $clave): array {
             $usuario = $conductor->usuario
@@ -49,6 +55,15 @@ class CrearAccesoConductor
 
             if ($conductor->user_id !== $usuario->id) {
                 $conductor->forceFill(['user_id' => $usuario->id])->save();
+            }
+
+            // Aparece en Configuración → Usuarios con el rol Conductor (sin acceso al panel de la empresa).
+            $empresa = Empresa::findOrFail($conductor->empresa_id);
+            if (! $empresa->usuarios()->whereKey($usuario->id)->exists()) {
+                $empresa->usuarios()->attach($usuario->id, ['oficina_id' => $conductor->oficina_id, 'activo' => true]);
+                (new AsignarRol)($usuario, $empresa, Rol::CONDUCTOR);
+            } else {
+                $empresa->usuarios()->updateExistingPivot($usuario->id, ['activo' => true]);
             }
 
             activity('Conductor')->performedOn($conductor)->causedBy(auth()->user())
