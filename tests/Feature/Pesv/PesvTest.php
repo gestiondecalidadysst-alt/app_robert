@@ -434,4 +434,23 @@ class PesvTest extends ConfiguracionTestCase
 
         $this->assertNull($conductor->refresh()->user_id);
     }
+
+    public function test_correo_de_un_usuario_de_otra_empresa_tambien_se_detecta(): void
+    {
+        $conductor = Conductor::query()->deEmpresa($this->demo)->where('id', '!=', $this->conductor()->id)->whereNull('user_id')->firstOrFail();
+        // admin@ejemplo.test es de otra empresa: dentro del panel de la demo no se ve con User::query().
+        $conductor->forceFill(['email' => 'admin@ejemplo.test'])->save();
+        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $this->entrarComo('admin@demo.test');
+        // Como en una petición real: filtros por empresa de los recursos del panel (incluido Usuarios).
+        \Filament\Facades\Filament::getPanel('app')->bootTenancy();
+
+        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+            ->fillForm(['rol_id' => $rol->id])
+            ->fillForm(['conductor_id' => $conductor->id])
+            ->call('create')
+            ->assertHasFormErrors(['email']);
+
+        $this->assertNull($conductor->refresh()->user_id);
+    }
 }

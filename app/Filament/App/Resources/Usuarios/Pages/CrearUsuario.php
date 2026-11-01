@@ -67,7 +67,8 @@ class CrearUsuario extends CreateRecord
         $email = filled($data['email'] ?? null) ? trim($data['email']) : null;
 
         // Ojo: where('id', '!=', null) nunca es verdadero en SQL; por eso se filtra solo si ya tiene usuario.
-        if ($email && User::query()->where('email', $email)
+        // Sin filtros: dentro del panel, User::query() solo ve los usuarios de la empresa activa.
+        if ($email && User::query()->withoutGlobalScopes()->where('email', $email)
             ->when($conductor->user_id, fn ($q, $id) => $q->whereKeyNot($id))->exists()) {
             throw ValidationException::withMessages(['data.email' => 'Ese correo ya lo usa otro usuario. Déjelo vacío: el conductor entra con su documento.']);
         }

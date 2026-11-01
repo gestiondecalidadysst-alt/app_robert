@@ -34,7 +34,8 @@ class CrearAccesoConductor
 
         return DB::transaction(function () use ($conductor, $clave): array {
             $usuario = $conductor->usuario
-                ?? User::query()->whereIn('id', Conductor::query()->withoutGlobalScopes()
+                // Sin filtros: dentro del panel, User::query() solo ve los usuarios de la empresa activa.
+                ?? User::query()->withoutGlobalScopes()->whereIn('id', Conductor::query()->withoutGlobalScopes()
                     ->where('documento', $conductor->documento)->whereNotNull('user_id')->select('user_id'))->first();
 
             $nuevo = ! $usuario;
