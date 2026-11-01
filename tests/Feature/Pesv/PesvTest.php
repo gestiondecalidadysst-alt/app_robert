@@ -453,4 +453,15 @@ class PesvTest extends ConfiguracionTestCase
 
         $this->assertNull($conductor->refresh()->user_id);
     }
+
+    public function test_con_sesion_de_oficina_abierta_el_conductor_puede_ingresar_al_portal(): void
+    {
+        $this->get('/app/login')->assertOk()->assertSee('portal del conductor');
+        $this->actingAs($this->usuario('admin@demo.test'));
+        $this->get('/conductor/ingresar')->assertOk()->assertSee('Número de documento');
+
+        $this->post('/conductor/ingresar', ['documento' => 'x@y.com', 'clave' => 'a'])->assertSessionHasErrors('documento');
+        $this->post('/conductor/ingresar', ['documento' => '20000001', 'clave' => 'Ruta2026*'])->assertRedirect(route('conductor.inicio'));
+        $this->get('/conductor')->assertOk()->assertSee('Servicios asignados');
+    }
 }

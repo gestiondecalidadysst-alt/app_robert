@@ -48,6 +48,8 @@ class AppPanelProvider extends PanelProvider
             ], isPersistent: true)
             ->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER, fn () => view('filament.partes.empresa-topbar'))
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('filament.partes.rol-topbar'))
+            // Los conductores entran por /conductor con su documento, no por aquí.
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.partes.enlace-portal-conductor'))
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([

@@ -20,7 +20,9 @@ class AccesoController extends Controller
 {
     public function formulario(Request $request): View|RedirectResponse
     {
-        if ($request->user()) {
+        // Solo si ya hay un conductor con sesión. Con la sesión de un usuario de oficina abierta en el
+        // mismo navegador se muestra el formulario normal (ingresar como conductor cierra esa sesión).
+        if ($request->user() && \App\Support\Pesv\ServiciosConductor::conductores($request->user())->isNotEmpty()) {
             return redirect()->route('conductor.inicio');
         }
 
@@ -48,8 +50,11 @@ class AccesoController extends Controller
             ->first(fn (User $u) => Hash::check($datos['clave'], $u->password));
 
         if (! $usuario) {
-            return back()->withInput($request->only('documento'))
-                ->withErrors(['documento' => 'El documento o la clave no son correctos.']);
+            $mensaje = str_contains($datos['documento'], '@')
+                ? 'Escriba su número de documento (no el correo).'
+                : 'El documento o la clave no son correctos.';
+
+            return back()->withInput($request->only('documento'))->withErrors(['documento' => $mensaje]);
         }
 
         Auth::login($usuario, remember: true);
