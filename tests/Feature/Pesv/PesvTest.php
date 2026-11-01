@@ -417,4 +417,21 @@ class PesvTest extends ConfiguracionTestCase
             ->call('create')
             ->assertHasFormErrors(['conductor_id' => 'required']);
     }
+
+    public function test_usuario_conductor_con_correo_de_otro_usuario_avisa_en_el_campo(): void
+    {
+        $conductor = Conductor::query()->deEmpresa($this->demo)->where('id', '!=', $this->conductor()->id)->whereNull('user_id')->firstOrFail();
+        $conductor->forceFill(['email' => 'admin@demo.test'])->save();
+        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $this->entrarComo('admin@demo.test');
+
+        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+            ->fillForm(['rol_id' => $rol->id])
+            ->fillForm(['conductor_id' => $conductor->id])
+            ->assertFormSet(['email' => 'admin@demo.test'])
+            ->call('create')
+            ->assertHasFormErrors(['email']);
+
+        $this->assertNull($conductor->refresh()->user_id);
+    }
 }
