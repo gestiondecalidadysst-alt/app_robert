@@ -64,6 +64,8 @@ class ExpedirFuec
                 'vehiculo_id' => $vehiculo->id,
                 'fecha_inicio' => $inicio->toDateString(),
                 'fecha_fin' => Carbon::parse($datos['fecha_fin'])->toDateString(),
+                'hora_inicio' => self::hora($datos['hora_inicio'] ?? null),
+                'hora_fin' => self::hora($datos['hora_fin'] ?? null),
                 'origen_municipio_id' => $datos['origen_municipio_id'],
                 'destino_municipio_id' => $datos['destino_municipio_id'],
                 'recorrido' => $datos['recorrido'] ?? null,
@@ -119,6 +121,12 @@ class ExpedirFuec
             $agregar('fecha_fin', 'La terminación no puede ser anterior al inicio.');
         }
 
+        $horaInicio = self::hora($datos['hora_inicio'] ?? null);
+        $horaFin = self::hora($datos['hora_fin'] ?? null);
+        if ($horaInicio !== null && $horaInicio === $horaFin) {
+            $agregar('hora_fin', 'La hora final debe ser distinta de la inicial (déjelas vacías si el servicio es todo el día).');
+        }
+
         // Contrato
         $contrato = filled($datos['contrato_id'] ?? null)
             ? Contrato::query()->deEmpresa($empresa)->find($datos['contrato_id'])
@@ -167,6 +175,15 @@ class ExpedirFuec
                 foreach ($conductor->bloqueosOperacion($inicio) as $bloqueo) {
                     $agregar('conductores', "{$conductor->nombre_completo} · {$bloqueo}");
                 }
+            }
+        }
+
+        // Cruce de horarios: el vehículo y los conductores no pueden estar en otro servicio al mismo tiempo.
+        if ($inicio && $fin && ! $fin->lt($inicio) && ! isset($errores['hora_fin'])) {
+            $horario = new \App\Support\Operacion\Horario($inicio, $fin, $horaInicio, $horaFin);
+
+            foreach ($this->cruces($empresa, $horario, $vehiculo?->id, $ids) as [$campo, $mensaje]) {
+                $agregar($campo, $mensaje);
             }
         }
 
@@ -233,6 +250,55 @@ class ExpedirFuec
             . $bloque($anioExpedicion, 4)
             . $bloque($numeroContrato, 4)
             . $bloque($consecutivo, 4);
+    }
+
+    /**
+     * FUEC vigentes (no anulados) del mismo vehículo o de los mismos conductores cuyo horario se cruza.
+     *
+     * @return list<array{0:string,1:string}> [campo, mensaje]
+     */
+    private function cruces(Empresa $empresa, \App\Support\Operacion\Horario $horario, ?int $vehiculoId, array $conductorIds): array
+    {
+        $conductorIds = array_map('intval', $conductorIds);
+        if (! $vehiculoId && $conductorIds === []) {
+            return [];
+        }
+
+        $candidatos = Fuec::query()->deEmpresa($empresa)->noAnulados()
+            ->whereDate('fecha_inicio', '<=', $horario->fechaFin->copy()->addDay())
+            ->whereDate('fecha_fin', '>=', $horario->fechaInicio->copy()->subDay())
+            ->where(fn ($q) => $q->when($vehiculoId, fn ($q) => $q->where('vehiculo_id', $vehiculoId))
+                ->orWhereHas('conductores', fn ($c) => $c->whereIn('conductores.id', $conductorIds ?: [0])))
+            ->with(['conductores', 'vehiculo'])
+            ->orderBy('fecha_inicio')
+            ->get()
+            ->filter(fn (Fuec $f) => $f->horario()->seCruzaCon($horario));
+
+        $cruces = [];
+        foreach ($candidatos as $otro) {
+            $detalle = "FUEC {$otro->numero_formateado} ({$otro->horario()->texto()})";
+
+            if ($vehiculoId && $otro->vehiculo_id === $vehiculoId) {
+                $cruces[] = ['vehiculo_id', "{$otro->placa} ya está asignado al {$detalle}. Elija otro vehículo u otro horario."];
+            }
+            foreach ($otro->conductores->whereIn('id', $conductorIds) as $conductor) {
+                $cruces[] = ['conductores', "{$conductor->nombre_completo} ya está asignado al {$detalle} con el vehículo {$otro->placa}."];
+            }
+        }
+
+        return $cruces;
+    }
+
+    /** "06:00" o "06:00:00" → "06:00:00"; vacío → null. */
+    private static function hora(mixed $valor): ?string
+    {
+        if (blank($valor)) {
+            return null;
+        }
+
+        return preg_match('/^(\d{1,2}):(\d{2})/', (string) $valor, $m)
+            ? sprintf('%02d:%02d:00', (int) $m[1], (int) $m[2])
+            : null;
     }
 
     private function conductores(Empresa $empresa, array $ids)

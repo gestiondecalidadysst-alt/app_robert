@@ -53,6 +53,9 @@ class OperacionTest extends ConfiguracionTestCase
             'conductores' => [$this->conductor('20000001')->id],
             'fecha_inicio' => today()->toDateString(),
             'fecha_fin' => today()->addDays(5)->toDateString(),
+            // El FUEC demo de DMO101 y el conductor 20000001 es de 06:00 a 15:00: este no se cruza.
+            'hora_inicio' => '16:00',
+            'hora_fin' => '20:00',
             'origen_municipio_id' => $monteria,
             'destino_municipio_id' => $monteria,
             ...$cambios,
@@ -114,7 +117,7 @@ class OperacionTest extends ConfiguracionTestCase
         $contrato = $this->contratoVigente();
 
         $fuec = app(ExpedirFuec::class)($this->demo, $this->datosFuec());
-        $otro = app(ExpedirFuec::class)($this->demo, $this->datosFuec(['conductores' => [$this->conductor('20000001')->id, $this->conductor('20000002')->id]]));
+        $otro = app(ExpedirFuec::class)($this->demo, $this->datosFuec(['hora_inicio' => '20:00', 'hora_fin' => '23:00', 'conductores' => [$this->conductor('20000001')->id, $this->conductor('20000002')->id]]));
 
         $this->assertSame(1, $fuec->consecutivo);
         $this->assertSame(2, $otro->consecutivo);
@@ -202,6 +205,8 @@ class OperacionTest extends ConfiguracionTestCase
                 'vehiculo_id' => $datos['vehiculo_id'],
                 'conductor_1' => $datos['conductores'][0],
                 'fecha_fin' => $datos['fecha_fin'],
+                'hora_inicio' => $datos['hora_inicio'],
+                'hora_fin' => $datos['hora_fin'],
                 'origen_municipio_id' => $datos['origen_municipio_id'],
                 'destino_municipio_id' => $datos['destino_municipio_id'],
             ])
@@ -274,5 +279,46 @@ class OperacionTest extends ConfiguracionTestCase
 
         $errores = app(ExpedirFuec::class)->validar($this->demo, $this->datosFuec());
         $this->assertStringContainsString('retirado', implode(' ', $errores['conductores']));
+    }
+
+    public function test_no_se_asigna_el_mismo_vehiculo_o_conductor_a_servicios_que_se_cruzan(): void
+    {
+        $this->entrarComo('admin@demo.test');
+        $expedir = app(ExpedirFuec::class);
+        $uno = $this->conductor('20000001')->id;
+        $dos = $this->conductor('20000002')->id;
+        $dmo101 = $this->vehiculo('DMO101')->id;
+        $dmo102 = $this->vehiculo('DMO102')->id;
+        $hoy = today()->toDateString();
+        $manana = today()->addDay()->toDateString();
+        $pasado = today()->addDays(2)->toDateString();
+
+        // DMO102 con la conductora 2 hoy, todo el día (00:00 a 23:59).
+        $todoElDia = $expedir($this->demo, $this->datosFuec(['vehiculo_id' => $dmo102, 'fecha_fin' => $hoy, 'hora_inicio' => null, 'hora_fin' => null, 'conductores' => [$dos]]));
+
+        // Mismo vehículo hoy a cualquier hora: bloqueado.
+        $errores = $expedir->validar($this->demo, $this->datosFuec(['vehiculo_id' => $dmo102, 'fecha_fin' => $hoy, 'hora_inicio' => '21:00', 'hora_fin' => '22:00', 'conductores' => [$uno]]));
+        $this->assertStringContainsString('DMO102 ya está asignado', implode(' ', $errores['vehiculo_id']));
+        $this->assertStringContainsString('todo el día', implode(' ', $errores['vehiculo_id']));
+
+        // Misma conductora con otro vehículo (DMO101 de 16:00 a 20:00, libre): bloqueada por la conductora.
+        $errores = $expedir->validar($this->demo, $this->datosFuec(['fecha_fin' => $hoy, 'conductores' => [$dos]]));
+        $this->assertArrayNotHasKey('vehiculo_id', $errores);
+        $this->assertStringContainsString('Conductora Dos Demo ya está asignado', implode(' ', $errores['conductores']));
+
+        // DMO101 tiene el FUEC demo de 06:00 a 15:00: a las 14:00 se cruza; desde las 15:00, no.
+        $errores = $expedir->validar($this->demo, $this->datosFuec(['fecha_inicio' => $manana, 'fecha_fin' => $manana, 'hora_inicio' => '14:00', 'hora_fin' => '18:00']));
+        $this->assertStringContainsString('de 06:00 a 15:00', implode(' ', $errores['vehiculo_id']));
+        $this->assertArrayNotHasKey('vehiculo_id', $expedir->validar($this->demo, $this->datosFuec(['fecha_inicio' => $manana, 'fecha_fin' => $manana, 'hora_inicio' => '15:00', 'hora_fin' => '18:00'])));
+
+        // Nocturno de mañana (22:00 a 05:00) se cruza con pasado mañana a las 04:00.
+        $expedir($this->demo, $this->datosFuec(['vehiculo_id' => $dmo102, 'fecha_inicio' => $manana, 'fecha_fin' => $manana, 'hora_inicio' => '22:00', 'hora_fin' => '05:00', 'conductores' => [$dos]]));
+        $errores = $expedir->validar($this->demo, $this->datosFuec(['vehiculo_id' => $dmo102, 'fecha_inicio' => $pasado, 'fecha_fin' => $pasado, 'hora_inicio' => '04:00', 'hora_fin' => '08:00', 'conductores' => [$uno]]));
+        $this->assertStringContainsString('del día siguiente', implode(' ', $errores['vehiculo_id']));
+        $this->assertArrayNotHasKey('vehiculo_id', $expedir->validar($this->demo, $this->datosFuec(['vehiculo_id' => $dmo102, 'fecha_inicio' => $pasado, 'fecha_fin' => $pasado, 'hora_inicio' => '05:00', 'hora_fin' => '08:00', 'conductores' => [$uno]])));
+
+        // Un FUEC anulado libera el vehículo.
+        app(AnularFuec::class)($todoElDia, 'Prueba');
+        $this->assertArrayNotHasKey('vehiculo_id', $expedir->validar($this->demo, $this->datosFuec(['vehiculo_id' => $dmo102, 'fecha_fin' => $hoy, 'hora_inicio' => '21:00', 'hora_fin' => '22:00', 'conductores' => [$uno]])));
     }
 }

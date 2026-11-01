@@ -101,6 +101,8 @@ class DemoOperacionSeeder extends Seeder
                 'conductores' => [$conductor->id],
                 'fecha_inicio' => today()->toDateString(),
                 'fecha_fin' => today()->addDays(10)->toDateString(),
+                'hora_inicio' => '06:00',
+                'hora_fin' => '15:00',
                 'origen_municipio_id' => $monteria,
                 'destino_municipio_id' => $cerete,
                 'recorrido' => 'Montería – Cereté por la vía principal.',

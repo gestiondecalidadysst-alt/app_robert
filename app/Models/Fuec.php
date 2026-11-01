@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EstadoVigencia;
+use App\Support\Operacion\Horario;
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,7 +25,7 @@ class Fuec extends Model
     protected $table = 'fuecs';
 
     protected $fillable = [
-        'empresa_id', 'contrato_id', 'consecutivo', 'numero', 'vehiculo_id', 'fecha_inicio', 'fecha_fin',
+        'empresa_id', 'contrato_id', 'consecutivo', 'numero', 'vehiculo_id', 'fecha_inicio', 'fecha_fin', 'hora_inicio', 'hora_fin',
         'origen_municipio_id', 'destino_municipio_id', 'recorrido', 'empresa_convenio_id', 'datos',
         'codigo_verificacion', 'oficina_id', 'user_id',
     ];
@@ -99,6 +100,11 @@ class Fuec extends Model
         $n = $this->numero;
 
         return implode(' ', [substr($n, 0, 3), substr($n, 3, 4), substr($n, 7, 2), substr($n, 9, 4), substr($n, 13, 4), substr($n, 17, 4)]);
+    }
+
+    public function horario(): Horario
+    {
+        return new Horario($this->fecha_inicio, $this->fecha_fin, $this->hora_inicio, $this->hora_fin);
     }
 
     public function getPlacaAttribute(): ?string

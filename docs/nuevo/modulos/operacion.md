@@ -56,6 +56,7 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
 5. Entre 1 y 3 conductores distintos que pueden operar al iniciar (`Conductor::bloqueosOperacion`: estado, licencia C vigente, planilla vigente).
 6. Ningún documento obligatorio del vehículo o los conductores vence antes de terminar el FUEC; si alguno vence, el error indica la **fecha máxima posible**.
 7. El convenio (si se indica) es de la empresa.
+8. **Sin cruces de horario** (pedido del usuario, 2026-11-01): el vehículo y cada conductor no pueden estar en otro FUEC no anulado cuyo horario se cruce. Cada FUEC tiene `hora_inicio` y `hora_fin` (se copian del contrato y se pueden cambiar). Vacías = todo el día (00:00 a 24:00). Si la hora final es menor o igual que la inicial, el servicio pasa la medianoche. Un servicio que termina a las 15:00 no se cruza con uno que empieza a las 15:00. El error dice qué FUEC y qué horario ocupa al vehículo o al conductor. Cálculo en `app/Support/Operacion/Horario.php`; migración `2026_11_01_200001_add_horario_to_fuecs.php`.
 
 ### Pantallas (Filament)
 - `app/Filament/App/Resources/Fuecs/FuecResource.php`, `Schemas/FuecForm.php` (revisión en vivo, sugerencia de conductores), `Schemas/FuecInfolist.php`, `Acciones/AccionesFuec.php` (PDF, anular), `Pages/ExpedirFuec.php` (lleva los errores a cada campo), `ListarFuecs.php`, `VerFuec.php`.

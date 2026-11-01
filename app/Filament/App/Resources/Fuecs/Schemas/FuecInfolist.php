@@ -36,7 +36,8 @@ final class FuecInfolist
                     TextEntry::make('numero')->label('FUEC No.')->fontFamily('mono')->weight('bold')->copyable()->columnSpan(2),
                     TextEntry::make('estado')->badge()->state(fn (Fuec $record) => $record->estado()),
                     TextEntry::make('vigencia')->label('Vigencia')
-                        ->state(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y') . ' – ' . $record->fecha_fin->format('d/m/Y')),
+                        ->state(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y') . ' – ' . $record->fecha_fin->format('d/m/Y'))
+                        ->helperText(fn (Fuec $record) => 'Horario: ' . $record->horario()->franjaTexto()),
                     TextEntry::make('contrato')->label('Contrato')
                         ->state(fn (Fuec $record) => "{$record->datos['contrato']['numero']} · {$record->datos['contrato']['contratante']}")
                         ->url(fn (Fuec $record) => ContratoResource::getUrl('view', ['record' => $record->contrato_id]))

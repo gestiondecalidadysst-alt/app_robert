@@ -14,6 +14,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -57,6 +58,10 @@ final class FuecForm
                                 ->visible(fn (Get $get) => self::fechaMaxima($get) !== null)
                                 ->action(fn (Get $get, Set $set) => $set('fecha_fin', self::fechaMaxima($get)?->toDateString())),
                         ),
+                    TimePicker::make('hora_inicio')->label('Hora de inicio')->seconds(false)->live()
+                        ->helperText('Del contrato. Vacía = todo el día.'),
+                    TimePicker::make('hora_fin')->label('Hora de terminación')->seconds(false)->live()
+                        ->helperText('Si es menor que la de inicio, el servicio pasa la medianoche.'),
                     Select::make('empresa_convenio_id')
                         ->label('Convenio de colaboración')
                         ->options(fn () => EmpresaConvenio::query()->where('activo', true)->orderBy('razon_social')->pluck('razon_social', 'id'))
@@ -100,7 +105,7 @@ final class FuecForm
                 ->status(fn (Get $get) => self::errores($get) === [] ? 'success' : 'danger')
                 ->icon(fn (Get $get) => self::errores($get) === [] ? 'heroicon-o-check-circle' : 'heroicon-o-exclamation-triangle')
                 ->description(fn (Get $get) => self::errores($get) === []
-                    ? 'El contrato, el vehículo y los conductores cumplen para toda la vigencia.'
+                    ? 'El contrato, el vehículo y los conductores cumplen para toda la vigencia y no tienen otro servicio a la misma hora.'
                     : new HtmlString(collect(self::errores($get))->flatten()->map(fn ($m) => '• ' . e($m))->implode('<br>')))
                 ->visible(fn (Get $get) => filled($get('contrato_id')) && filled($get('vehiculo_id'))),
         ]);
@@ -115,6 +120,8 @@ final class FuecForm
             'conductores' => array_values(array_filter(array_map(fn ($c) => $estado[$c] ?? null, self::CAMPOS_CONDUCTOR))),
             'fecha_inicio' => $estado['fecha_inicio'] ?? null,
             'fecha_fin' => $estado['fecha_fin'] ?? null,
+            'hora_inicio' => $estado['hora_inicio'] ?? null,
+            'hora_fin' => $estado['hora_fin'] ?? null,
             'origen_municipio_id' => $estado['origen_municipio_id'] ?? null,
             'destino_municipio_id' => $estado['destino_municipio_id'] ?? null,
             'recorrido' => $estado['recorrido'] ?? null,
@@ -135,6 +142,8 @@ final class FuecForm
             'contrato_id' => $contrato->id,
             'fecha_inicio' => Carbon::parse(max($contrato->fecha_inicio->toDateString(), today()->toDateString()))->toDateString(),
             'fecha_fin' => $contrato->fecha_fin->toDateString(),
+            'hora_inicio' => $contrato->hora_inicio ? substr((string) $contrato->hora_inicio, 0, 5) : null,
+            'hora_fin' => $contrato->hora_fin ? substr((string) $contrato->hora_fin, 0, 5) : null,
             'origen_municipio_id' => $contrato->origen_municipio_id,
             'destino_municipio_id' => $contrato->destino_municipio_id,
             'recorrido' => $contrato->recorrido,
@@ -193,7 +202,7 @@ final class FuecForm
     private static function estadoActual(Get $get): array
     {
         return self::aDatos([
-            ...collect(['contrato_id', 'vehiculo_id', 'fecha_inicio', 'fecha_fin', 'origen_municipio_id', 'destino_municipio_id', 'empresa_convenio_id'])
+            ...collect(['contrato_id', 'vehiculo_id', 'fecha_inicio', 'fecha_fin', 'hora_inicio', 'hora_fin', 'origen_municipio_id', 'destino_municipio_id', 'empresa_convenio_id'])
                 ->mapWithKeys(fn ($c) => [$c => $get($c)])->all(),
             ...collect(self::CAMPOS_CONDUCTOR)->mapWithKeys(fn ($c) => [$c => $get($c)])->all(),
         ]);

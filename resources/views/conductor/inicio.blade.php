@@ -32,7 +32,7 @@
         </div>
         <div class="grande">{{ $f->origen?->nombre }} → {{ $f->destino?->nombre }}</div>
         <div class="numero">FUEC {{ $f->numero_formateado }}</div>
-        <p class="dato" style="margin-top:8px"><b>{{ $f->fecha_inicio->format('d/m/Y') }}</b>{{ $f->fecha_fin->ne($f->fecha_inicio) ? ' al '.$f->fecha_fin->format('d/m/Y') : '' }} · Vehículo <b>{{ $f->placa }}</b>{{ $f->vehiculo?->numero_interno ? ' ('.$f->vehiculo->numero_interno.')' : '' }}</p>
+        <p class="dato" style="margin-top:8px"><b>{{ $f->fecha_inicio->format('d/m/Y') }}</b>{{ $f->fecha_fin->ne($f->fecha_inicio) ? ' al '.$f->fecha_fin->format('d/m/Y') : '' }} · {{ $f->horario()->franjaTexto() }} · Vehículo <b>{{ $f->placa }}</b>{{ $f->vehiculo?->numero_interno ? ' ('.$f->vehiculo->numero_interno.')' : '' }}</p>
         @if ($f->contrato?->cliente)<p class="dato">Cliente: {{ $f->contrato->cliente->nombre }}</p>@endif
         @if ($f->recorrido)<p class="dato tenue" style="font-size:13px">{{ \Illuminate\Support\Str::limit($f->recorrido, 140) }}</p>@endif
 

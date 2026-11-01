@@ -64,7 +64,7 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 - Legado `Pago de contrato`: fecha_pago→fecha, valorPagado→valor, codMetodo (EFECTIVO, TRANSFERENCIAS, TARJETA DE CRÉDITO)→metodo, obspago→observacion.
 
 ### `fuecs`
-- `contrato_id`, `consecutivo` (por contrato, único), `numero` (21 dígitos), `vehiculo_id`, `fecha_inicio`, `fecha_fin`, `origen_municipio_id`, `destino_municipio_id`, `recorrido`, `empresa_convenio_id`, `datos` (JSON: copia de empresa, contrato, vehículo, conductores, origen, destino y convenio al expedir), `codigo_verificacion` (único, QR), `oficina_id`, `user_id`, anulación (`anulado_at`, `motivo_anulacion`, `anulado_por`).
+- `contrato_id`, `consecutivo` (por contrato, único), `numero` (21 dígitos), `vehiculo_id`, `fecha_inicio`, `fecha_fin`, `hora_inicio` y `hora_fin` (franja diaria; vacías = todo el día), `origen_municipio_id`, `destino_municipio_id`, `recorrido`, `empresa_convenio_id`, `datos` (JSON: copia de empresa, contrato, vehículo, conductores, origen, destino y convenio al expedir), `codigo_verificacion` (único, QR), `oficina_id`, `user_id`, anulación (`anulado_at`, `motivo_anulacion`, `anulado_por`).
 - `fuec_conductor`: `fuec_id`, `conductor_id`, `orden` (1–3).
 - Legado `Extracto`: número control→id interno; número extracto→`numero`; contrato, fecha_inicio, fecha_fin, placa→vehiculo_id, idorigen/iddestino→municipios, recorridos→recorrido, idconductor1/idconductor2→fuec_conductor (orden 1 y 2), usuario, oficina. Al migrar, los extractos históricos conservan su número original y se reconstruye `datos` con lo disponible; nombre_pdf no se migra (el PDF se genera).
 
