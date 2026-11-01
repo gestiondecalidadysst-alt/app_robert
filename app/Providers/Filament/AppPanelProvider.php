@@ -8,7 +8,7 @@ use App\Http\Middleware\PrepararEmpresaActiva;
 use App\Models\Empresa;
 use App\Providers\Filament\Concerns\EstiloRuta;
 use Filament\View\PanelsRenderHook;
-use Filament\Http\Middleware\Authenticate;
+use App\Http\Middleware\AutenticarPanel;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -78,7 +78,7 @@ class AppPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                AutenticarPanel::class,
             ]);
     }
 }

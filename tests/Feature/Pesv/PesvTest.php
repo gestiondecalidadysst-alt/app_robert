@@ -483,4 +483,20 @@ class PesvTest extends ConfiguracionTestCase
         $this->get(route('conductor.preoperacional', ['vehiculo' => $this->vehiculo()->id]))->assertRedirect(route('conductor.firma'));
         $this->get('/conductor/firma')->assertOk();
     }
+
+    public function test_con_sesion_de_conductor_el_panel_cierra_la_sesion_en_vez_de_403(): void
+    {
+        $this->entrarAlPortal();
+
+        $this->get('/app/cootrasec-demo')->assertRedirect('/app/login');
+        $this->assertGuest();
+
+        $this->entrarAlPortal();
+        $this->get('/admin')->assertRedirect('/admin/login');
+        $this->assertGuest();
+
+        // Un usuario de oficina sin acceso sigue recibiendo 403.
+        $this->actingAs($this->usuario('admin@demo.test'));
+        $this->get('/admin')->assertForbidden();
+    }
 }
