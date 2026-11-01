@@ -77,7 +77,7 @@ class Integraciones extends Page
             ->disabled(! $this->puedeEditar())
             ->components([
                 Section::make('Mensajes de texto (SMS) — Onurix')
-                    ->description('Se usan para enviar el enlace de firma y el código de verificación. Cree su cuenta en onurix.com y copie aquí el Client ID y la clave del API.')
+                    ->description('Se usan para enviar el enlace de firma y el código de verificación. Cree su cuenta en onurix.com, copie aquí el Client ID y la clave del API, y autorice en Onurix la IP de este servidor (botón «Ver IP del servidor»).')
                     ->icon('heroicon-o-device-phone-mobile')
                     ->columns(['default' => 1, 'md' => 2])
                     ->schema([
@@ -149,6 +149,19 @@ class Integraciones extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('ip')
+                ->label('Ver IP del servidor')
+                ->icon('heroicon-o-globe-alt')
+                ->color('gray')
+                ->action(function (): void {
+                    $ip = OnurixSms::ipSalida();
+
+                    $ip === null
+                        ? Notification::make()->danger()->title('No se pudo averiguar la IP del servidor')->send()
+                        : Notification::make()->info()->title("IP del servidor: {$ip}")
+                            ->body('Regístrela en su cuenta de Onurix como IP permitida para el API. Si el proveedor del servidor cambia la IP, hay que actualizarla allá.')
+                            ->persistent()->send();
+                }),
             Action::make('saldo')
                 ->label('Consultar saldo')
                 ->icon('heroicon-o-banknotes')

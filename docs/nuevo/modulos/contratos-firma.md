@@ -76,6 +76,7 @@ Estados del documento: Emitido, Enviado para firma, Visto por el cliente, Firmad
 11. Sin cambiar (decisión del usuario): cláusula 10 menciona "legislación vigente para las entidades públicas"; el depósito de $100.000 sigue escrito en el texto.
 
 ## Pendientes / ideas
+- **Onurix exige autorizar la IP del servidor** (error "Ip's no permitidas"): en Integraciones, «Ver IP del servidor» muestra la IP pública de salida (consulta api.ipify.org, guardada 1 hora) y el error de envío la incluye. Esa IP se registra en la cuenta de Onurix; si Easypanel/el proveedor cambia la IP, hay que actualizarla.
 - **Probar Onurix con credenciales reales**: la URL y los parámetros salen de la especificación pública del API (no de documentación oficial verificada). Usar "Enviar SMS de prueba"; si falla, ajustar `ONURIX_URL`.
 - Configurar **SMTP** en Easypanel (sin él los correos van al log): enlace, código por correo y copia firmada.
 - El worker debe correr (`CONTAINER_ROLE=worker`) para enlaces, recordatorios y copias por correo.

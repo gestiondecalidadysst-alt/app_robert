@@ -3,6 +3,7 @@
 namespace App\Services\Mensajeria;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -66,9 +67,43 @@ final class OnurixSms
         return rtrim((string) config('ruta.onurix.url'), '/') . $ruta;
     }
 
+    /**
+     * IP pública con la que este servidor sale a internet. Onurix solo acepta peticiones de las IP
+     * registradas en la cuenta, así que esta es la que hay que autorizar allá. Null si no se pudo saber.
+     */
+    public static function ipSalida(): ?string
+    {
+        $ip = Cache::get('ip_salida_servidor');
+        if ($ip) {
+            return $ip;
+        }
+
+        foreach (['https://api.ipify.org', 'https://ifconfig.me/ip', 'https://icanhazip.com'] as $servicio) {
+            try {
+                $respuesta = trim((string) Http::timeout(5)->get($servicio)->body());
+            } catch (\Throwable) {
+                continue;
+            }
+            if (filter_var($respuesta, FILTER_VALIDATE_IP)) {
+                Cache::put('ip_salida_servidor', $respuesta, now()->addHour());
+
+                return $respuesta;
+            }
+        }
+
+        return null;
+    }
+
     private static function error(int $estado, array $json): string
     {
         $mensaje = $json['message'] ?? $json['msg'] ?? null;
+
+        if ($mensaje !== null && str_contains(mb_strtolower((string) $mensaje), 'ip')) {
+            $ip = self::ipSalida();
+
+            return "Onurix: {$mensaje}. Autorice en su cuenta de Onurix la IP de este servidor"
+                . ($ip ? ": {$ip}" : ' (no se pudo averiguar; use «Ver IP del servidor»)') . '.';
+        }
 
         return match (true) {
             $estado === 401 => 'Onurix rechazó las credenciales (revise el Client ID y la clave).',
