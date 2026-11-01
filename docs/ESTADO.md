@@ -27,4 +27,4 @@
 
 ## Siguiente paso
 1. Redesplegar (web y worker), completar Mi empresa e Integraciones, y firmar un contrato de prueba desde un celular.
-2. Módulo 5 – PESV: alistamiento diario (checklist del conductor con firma) e inspección mensual configurables, informes y el **informe preoperacional en PDF** del legado. Reutilizar la firma dibujada (`FirmaManuscrita`) y la mensajería (`Mensajero`). Al terminar, agregar "alistamiento del día" como validación en `ExpedirFuec`.
+2. Módulo 5 – PESV: alistamiento diario (checklist del conductor con firma) e inspección mensual configurables, informes y el **informe preoperacional en PDF** del legado. La firma del conductor se toma **una vez** al crearlo (ver DECISIONES) y se estampa en cada PDF; reutilizar `FirmaManuscrita` y la mensajería (`Mensajero`). Al terminar, agregar "alistamiento del día" como validación en `ExpedirFuec`.
