@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -13,134 +14,156 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('empresas', function (Blueprint $table) {
-            $table->string('representante_expedicion')->nullable()->after('representante_documento');
-            $table->string('sitio_web')->nullable()->after('email');
-            $table->string('firma_representante_path')->nullable()->after('logo_path'); // disco privado
-            $table->string('pie_documentos_path')->nullable()->after('firma_representante_path'); // certificaciones, sellos
-
+        $columnas = [
+            'representante_expedicion' => fn (Blueprint $t) => $t->string('representante_expedicion')->nullable()->after('representante_documento'),
+            'sitio_web' => fn (Blueprint $t) => $t->string('sitio_web')->nullable()->after('email'),
+            'firma_representante_path' => fn (Blueprint $t) => $t->string('firma_representante_path')->nullable()->after('logo_path'), // disco privado
+            'pie_documentos_path' => fn (Blueprint $t) => $t->string('pie_documentos_path')->nullable(), // certificaciones, sellos
             // Integraciones (credenciales cifradas con APP_KEY)
-            $table->boolean('sms_habilitado')->default(false);
-            $table->text('onurix_cliente')->nullable();
-            $table->text('onurix_clave')->nullable();
-            $table->unsignedInteger('sms_limite_mensual')->nullable();
-            $table->boolean('firma_envio_automatico')->default(false);
-            $table->unsignedTinyInteger('firma_dias_enlace')->default(7);
-            $table->unsignedTinyInteger('firma_dias_recordatorio')->default(2);
-        });
+            'sms_habilitado' => fn (Blueprint $t) => $t->boolean('sms_habilitado')->default(false),
+            'onurix_cliente' => fn (Blueprint $t) => $t->text('onurix_cliente')->nullable(),
+            'onurix_clave' => fn (Blueprint $t) => $t->text('onurix_clave')->nullable(),
+            'sms_limite_mensual' => fn (Blueprint $t) => $t->unsignedInteger('sms_limite_mensual')->nullable(),
+            'firma_envio_automatico' => fn (Blueprint $t) => $t->boolean('firma_envio_automatico')->default(false),
+            'firma_dias_enlace' => fn (Blueprint $t) => $t->unsignedTinyInteger('firma_dias_enlace')->default(7),
+            'firma_dias_recordatorio' => fn (Blueprint $t) => $t->unsignedTinyInteger('firma_dias_recordatorio')->default(2),
+        ];
 
-        Schema::create('plantillas_contrato', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('empresa_id')->constrained('empresas')->cascadeOnDelete();
-            $table->unsignedSmallInteger('version');
-            $table->string('codigo_formato', 40)->nullable(); // control de documentos (ISO), p. ej. GPS-PR01-FT03
-            $table->string('titulo')->default('FORMATO DE CONTRATO DE PRESTACIÓN DE SERVICIO');
-            $table->longText('contenido'); // HTML con variables (merge tags del editor)
-            $table->text('notas_cambio')->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
+        foreach ($columnas as $columna => $definir) {
+            if (! Schema::hasColumn('empresas', $columna)) {
+                Schema::table('empresas', fn (Blueprint $table) => $definir($table));
+            }
+        }
 
-            $table->unique(['empresa_id', 'version']);
-        });
+        // La tabla de eventos pudo quedar creada sin su índice (nombre de 65 caracteres, MySQL admite 64)
+        // en un despliegue que falló. En ese caso está vacía: se elimina y se crea de nuevo.
+        if (Schema::hasTable('eventos_documento_contrato') && DB::table('eventos_documento_contrato')->count() === 0
+            && ! Schema::hasIndex('eventos_documento_contrato', 'eventos_doc_contrato_fecha_index')) {
+            Schema::drop('eventos_documento_contrato');
+        }
 
-        Schema::create('documentos_contrato', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('empresa_id')->constrained('empresas')->cascadeOnDelete();
-            $table->foreignId('contrato_id')->constrained('contratos')->cascadeOnDelete();
-            $table->foreignId('plantilla_contrato_id')->nullable()->constrained('plantillas_contrato')->nullOnDelete();
-            $table->unsignedSmallInteger('version_plantilla');
-            $table->string('codigo_formato', 40)->nullable();
+        if (! Schema::hasTable('plantillas_contrato')) {
+            Schema::create('plantillas_contrato', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('empresa_id')->constrained('empresas')->cascadeOnDelete();
+                $table->unsignedSmallInteger('version');
+                $table->string('codigo_formato', 40)->nullable(); // control de documentos (ISO), p. ej. GPS-PR01-FT03
+                $table->string('titulo')->default('FORMATO DE CONTRATO DE PRESTACIÓN DE SERVICIO');
+                $table->longText('contenido'); // HTML con variables (merge tags del editor)
+                $table->text('notas_cambio')->nullable();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamps();
 
-            // Copia congelada al emitir
-            $table->longText('contenido'); // HTML ya diligenciado
-            $table->json('datos'); // valores de las variables, encabezado y pie
-            $table->string('huella_contenido', 64); // SHA-256 del contenido y los datos
-            $table->string('firma_contratista_path')->nullable(); // copia de la firma del representante
+                $table->unique(['empresa_id', 'version']);
+            });
+        }
 
-            $table->string('estado', 20)->default('emitido'); // emitido | enviado | visto | firmado | anulado
-            $table->string('codigo_verificacion', 32)->unique(); // QR público
+        if (! Schema::hasTable('documentos_contrato')) {
+            Schema::create('documentos_contrato', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('empresa_id')->constrained('empresas')->cascadeOnDelete();
+                $table->foreignId('contrato_id')->constrained('contratos')->cascadeOnDelete();
+                $table->foreignId('plantilla_contrato_id')->nullable()->constrained('plantillas_contrato')->nullOnDelete();
+                $table->unsignedSmallInteger('version_plantilla');
+                $table->string('codigo_formato', 40)->nullable();
 
-            // Enlace de firma (solo se guarda la huella del token)
-            $table->string('token_hash', 64)->nullable()->unique();
-            $table->text('token_cifrado')->nullable(); // para reenviar el mismo enlace (recordatorios)
-            $table->timestamp('token_expira_at')->nullable();
+                // Copia congelada al emitir
+                $table->longText('contenido'); // HTML ya diligenciado
+                $table->json('datos'); // valores de las variables, encabezado y pie
+                $table->string('huella_contenido', 64); // SHA-256 del contenido y los datos
+                $table->string('firma_contratista_path')->nullable(); // copia de la firma del representante
 
-            // Firmante
-            $table->string('firmante_nombre')->nullable();
-            $table->string('firmante_documento', 30)->nullable();
-            $table->string('firmante_celular', 20)->nullable();
-            $table->string('firmante_email')->nullable();
+                $table->string('estado', 20)->default('emitido'); // emitido | enviado | visto | firmado | anulado
+                $table->string('codigo_verificacion', 32)->unique(); // QR público
 
-            // Evidencia de la firma
-            $table->timestamp('enviado_at')->nullable();
-            $table->timestamp('visto_at')->nullable();
-            $table->timestamp('firmado_at')->nullable();
-            $table->string('firma_path')->nullable(); // imagen de la firma del contratante (privada)
-            $table->string('firma_ip', 45)->nullable();
-            $table->text('firma_user_agent')->nullable();
-            $table->string('firma_canal_codigo', 10)->nullable(); // sms | correo
-            $table->string('firma_destino_codigo')->nullable(); // enmascarado
-            $table->string('pdf_firmado_path')->nullable();
-            $table->string('huella_pdf', 64)->nullable(); // SHA-256 del PDF firmado
+                // Enlace de firma (solo se guarda la huella del token)
+                $table->string('token_hash', 64)->nullable()->unique();
+                $table->text('token_cifrado')->nullable(); // para reenviar el mismo enlace (recordatorios)
+                $table->timestamp('token_expira_at')->nullable();
 
-            $table->timestamp('recordatorio_enviado_at')->nullable();
-            $table->timestamp('vencimiento_avisado_at')->nullable();
+                // Firmante
+                $table->string('firmante_nombre')->nullable();
+                $table->string('firmante_documento', 30)->nullable();
+                $table->string('firmante_celular', 20)->nullable();
+                $table->string('firmante_email')->nullable();
 
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('anulado_at')->nullable();
-            $table->text('motivo_anulacion')->nullable();
-            $table->foreignId('anulado_por')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
+                // Evidencia de la firma
+                $table->timestamp('enviado_at')->nullable();
+                $table->timestamp('visto_at')->nullable();
+                $table->timestamp('firmado_at')->nullable();
+                $table->string('firma_path')->nullable(); // imagen de la firma del contratante (privada)
+                $table->string('firma_ip', 45)->nullable();
+                $table->text('firma_user_agent')->nullable();
+                $table->string('firma_canal_codigo', 10)->nullable(); // sms | correo
+                $table->string('firma_destino_codigo')->nullable(); // enmascarado
+                $table->string('pdf_firmado_path')->nullable();
+                $table->string('huella_pdf', 64)->nullable(); // SHA-256 del PDF firmado
 
-            $table->index(['contrato_id', 'estado']);
-            $table->index(['empresa_id', 'estado']);
-        });
+                $table->timestamp('recordatorio_enviado_at')->nullable();
+                $table->timestamp('vencimiento_avisado_at')->nullable();
 
-        Schema::create('codigos_firma', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('documento_contrato_id')->constrained('documentos_contrato')->cascadeOnDelete();
-            $table->string('canal', 10); // sms | correo
-            $table->string('destino'); // enmascarado
-            $table->string('codigo_hash', 64);
-            $table->timestamp('expira_at');
-            $table->unsignedTinyInteger('intentos')->default(0);
-            $table->timestamp('usado_at')->nullable();
-            $table->string('ip', 45)->nullable();
-            $table->timestamps();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamp('anulado_at')->nullable();
+                $table->text('motivo_anulacion')->nullable();
+                $table->foreignId('anulado_por')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamps();
 
-            $table->index(['documento_contrato_id', 'created_at']);
-        });
+                $table->index(['contrato_id', 'estado']);
+                $table->index(['empresa_id', 'estado']);
+            });
+        }
 
-        Schema::create('eventos_documento_contrato', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('documento_contrato_id')->constrained('documentos_contrato')->cascadeOnDelete();
-            $table->string('evento', 30);
-            $table->string('ip', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->json('detalle')->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('created_at')->nullable();
+        if (! Schema::hasTable('codigos_firma')) {
+            Schema::create('codigos_firma', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('documento_contrato_id')->constrained('documentos_contrato')->cascadeOnDelete();
+                $table->string('canal', 10); // sms | correo
+                $table->string('destino'); // enmascarado
+                $table->string('codigo_hash', 64);
+                $table->timestamp('expira_at');
+                $table->unsignedTinyInteger('intentos')->default(0);
+                $table->timestamp('usado_at')->nullable();
+                $table->string('ip', 45)->nullable();
+                $table->timestamps();
 
-            $table->index(['documento_contrato_id', 'created_at']);
-        });
+                $table->index(['documento_contrato_id', 'created_at']);
+            });
+        }
 
-        Schema::create('envios_mensaje', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('empresa_id')->constrained('empresas')->cascadeOnDelete();
-            $table->foreignId('documento_contrato_id')->nullable()->constrained('documentos_contrato')->cascadeOnDelete();
-            $table->string('tipo', 30); // enlace_firma | codigo_firma | contrato_firmado | recordatorio_firma | prueba
-            $table->string('canal', 10); // sms | correo
-            $table->string('destino'); // enmascarado
-            $table->string('estado', 15)->default('pendiente'); // pendiente | enviado | fallido | omitido
-            $table->string('proveedor', 30)->nullable();
-            $table->string('referencia_proveedor')->nullable();
-            $table->text('error')->nullable();
-            $table->unsignedTinyInteger('intentos')->default(0);
-            $table->timestamp('enviado_at')->nullable();
-            $table->timestamps();
+        if (! Schema::hasTable('eventos_documento_contrato')) {
+            Schema::create('eventos_documento_contrato', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('documento_contrato_id')->constrained('documentos_contrato')->cascadeOnDelete();
+                $table->string('evento', 30);
+                $table->string('ip', 45)->nullable();
+                $table->text('user_agent')->nullable();
+                $table->json('detalle')->nullable();
+                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamp('created_at')->nullable();
 
-            $table->index(['empresa_id', 'canal', 'created_at']);
-        });
+                $table->index(['documento_contrato_id', 'created_at'], 'eventos_doc_contrato_fecha_index');
+            });
+        }
+
+        if (! Schema::hasTable('envios_mensaje')) {
+            Schema::create('envios_mensaje', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('empresa_id')->constrained('empresas')->cascadeOnDelete();
+                $table->foreignId('documento_contrato_id')->nullable()->constrained('documentos_contrato')->cascadeOnDelete();
+                $table->string('tipo', 30); // enlace_firma | codigo_firma | contrato_firmado | recordatorio_firma | prueba
+                $table->string('canal', 10); // sms | correo
+                $table->string('destino'); // enmascarado
+                $table->string('estado', 15)->default('pendiente'); // pendiente | enviado | fallido | omitido
+                $table->string('proveedor', 30)->nullable();
+                $table->string('referencia_proveedor')->nullable();
+                $table->text('error')->nullable();
+                $table->unsignedTinyInteger('intentos')->default(0);
+                $table->timestamp('enviado_at')->nullable();
+                $table->timestamps();
+
+                $table->index(['empresa_id', 'canal', 'created_at']);
+            });
+        }
 
         if (! Schema::hasTable('notifications')) {
             Schema::create('notifications', function (Blueprint $table) {
@@ -164,11 +187,11 @@ return new class extends Migration
         Schema::dropIfExists('plantillas_contrato');
 
         Schema::table('empresas', function (Blueprint $table) {
-            $table->dropColumn([
+            $table->dropColumn(array_filter([
                 'representante_expedicion', 'sitio_web', 'firma_representante_path', 'pie_documentos_path',
                 'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual',
                 'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
-            ]);
+            ], fn (string $c) => Schema::hasColumn('empresas', $c)));
         });
     }
 };

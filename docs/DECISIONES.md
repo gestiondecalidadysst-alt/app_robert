@@ -50,4 +50,5 @@
 | 2026-10-31 | Un contrato con documento emitido no se edita: se anula el documento y se emite otro. Anular el contrato anula su documento. | El texto firmado debe coincidir con los datos. | Permitir editar y reemitir en silencio. |
 | 2026-10-31 | Límites de las páginas públicas con limitadores con nombre (clave propia por IP). | `throttle:N,1` comparte la misma clave entre rutas y bloqueaba al cliente con pocas visitas. | Límites numéricos por ruta. |
 | 2026-10-31 | Notificaciones en la campana del panel (contrato firmado, enlace vencido). | Aviso a quien emitió sin depender del correo. | Solo correo. |
+| 2026-10-31 | La migración de contratos y firma se rehízo para poder volver a correr sobre un despliegue que falló a medias (agrega solo las columnas y tablas que falten) y con un nombre de índice corto. Las pruebas se corren también sobre MySQL/MariaDB antes de subir migraciones. | En MySQL el índice `eventos_documento_contrato_documento_contrato_id_created_at_index` (65 caracteres) superó el máximo de 64 y el despliegue quedó a medias; SQLite no lo detecta. | Pedir al usuario borrar columnas a mano. |
 
