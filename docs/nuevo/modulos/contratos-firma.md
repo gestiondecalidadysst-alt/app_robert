@@ -48,7 +48,7 @@ Estados del documento: Emitido, Enviado para firma, Visto por el cliente, Firmad
 
 ### Mensajería
 - `app/Services/Mensajeria/OnurixSms.php`: `POST {ONURIX_URL}/send-sms` (client, key, phone, sms, country_code) y `GET /balance`. URL por defecto `https://www.onurix.com/api/v1` (configurable con `ONURIX_URL`).
-- `app/Services/Mensajeria/Mensajero.php`: envía y registra cada mensaje (destino enmascarado, sin contenido). Código de verificación: envío inmediato; enlaces, recordatorios y copias: en cola con reintentos (`app/Jobs/EnviarSms.php`, `EnviarCorreo.php`, **cifrados** en la cola).
+- `app/Services/Mensajeria/Mensajero.php`: envía y registra cada mensaje (destino enmascarado, sin contenido). Código de verificación y enlace enviado con el botón: envío inmediato (se ve en pantalla si Onurix lo aceptó o el error); recordatorios y correos: en cola con reintentos (`app/Jobs/EnviarSms.php`, `EnviarCorreo.php`, **cifrados** en la cola).
 - `app/Mail/CorreoFirmaContrato.php` + `resources/views/correo/firma-contrato.blade.php`: enlace, recordatorio, código y contrato firmado (PDF adjunto).
 
 ### Base de datos

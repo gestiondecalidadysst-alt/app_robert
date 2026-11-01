@@ -86,8 +86,11 @@ class EnviarParaFirma
 
         if ($celular) {
             $texto = self::textoSms($nombreEmpresa, $numero, $enlace, $documento->token_expira_at->format('d/m'), $recordatorio);
-            $envio = Mensajero::sms($empresa, $tipo, $celular, $texto, $documento);
-            $envio->estado === 'omitido' ? $omitidos[] = 'SMS: ' . $envio->error : $canales[] = 'SMS ' . Contacto::ocultarCelular($celular);
+            // El envío manual va de inmediato (quien envía ve si Onurix lo aceptó); el recordatorio, en cola.
+            $envio = Mensajero::sms($empresa, $tipo, $celular, $texto, $documento, ahora: ! $recordatorio);
+            in_array($envio->estado, ['omitido', 'fallido'], true)
+                ? $omitidos[] = 'SMS no enviado: ' . $envio->error
+                : $canales[] = 'SMS ' . Contacto::ocultarCelular($celular);
         }
 
         if ($email) {

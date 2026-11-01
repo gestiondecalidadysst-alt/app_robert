@@ -195,9 +195,10 @@ class DocumentosRelationManager extends RelationManager
                 if ($resultado['canales'] === []) {
                     $notificacion->warning()->title('No se envió ningún mensaje')
                         ->body(implode(' ', $resultado['omitidos']) . ' Use «Copiar enlace» para compartirlo.')->persistent();
+                } elseif ($resultado['omitidos']) {
+                    $notificacion->warning()->body('Por ' . implode(' y ', $resultado['canales']) . '. ' . implode(' ', $resultado['omitidos']))->persistent();
                 } else {
-                    $notificacion->success()->body('Por ' . implode(' y ', $resultado['canales']) . '.'
-                        . ($resultado['omitidos'] ? ' ' . implode(' ', $resultado['omitidos']) : ''));
+                    $notificacion->success()->body('Por ' . implode(' y ', $resultado['canales']) . '.');
                 }
 
                 $notificacion->send();
