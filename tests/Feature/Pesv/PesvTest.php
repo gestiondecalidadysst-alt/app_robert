@@ -464,4 +464,23 @@ class PesvTest extends ConfiguracionTestCase
         $this->post('/conductor/ingresar', ['documento' => '20000001', 'clave' => 'Ruta2026*'])->assertRedirect(route('conductor.inicio'));
         $this->get('/conductor')->assertOk()->assertSee('Servicios asignados');
     }
+
+    public function test_si_se_pierde_el_archivo_de_la_firma_se_vuelve_a_pedir(): void
+    {
+        $conductor = $this->conductor();
+        Storage::disk('local')->delete($conductor->firma_path);
+        $this->assertFalse($conductor->refresh()->tieneFirma());
+
+        try {
+            app(RegistrarInspeccion::class)($this->demo, TipoInspeccion::Preoperacional, $this->vehiculo(), $this->respuestas(), conductor: $conductor, kilometraje: 1);
+            $this->fail('Debió rechazar');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('Regístrela de nuevo', $e->errors()['conductor'][0]);
+        }
+
+        $this->entrarAlPortal();
+        $this->get('/conductor')->assertSee('Falta su firma');
+        $this->get(route('conductor.preoperacional', ['vehiculo' => $this->vehiculo()->id]))->assertRedirect(route('conductor.firma'));
+        $this->get('/conductor/firma')->assertOk();
+    }
 }

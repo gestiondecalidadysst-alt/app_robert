@@ -65,7 +65,9 @@ class RegistrarInspeccion
             if (! $conductor) {
                 $errores['conductor'] = 'El preoperacional lo registra el conductor.';
             } elseif (! $conductor->tieneFirma()) {
-                $errores['conductor'] = 'El conductor no tiene firma registrada. Regístrela antes de hacer el preoperacional.';
+                $errores['conductor'] = filled($conductor->firma_path)
+                    ? 'No se encontró el archivo de la firma del conductor. Regístrela de nuevo antes de hacer el preoperacional.'
+                    : 'El conductor no tiene firma registrada. Regístrela antes de hacer el preoperacional.';
             }
             if ($kilometraje === null) {
                 $errores['kilometraje'] = 'Escriba el kilometraje actual.';

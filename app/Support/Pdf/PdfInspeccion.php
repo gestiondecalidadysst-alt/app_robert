@@ -48,7 +48,19 @@ final class PdfInspeccion
         $filas = $inspecciones->sortBy('id')->flatMap(fn (Inspeccion $i) => $i->respuestas)
             ->unique(fn (array $r) => $r['grupo'] . '|' . $r['descripcion'])->values();
 
+        // Firma de cada conductor del período (la copia guardada en su último preoperacional del rango).
+        $firmas = $inspecciones->sortByDesc('id')
+            ->filter(fn (Inspeccion $i) => filled($i->datos['conductor']['documento'] ?? null))
+            ->groupBy(fn (Inspeccion $i) => $i->datos['conductor']['documento'])
+            ->map(fn ($grupo) => [
+                'nombre' => $grupo->first()->datos['conductor']['nombre'] ?? '',
+                'documento' => $grupo->first()->datos['conductor']['documento'],
+                'dias' => $grupo->map(fn (Inspeccion $i) => $i->fecha->format('d'))->unique()->sort()->values()->implode(', '),
+                'firma' => Imagenes::deDisco($grupo->first(fn (Inspeccion $i) => filled($i->firma_path))?->firma_path, Inspeccion::DISCO),
+            ])->values();
+
         $html = view('pdf.informe-preoperacional', [
+            'firmas' => $firmas,
             'vehiculo' => $vehiculo,
             'desde' => $desde,
             'hasta' => $hasta,

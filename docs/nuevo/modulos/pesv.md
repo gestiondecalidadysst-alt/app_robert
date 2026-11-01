@@ -143,6 +143,12 @@ El esquema está en `nuevo/datos.md`. Hay un seeder de demostración, `DemoPesvS
 - Da acceso al portal al conductor 20000001 con la clave `Ruta2026*` y le registra una firma.
 - Crea 6 preoperacionales de días anteriores, uno de ellos NO APTO, y una inspección mensual.
 
+## Archivos de firmas (importante al desplegar)
+- Las firmas del conductor y sus copias en cada inspección están en `storage/app/private`. **El servicio web necesita un volumen montado en `/var/www/html/storage/app`** (README, paso 4). Sin volumen, cada despliegue borra esos archivos.
+- Si el archivo de la firma del conductor no existe, `Conductor::tieneFirma()` devuelve falso: el portal la vuelve a pedir y `RegistrarInspeccion` no registra preoperacionales sin firma.
+- `GuardarFirmaConductor` comprueba que el archivo quedó escrito; si no, avisa y deja el error en el log.
+- El informe PDF incluye la sección **Firmas de los conductores**: la firma de cada conductor del período con sus días.
+
 ## Pendientes / ideas
 - Aviso por SMS al conductor cuando se le expide un FUEC (con `Mensajero`; consume saldo, así que sería opcional).
 - Fotos de las novedades en el preoperacional y orden de mantenimiento correctiva automática cuando un ítem crítico falla (módulo de mantenimiento).

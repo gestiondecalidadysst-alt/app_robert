@@ -25,7 +25,12 @@ class GuardarFirmaConductor
             : [FirmaManuscrita::desdeDataUri($firma), 'png'];
 
         $ruta = "conductores/{$conductor->empresa_id}/{$conductor->id}/firma-" . Str::lower(Str::random(10)) . ".{$extension}";
-        Storage::disk(self::DISCO)->put($ruta, $contenido);
+        // El disco no lanza errores (throw = false): se comprueba que el archivo quedó escrito.
+        if (! Storage::disk(self::DISCO)->put($ruta, $contenido) || ! Storage::disk(self::DISCO)->exists($ruta)) {
+            report(new \RuntimeException("No se pudo escribir la firma del conductor en storage/app/private/{$ruta}"));
+
+            throw ValidationException::withMessages(['firma' => 'El servidor no pudo guardar el archivo de la firma. Avise al administrador (permisos o volumen de la carpeta storage).']);
+        }
 
         $anterior = $conductor->firma_path;
 

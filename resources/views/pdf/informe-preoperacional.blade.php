@@ -90,6 +90,24 @@
 </table>
 <p class="sub" style="text-align: left; margin: 4px 0 0">✓ cumple · ✗ no cumple · N/A no aplica · * ítem crítico · A apto · NA no apto · conductor: últimos 4 dígitos del documento. Cada preoperacional tiene su PDF con la firma del conductor y su código de verificación.</p>
 
+@if ($firmas->isNotEmpty())
+    <p style="font-weight: bold; margin: 10px 0 4px; font-size: 8px">Firmas de los conductores</p>
+    <table>
+        <tr>
+            @foreach ($firmas as $f)
+                <td style="width: {{ floor(100 / max(3, $firmas->count())) }}%; vertical-align: bottom; padding-right: 14px">
+                    @if ($f['firma'])<img src="{{ $f['firma'] }}" style="height: 38px; max-width: 170px" alt="">@else<div style="height: 38px"></div>@endif
+                    <div style="border-top: 1px solid #111; padding-top: 2px; font-size: 6.6px">
+                        <strong>{{ $f['nombre'] }}</strong> · C.C. {{ $f['documento'] }}<br>
+                        Días: {{ $f['dias'] }} · firmado electrónicamente con su usuario
+                    </div>
+                </td>
+            @endforeach
+            @for ($k = $firmas->count(); $k < 3; $k++)<td></td>@endfor
+        </tr>
+    </table>
+@endif
+
 @if ($conFallas->isNotEmpty())
     <p style="font-weight: bold; margin: 10px 0 4px; font-size: 8px">Novedades y observaciones</p>
     <table class="lista">

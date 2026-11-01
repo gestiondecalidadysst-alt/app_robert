@@ -128,7 +128,10 @@ class Conductor extends Model
     /** Firma registrada una sola vez; se estampa en cada preoperacional (ver RegistrarInspeccion). */
     public function tieneFirma(): bool
     {
-        return filled($this->firma_path);
+        // También revisa el archivo: si se perdió (p. ej. un despliegue sin volumen en storage/app),
+        // el portal vuelve a pedirla en vez de registrar preoperacionales sin firma.
+        return filled($this->firma_path)
+            && \Illuminate\Support\Facades\Storage::disk(\App\Actions\Pesv\GuardarFirmaConductor::DISCO)->exists($this->firma_path);
     }
 
     public function asignacionesVigentes(): HasMany
