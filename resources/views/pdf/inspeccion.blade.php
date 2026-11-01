@@ -90,6 +90,7 @@
     <tr><th>Resultado</th><td>
         {{ count($i->respuestas) }} ítems revisados · {{ count($fallas) }} no cumple{{ count($fallas) === 1 ? '' : 'n' }}.
         @if (! $i->apta()) El vehículo <strong>no debe operar</strong> hasta corregir los ítems críticos. @endif
+        @if (! empty($d['plan_pendiente'])) Tenía pendiente el plan de acción {{ $d['plan_pendiente'] }} (falla crítica sin cerrar). @endif
     </td></tr>
     <tr><th>Observaciones</th><td>{{ $i->observaciones ?: '—' }}</td></tr>
 </table>

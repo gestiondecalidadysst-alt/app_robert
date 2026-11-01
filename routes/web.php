@@ -50,5 +50,12 @@ Route::prefix('conductor')->name('conductor.')->group(function () {
         Route::post('/preoperacional/{vehiculo}', [\App\Http\Controllers\Conductor\PreoperacionalController::class, 'guardar'])->name('preoperacional.guardar');
         Route::get('/historial', [\App\Http\Controllers\Conductor\PreoperacionalController::class, 'historial'])->name('historial');
         Route::get('/inspeccion/{inspeccion}/pdf', [\App\Http\Controllers\Conductor\PreoperacionalController::class, 'pdf'])->name('inspeccion.pdf');
+        Route::get('/mantenimiento', [\App\Http\Controllers\Conductor\MantenimientoController::class, 'inicio'])->name('mantenimiento');
+        Route::get('/mantenimiento/{vehiculo}', [\App\Http\Controllers\Conductor\MantenimientoController::class, 'formulario'])->name('mantenimiento.registrar');
+        Route::post('/mantenimiento/{vehiculo}', [\App\Http\Controllers\Conductor\MantenimientoController::class, 'guardar'])->name('mantenimiento.guardar');
     });
 });
+
+// Evidencias (facturas, fotos) de mantenimientos y planes de acción: disco privado, con permiso.
+Route::get('/evidencias/{evidencia}', \App\Http\Controllers\EvidenciaController::class)
+    ->middleware('auth')->whereNumber('evidencia')->name('evidencia');

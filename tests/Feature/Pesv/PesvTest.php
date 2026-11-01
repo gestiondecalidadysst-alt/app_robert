@@ -195,12 +195,23 @@ class PesvTest extends ConfiguracionTestCase
         $this->assertTrue($this->usuario('admin@demo.test')->notifications()->where('data', 'like', '%no apto%')->exists());
         $this->assertFalse($this->usuario('admin@ejemplo.test')->notifications()->exists());
 
-        // Un no crítico que falla no bloquea.
+        // La falla crítica abrió un plan de acción de prioridad alta: mientras esté pendiente, no queda apto.
+        $plan = \App\Models\PlanAccion::query()->deEmpresa($this->demo)->where('vehiculo_id', $this->vehiculo()->id)->pendientes()->firstOrFail();
+        $this->assertSame(\App\Enums\PrioridadPlan::Alta, $plan->prioridad);
+        $bloqueada = app(RegistrarInspeccion::class)($this->demo, TipoInspeccion::Preoperacional, $this->vehiculo(), $this->respuestas(),
+            conductor: $conductor, kilometraje: 2, usuario: $conductor->usuario);
+        $this->assertFalse($bloqueada->apta());
+        $this->assertSame($plan->numero, $bloqueada->datos['plan_pendiente']);
+
+        // Cerrado el plan, un no crítico que falla no bloquea (queda como novedad en el plan).
+        \App\Actions\Mantenimiento\GestionarPlanAccion::cerrar($plan, 'Corregido y verificado.');
         $noCritico = ItemChequeo::query()->deEmpresa($this->demo)->deTipo(TipoInspeccion::Preoperacional)->where('critico', false)->firstOrFail();
         $otra = app(RegistrarInspeccion::class)($this->demo, TipoInspeccion::Preoperacional, $this->vehiculo(),
             $this->respuestas(cambios: [$noCritico->id => ['respuesta' => 'no', 'observacion' => 'Sucio']]),
-            conductor: $conductor, kilometraje: 2, usuario: $conductor->usuario);
+            conductor: $conductor, kilometraje: 3, usuario: $conductor->usuario);
         $this->assertTrue($otra->apta());
+        $media = \App\Models\PlanAccion::query()->deEmpresa($this->demo)->where('vehiculo_id', $this->vehiculo()->id)->pendientes()->firstOrFail();
+        $this->assertSame(\App\Enums\PrioridadPlan::Media, $media->prioridad);
     }
 
     public function test_portal_tarjeta_preoperacional_y_extracto_bloqueado_hasta_hacerlo(): void

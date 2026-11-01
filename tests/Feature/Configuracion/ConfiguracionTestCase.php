@@ -32,7 +32,7 @@ abstract class ConfiguracionTestCase extends TestCase
 
     protected function usuario(string $email): User
     {
-        return User::where('email', $email)->firstOrFail();
+        return User::query()->withoutGlobalScopes()->where('email', $email)->firstOrFail();
     }
 
     /** Simula estar dentro del panel de empresa con la empresa indicada. */

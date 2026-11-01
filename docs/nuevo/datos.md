@@ -105,3 +105,34 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 
   Las inspecciones de la app anterior no tienen ítems críticos marcados: al migrarlas, su resultado se toma como «apto» salvo que la observación indique lo contrario. Hay que revisarlo con el usuario.
 
+## Módulo 6 – Mantenimiento (`2026_11_01_300001_create_mantenimiento.php`)
+- `rutinas_mantenimiento`: `nombre`, `clase_vehiculo_id` (vacía = todas), `vehiculo_id` (propia del vehículo), `intervalo_km`, `intervalo_meses`, `descripcion`, `orden`, `activo`.
+- `planes_accion`:
+  - **Origen:** `vehiculo_id`, `origen` (preoperacional | inspeccion | preventivo | manual), `inspeccion_id`, `rutina_mantenimiento_id`.
+  - **Contenido:**
+    - `prioridad` (alta | media | baja) y `titulo`.
+    - `hallazgos` (JSON). Cada hallazgo tiene `descripcion`, `critico`, `observacion`, `fecha` y `veces`.
+    - `accion`, `responsable` y `fecha_limite`.
+  - **Seguimiento:** `estado` (abierto | en_ejecucion | por_verificar | cerrado | rechazado), `reincidencias`, `observacion_cierre`, `cerrado_at`, `cerrado_por` y `user_id`.
+- `mantenimientos`:
+  - **Datos del trabajo:** `vehiculo_id`, `fecha`, `kilometraje`, `tipo` (preventivo | correctivo), `accion` (cambio | ajuste | revision | reparacion), `actividad`, `problema` y `repuestos`.
+  - **Taller y costo:** `taller`, `responsable_documento`, `responsable_nombre`, `valor` y `factura_numero`.
+  - **Vínculos y registro:** `plan_accion_id`, `conductor_id` (si lo registró el conductor) y `user_id`.
+  - **Anulación:** `anulado_at`, `motivo_anulacion` y `anulado_por`.
+- `mantenimiento_rutina`: tabla que relaciona cada mantenimiento con las rutinas que cumplió.
+- `evidencias`: tabla polimórfica (`adjuntable`: mantenimiento o plan de acción) con `path` (disco privado), `nombre`, `mime`, `tamano`, `descripcion` y `user_id`.
+- Correspondencia con la app anterior (`Mantenimientos`):
+
+| App anterior | Sistema nuevo |
+|---|---|
+| PREVENTIVO / CORRECTIVO | `tipo` |
+| CAMBIO / AJUSTE / REVISIÓN / REPARACIÓN | `accion` |
+| Actividad | `actividad` |
+| Problema | `problema` |
+| Repuesto | `repuestos` |
+| Centro automotriz | `taller` |
+| Documento y nombre del responsable | `responsable_*` |
+| Precio | `valor` |
+| Número de factura | `factura_numero` |
+| Adjunto de la factura | Una fila en `evidencias` |
+

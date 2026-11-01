@@ -148,6 +148,37 @@ class Vehiculo extends Model
         return $this->hasMany(Inspeccion::class);
     }
 
+    public function mantenimientos(): HasMany
+    {
+        return $this->hasMany(Mantenimiento::class);
+    }
+
+    public function planesAccion(): HasMany
+    {
+        return $this->hasMany(PlanAccion::class);
+    }
+
+    /**
+     * Kilometraje actual: el mayor reportado en preoperacionales, inspecciones o mantenimientos.
+     * Null si no hay ninguno.
+     */
+    public function kilometrajeActual(): ?int
+    {
+        $inspecciones = Inspeccion::query()->deEmpresa($this->empresa_id)->where('vehiculo_id', $this->id)->max('kilometraje');
+        $mantenimientos = Mantenimiento::query()->deEmpresa($this->empresa_id)->where('vehiculo_id', $this->id)->vigentes()->max('kilometraje');
+
+        $km = max((int) $inspecciones, (int) $mantenimientos);
+
+        return $km > 0 ? $km : null;
+    }
+
+    /** ¿Tiene un plan de acción de prioridad alta pendiente? (no puede quedar APTO hasta cerrarlo) */
+    public function planAltaPendiente(): ?PlanAccion
+    {
+        return PlanAccion::query()->deEmpresa($this->empresa_id)->where('vehiculo_id', $this->id)
+            ->pendientes()->where('prioridad', \App\Enums\PrioridadPlan::Alta->value)->oldest('id')->first();
+    }
+
     /** Último preoperacional del día (el que cuenta para operar y para ver el extracto). */
     public function preoperacionalDelDia(?\DateTimeInterface $fecha = null): ?Inspeccion
     {

@@ -58,6 +58,7 @@ class CrearEmpresa
 
             self::crearPlantillaContrato($empresa);
             ItemsBase::crear($empresa);
+            \App\Support\Mantenimiento\RutinasBase::crear($empresa);
 
             return $empresa;
         });

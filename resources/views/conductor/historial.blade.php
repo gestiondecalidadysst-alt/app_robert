@@ -1,10 +1,7 @@
 @extends('conductor.layout')
 @section('titulo', 'Mis preoperacionales')
 @section('cuerpo')
-<nav class="menu">
-    <a href="{{ route('conductor.inicio') }}">Servicios</a>
-    <a class="activo" href="{{ route('conductor.historial') }}">Mis preoperacionales</a>
-</nav>
+@include('conductor.partes.menu')
 <h1>Mis preoperacionales</h1>
 @forelse ($inspecciones as $i)
     <a class="tarjeta fila" href="{{ route('conductor.inspeccion.pdf', $i) }}" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; display:flex">

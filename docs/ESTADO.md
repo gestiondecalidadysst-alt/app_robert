@@ -14,6 +14,8 @@
 - [x] FUEC con el formato oficial (anverso y reverso) y sello Vigilado SuperTransporte.
 - [x] **Contratos: plantilla editable y firma electrónica** (enlace + código por SMS con Onurix, correo de respaldo, certificado de evidencias, verificación pública). 61 pruebas en verde. Detalle en `nuevo/modulos/contratos-firma.md`.
 - [x] **Módulo 5 – PESV y portal del conductor:** firma única del conductor, portal `/conductor` con tarjetas de servicio (Hacer preoperacional / Ver extracto, bloqueado hasta un preoperacional apto), ítems de chequeo configurables, inspección mensual, sin preoperacional hoy, PDF con firma y QR, informe mensual por vehículo. 75 pruebas en verde (SQLite y MySQL). Detalle en `nuevo/modulos/pesv.md`.
+- [x] **FUEC sin cruces de horario:** el vehículo y los conductores no se asignan a dos servicios que se cruzan (horas del FUEC). Ver `nuevo/modulos/operacion.md`, regla 8.
+- [x] **Módulo 6 – Mantenimiento:** planes de acción automáticos (fallas del preoperacional e inspecciones, rutinas vencidas) con evidencias y verificación; mantenimientos con evidencias (auxiliar, rol Mantenimiento y conductor desde el portal); plan preventivo por km y tiempo con semáforo; informe PDF. 94 pruebas en verde (SQLite y MySQL). Detalle en `nuevo/modulos/mantenimiento.md`.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
@@ -30,4 +32,5 @@
 
 ## Siguiente paso
 1. Redesplegar (web y worker), completar Mi empresa e Integraciones, firmar un contrato de prueba y hacer un preoperacional desde un celular.
-2. Elegir el siguiente módulo con el usuario: pagos de administración, mantenimiento y combustible, planillas y tiquetes, informes o alertas.
+2. Siguiente módulo sugerido: **Módulo 7 – Pagos de administración** (cuota mensual por vehículo, estado de cuenta; la app anterior bloqueaba el FUEC con administración atrasada). Después: 8 – Tablero de gerencia e informes; 9 – Planillas, tiquetes y caja.
+3. Montar el volumen de `storage/app` en Easypanel (firmas, evidencias, logos) — sin él se pierden en cada despliegue.

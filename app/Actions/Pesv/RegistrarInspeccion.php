@@ -126,7 +126,11 @@ class RegistrarInspeccion
 
         $noApto = collect($copia)->contains(fn (array $r) => $r['critico'] && $r['respuesta'] === 'no');
 
-        $inspeccion = DB::transaction(function () use ($empresa, $tipo, $vehiculo, $conductor, $fuec, $fecha, $kilometraje, $observaciones, $contexto, $usuario, $copia, $noApto) {
+        // Un plan de acción de prioridad alta pendiente (falla crítica sin corregir) deja el vehículo NO APTO.
+        $planAlta = $preoperacional ? $vehiculo->planAltaPendiente() : null;
+        $noApto = $noApto || $planAlta !== null;
+
+        $inspeccion = DB::transaction(function () use ($empresa, $tipo, $vehiculo, $conductor, $fuec, $fecha, $kilometraje, $observaciones, $contexto, $usuario, $copia, $noApto, $planAlta) {
             $codigo = Str::lower(Str::random(24));
             $firma = null;
 
@@ -145,7 +149,7 @@ class RegistrarInspeccion
                 'kilometraje' => $kilometraje,
                 'resultado' => $noApto ? ResultadoInspeccion::NoApto : ResultadoInspeccion::Apto,
                 'respuestas' => $copia,
-                'datos' => self::datos($empresa, $vehiculo, $conductor, $fuec, $usuario),
+                'datos' => [...self::datos($empresa, $vehiculo, $conductor, $fuec, $usuario), 'plan_pendiente' => $planAlta?->numero],
                 'observaciones' => filled($observaciones) ? Str::limit(trim($observaciones), 2000, '') : null,
                 'firma_path' => $firma,
                 'codigo_verificacion' => $codigo,
@@ -160,6 +164,16 @@ class RegistrarInspeccion
 
             return $inspeccion;
         });
+
+        // Fallas → plan de acción; nuevo kilometraje → revisa el preventivo. Un error aquí no deshace la inspección.
+        try {
+            \App\Actions\Mantenimiento\PlanesDesdeInspeccion::procesar($inspeccion);
+            if ($kilometraje !== null) {
+                \App\Actions\Mantenimiento\SeguimientoPreventivo::revisar($vehiculo);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         if ($noApto) {
             self::avisarNoApto($empresa, $inspeccion);
@@ -221,7 +235,8 @@ class RegistrarInspeccion
             ->each(fn (User $u) => Notification::make()
                 ->danger()
                 ->title("Vehículo {$inspeccion->placa} no apto")
-                ->body(($inspeccion->conductor_nombre ? "{$inspeccion->conductor_nombre}: " : '') . "falla en {$fallas}.")
+                ->body(($inspeccion->conductor_nombre ? "{$inspeccion->conductor_nombre}: " : '')
+                    . ($fallas !== '' ? "falla en {$fallas}." : "plan de acción {$inspeccion->datos['plan_pendiente']} pendiente de cierre."))
                 ->sendToDatabase($u));
 
         $registrar->setPermissionsTeamId($anterior);

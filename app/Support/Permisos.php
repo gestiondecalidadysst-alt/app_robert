@@ -46,6 +46,9 @@ final class Permisos
         'items_chequeo' => ['Ítems de chequeo (PESV)', 'Seguridad vial', ['ver', 'crear', 'editar', 'eliminar']],
         'inspecciones' => ['Preoperacionales e inspecciones', 'Seguridad vial', ['ver', 'crear']],
         'portal_conductor' => ['Acceso de conductores al portal', 'Conductores', ['crear']],
+        'mantenimientos' => ['Mantenimientos', 'Mantenimiento', ['ver', 'crear', 'anular']],
+        'planes_accion' => ['Planes de acción', 'Mantenimiento', ['ver', 'crear', 'editar']],
+        'rutinas_mantenimiento' => ['Rutinas preventivas', 'Mantenimiento', ['ver', 'crear', 'editar', 'eliminar']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -108,11 +111,15 @@ final class Permisos
                 'ver_fuecs', 'crear_fuecs',
                 'ver_plantillas_contrato', 'ver_documentos_contrato', 'crear_documentos_contrato',
                 'ver_items_chequeo', 'ver_inspecciones', 'crear_inspecciones', 'crear_portal_conductor',
+                'ver_mantenimientos', 'crear_mantenimientos', 'ver_planes_accion', 'ver_rutinas_mantenimiento',
             ],
             Rol::MANTENIMIENTO => [
                 'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',
                 'ver_conductores', 'ver_asignaciones_vehiculo',
                 'ver_items_chequeo', 'ver_inspecciones', 'crear_inspecciones',
+                'ver_mantenimientos', 'crear_mantenimientos', 'anular_mantenimientos',
+                'ver_planes_accion', 'crear_planes_accion', 'editar_planes_accion',
+                'ver_rutinas_mantenimiento', 'crear_rutinas_mantenimiento', 'editar_rutinas_mantenimiento', 'eliminar_rutinas_mantenimiento',
             ],
             Rol::CONDUCTOR => [],
         ];

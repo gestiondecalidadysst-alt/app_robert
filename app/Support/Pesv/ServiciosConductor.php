@@ -65,6 +65,8 @@ final class ServiciosConductor
         $motivo = match (true) {
             ! $vigente => 'El extracto se habilita el día del servicio, después del preoperacional.',
             ! $preop => 'Haga el preoperacional de hoy para ver el extracto.',
+            ! $preop->apta() && filled($preop->datos['plan_pendiente'] ?? null) && $preop->fallas() === []
+                => "El vehículo tiene el plan de acción {$preop->datos['plan_pendiente']} pendiente (falla crítica sin corregir). No queda apto hasta que la empresa lo cierre.",
             ! $preop->apta() => 'El vehículo quedó NO APTO en el preoperacional de hoy. Avise a la empresa.',
             default => null,
         };

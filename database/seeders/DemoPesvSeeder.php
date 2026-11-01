@@ -69,9 +69,27 @@ class DemoPesvSeeder extends Seeder
                 $respuestas[$item->id] = ['respuesta' => 'na'];
             }
 
-            $registrar($empresa, TipoInspeccion::Preoperacional, $vehiculo, $respuestas, conductor: $conductor,
+            $inspeccion = $registrar($empresa, TipoInspeccion::Preoperacional, $vehiculo, $respuestas, conductor: $conductor,
                 kilometraje: 125000 + $i * 180, contexto: ['ip' => '127.0.0.1', 'user_agent' => 'Demo'], usuario: $usuario,
                 fecha: today()->subDays($diasAtras));
+
+            // La falla crítica abrió un plan de acción: el propietario la corrige y la empresa lo cierra.
+            if (! $inspeccion->apta()) {
+                $plan = \App\Models\PlanAccion::query()->deEmpresa($empresa)->where('vehiculo_id', $vehiculo->id)->pendientes()->first();
+                app(\App\Actions\Mantenimiento\RegistrarMantenimiento::class)($empresa, $vehiculo, [
+                    'fecha' => today()->subDays($diasAtras)->toDateString(),
+                    'kilometraje' => 125000 + $i * 180 + 20,
+                    'tipo' => 'correctivo',
+                    'accion' => 'reparacion',
+                    'actividad' => 'Se corrigió la fuga y se completó el nivel de líquido de frenos.',
+                    'taller' => 'Taller demo',
+                    'valor' => 85000,
+                    'plan_accion_id' => $plan?->id,
+                ], usuario: User::firstWhere('email', 'admin@demo.test'));
+                if ($plan) {
+                    \App\Actions\Mantenimiento\GestionarPlanAccion::cerrar($plan->refresh(), 'Verificado en patio.', User::firstWhere('email', 'admin@demo.test'));
+                }
+            }
         }
 
         $mensual = ItemChequeo::query()->deEmpresa($empresa)->deTipo(TipoInspeccion::Mensual)->activos()->get()

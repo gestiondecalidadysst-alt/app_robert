@@ -1,10 +1,7 @@
 @extends('conductor.layout')
 @section('titulo', 'Mis servicios')
 @section('cuerpo')
-<nav class="menu">
-    <a class="activo" href="{{ route('conductor.inicio') }}">Servicios</a>
-    <a href="{{ route('conductor.historial') }}">Mis preoperacionales</a>
-</nav>
+@include('conductor.partes.menu')
 
 @if ($errors->any())<div class="error">{{ $errors->first() }}</div>@endif
 
@@ -14,6 +11,14 @@
         <p class="tenue" style="margin:0">Regístrela una sola vez para poder hacer los preoperacionales.</p>
         <div class="botones"><a class="boton" href="{{ route('conductor.firma') }}">Registrar mi firma</a></div>
     </div>
+@endif
+
+@php
+    $planesAltos = \App\Models\PlanAccion::query()->withoutGlobalScopes()->pendientes()->where('prioridad', 'alta')
+        ->whereIn('vehiculo_id', $vehiculos->pluck('vehiculo.id')->merge($tarjetas->pluck('fuec.vehiculo_id'))->filter()->unique())->count();
+@endphp
+@if ($planesAltos)
+    <div class="alerta">Hay {{ $planesAltos }} {{ $planesAltos === 1 ? 'plan de acción pendiente' : 'planes de acción pendientes' }} por fallas críticas. <a href="{{ route('conductor.mantenimiento') }}" style="color:inherit">Ver y registrar el arreglo</a>.</div>
 @endif
 
 <h1>Servicios asignados</h1>

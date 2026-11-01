@@ -47,7 +47,7 @@
     .alerta { background: #fef2f2; color: #7f1d1d; border: 2px solid #f87171; padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 600; margin-bottom: 12px; }
     .tenue { color: var(--tenue); font-size: 14px; }
     label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; }
-    input[type=text], input[type=password], input[type=number], input[type=tel], textarea { width: 100%; font-size: 17px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; background: #fff; }
+    input[type=text], input[type=password], input[type=number], input[type=tel], input[type=date], textarea { width: 100%; font-size: 17px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; background: #fff; }
     textarea { font-size: 15px; min-height: 76px; resize: vertical; }
     input:focus, textarea:focus { outline: 2px solid #fb923c; border-color: #fb923c; }
     .campo { margin-bottom: 14px; }

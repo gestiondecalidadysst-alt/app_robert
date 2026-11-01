@@ -156,6 +156,8 @@ class VehiculoResource extends Resource
             DocumentosRelationManager::class,
             ConductoresRelationManager::class,
             NovedadesRelationManager::class,
+            \App\Filament\App\Resources\Vehiculos\RelationManagers\MantenimientosRelationManager::class,
+            \App\Filament\App\Resources\Vehiculos\RelationManagers\PlanesAccionRelationManager::class,
         ];
     }
 
