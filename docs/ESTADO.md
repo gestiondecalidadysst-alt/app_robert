@@ -1,6 +1,6 @@
 # Estado del proyecto – Rediseño COOTRASEC (multiempresa)
 
-Última actualización: 2026-10-31
+Última actualización: 2026-11-01
 
 ## Hecho
 - [x] Relevamiento del legado (`legado/`), decisiones (`DECISIONES.md`) y arquitectura (`nuevo/ARQUITECTURA.md`).
@@ -13,6 +13,7 @@
 - [x] **Módulo 4 – Operación:** clientes, contratos con pagos y saldo, expedición del FUEC (Res. 6652/2019) con revisión en vivo, PDF con QR y verificación pública, anulación. 50 pruebas en verde. Detalle en `nuevo/modulos/operacion.md`.
 - [x] FUEC con el formato oficial (anverso y reverso) y sello Vigilado SuperTransporte.
 - [x] **Contratos: plantilla editable y firma electrónica** (enlace + código por SMS con Onurix, correo de respaldo, certificado de evidencias, verificación pública). 61 pruebas en verde. Detalle en `nuevo/modulos/contratos-firma.md`.
+- [x] **Módulo 5 – PESV y portal del conductor:** firma única del conductor, portal `/conductor` con tarjetas de servicio (Hacer preoperacional / Ver extracto, bloqueado hasta un preoperacional apto), ítems de chequeo configurables, inspección mensual, sin preoperacional hoy, PDF con firma y QR, informe mensual por vehículo. 75 pruebas en verde (SQLite y MySQL). Detalle en `nuevo/modulos/pesv.md`.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
@@ -25,6 +26,8 @@
 - [ ] En «Mi empresa»: subir la firma escaneada del representante, la cédula "expedida en", el sitio web y la imagen del pie (certificaciones).
 - [ ] FUEC electrónico por RUNT (Decreto 1048 de 2026): pendiente de reglamentación del Ministerio.
 
+- [ ] PESV: revisar con el usuario los ítems por defecto y cuáles son críticos (Seguridad vial → Ítems de chequeo); dar acceso al portal a los conductores.
+
 ## Siguiente paso
-1. Redesplegar (web y worker), completar Mi empresa e Integraciones, y firmar un contrato de prueba desde un celular.
-2. Módulo 5 – PESV: alistamiento diario (checklist del conductor con firma) e inspección mensual configurables, informes y el **informe preoperacional en PDF** del legado. La firma del conductor se toma **una vez** al crearlo (ver DECISIONES) y se estampa en cada PDF; reutilizar `FirmaManuscrita` y la mensajería (`Mensajero`). Al terminar, agregar "alistamiento del día" como validación en `ExpedirFuec`.
+1. Redesplegar (web y worker), completar Mi empresa e Integraciones, firmar un contrato de prueba y hacer un preoperacional desde un celular.
+2. Elegir el siguiente módulo con el usuario: pagos de administración, mantenimiento y combustible, planillas y tiquetes, informes o alertas.

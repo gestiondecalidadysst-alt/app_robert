@@ -78,3 +78,30 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 - `notifications`: notificaciones del panel (Laravel).
 - Legado: el contrato era un documento diligenciado a mano (plantilla Word/PDF); no hay datos que migrar a estas tablas.
 
+## Módulo 5 – PESV (`2026_11_01_100001_create_pesv.php`)
+- `users`: `email` pasa a ser opcional, porque los conductores entran con su documento; se agrega `debe_cambiar_clave`.
+- `conductores` (columnas nuevas): `firma_path` (disco privado) y `firma_actualizada_at`.
+- `items_chequeo` (una fila por ítem de la lista de cada empresa):
+  - `tipo`: preoperacional o mensual.
+  - `grupo` y `descripcion`.
+  - `critico`: si falla, el vehículo queda NO APTO.
+  - `orden` y `activo`.
+- `inspecciones` (preoperacionales e inspecciones mensuales):
+  - **Datos de la inspección:** `tipo`, `vehiculo_id`, `conductor_id`, `fuec_id`, `fecha`, `kilometraje` y `resultado` (apto o no_apto).
+  - **Copias al registrar:**
+    - `respuestas` (JSON): cada ítem con su grupo, descripción, si es crítico, la respuesta (si, no o na) y la observación.
+    - `datos` (JSON): empresa, vehículo, conductor con su licencia, FUEC, quién la registró y si fue el conductor.
+  - **Evidencia y verificación:** `observaciones`, `firma_path` (copia de la firma), `codigo_verificacion`, `ip`, `user_agent`, `latitud`, `longitud` y `user_id`.
+- Correspondencia con la app anterior:
+
+| App anterior | Sistema nuevo |
+|---|---|
+| Ítems del alistamiento diario (tabla parámetros «Alistamiento Día») y de la inspección mensual | `items_chequeo` |
+| `Alistamiento diario`, cada checklist | `inspecciones` de tipo preoperacional: un ítem marcado → `si`, sin marcar → `no` |
+| Kilometraje inicial | `kilometraje` |
+| Observación | `observaciones` |
+| Firma en base64 | Archivo de firma de la inspección |
+| `Inspección mensual`: S, N y N/A | `si`, `no` y `na` |
+
+  Las inspecciones de la app anterior no tienen ítems críticos marcados: al migrarlas, su resultado se toma como «apto» salvo que la observación indique lo contrario. Hay que revisarlo con el usuario.
+

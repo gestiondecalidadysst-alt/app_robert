@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -26,7 +27,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 
     protected $fillable = [
         'name', 'email', 'password', 'tipo_identificacion_id', 'documento', 'telefono',
-        'avatar_path', 'es_superadmin', 'activo', 'ultima_empresa_id', 'ultimo_acceso_at',
+        'avatar_path', 'es_superadmin', 'activo', 'debe_cambiar_clave', 'ultima_empresa_id', 'ultimo_acceso_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -39,6 +40,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
             'password' => 'hashed',
             'es_superadmin' => 'boolean',
             'activo' => 'boolean',
+            'debe_cambiar_clave' => 'boolean',
         ];
     }
 
@@ -50,6 +52,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
             ->using(EmpresaUsuario::class)
             ->withPivot(['oficina_id', 'activo'])
             ->withTimestamps();
+    }
+
+    /** Hojas de vida de conductor ligadas a este usuario (portal del conductor), en cualquier empresa. */
+    public function conductores(): HasMany
+    {
+        return $this->hasMany(Conductor::class, 'user_id')->withoutGlobalScopes()->whereNull('conductores.deleted_at');
     }
 
     public function ultimaEmpresa(): BelongsTo

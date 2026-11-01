@@ -5,7 +5,9 @@ namespace App\Filament\App\Resources\Conductores\Schemas;
 use App\Enums\EstadoDocumento;
 use App\Enums\TipoDocumentoConductor;
 use App\Models\AsignacionVehiculo;
+use App\Actions\Pesv\GuardarFirmaConductor;
 use App\Models\Conductor;
+use App\Support\Pdf\Imagenes;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Callout;
@@ -135,6 +137,32 @@ final class ConductorInfolist
                             TextEntry::make('comparendos_estado')->label('Situación')->badge()->placeholder('Sin consultar'),
                             TextEntry::make('comparendos_cantidad')->label('Cantidad'),
                             TextEntry::make('comparendos_consultado_el')->label('Consultado el')->date('d/m/Y')->placeholder('—'),
+                        ]),
+                    Tab::make('Firma y portal')
+                        ->icon(fn (Conductor $record) => $record->tieneFirma() && $record->user_id ? null : 'heroicon-m-exclamation-circle')
+                        ->columns(['default' => 1, 'md' => 3])
+                        ->schema([
+                            ImageEntry::make('firma')
+                                ->label('Firma registrada')
+                                ->state(fn (Conductor $record) => Imagenes::deDisco($record->firma_path, GuardarFirmaConductor::DISCO))
+                                ->imageHeight(80)
+                                ->extraImgAttributes(['style' => 'background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:4px'])
+                                ->placeholder('Sin firma. Regístrela en Editar → Firma, o el conductor la registra al entrar al portal.')
+                                ->helperText(fn (Conductor $record) => $record->firma_actualizada_at ? 'Desde el ' . $record->firma_actualizada_at->format('d/m/Y h:i a') : null),
+                            TextEntry::make('portal')
+                                ->label('Portal del conductor')
+                                ->state(fn (Conductor $record) => match (true) {
+                                    ! $record->usuario => 'Sin acceso',
+                                    ! $record->usuario->activo => 'Usuario inactivo',
+                                    $record->usuario->debe_cambiar_clave => 'Con clave temporal (aún no ha entrado)',
+                                    default => 'Activo',
+                                })
+                                ->badge()
+                                ->color(fn (string $state) => $state === 'Activo' ? 'success' : ($state === 'Sin acceso' ? 'gray' : 'warning'))
+                                ->helperText(fn (Conductor $record) => $record->usuario
+                                    ? 'Ingresa en ' . route('conductor.ingresar') . ' con su documento ' . $record->documento . '.'
+                                        . ($record->usuario->ultimo_acceso_at ? ' Último ingreso: ' . $record->usuario->ultimo_acceso_at->format('d/m/Y h:i a') . '.' : '')
+                                    : 'Use «Acceso al portal» para crearle usuario y clave.'),
                         ]),
                 ]),
         ]);

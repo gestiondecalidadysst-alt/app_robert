@@ -26,7 +26,7 @@
 - **Tres paneles:**
   - `/admin`: **Superadministrador** de SolucionesApp. Crea empresas y administra catálogos nacionales.
   - `/app`: **Empresa**. Todos los módulos de negocio.
-  - `/conductor`: **Portal del conductor**, una PWA. Se construye en el módulo 9.
+  - `/conductor`: **Portal del conductor** (Blade, instalable en el celular). Construido con el módulo 5 (PESV): servicios, preoperacional y extracto. Ver `modulos/pesv.md`.
 
 ## Catálogos: globales frente a por empresa
 - **Globales** (los administra el superadmin y se comparten entre empresas): departamentos, municipios (DANE), tipos de identificación, marcas, líneas, clases de vehículo, carrocerías, combustibles, tipos de servicio, categorías de licencia, EPS, ARL, niveles académicos y aseguradoras.

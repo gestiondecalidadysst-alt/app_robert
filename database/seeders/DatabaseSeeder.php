@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             CatalogosSeeder::class,
             PermisosSeeder::class,
             PlantillasContratoSeeder::class,
+            ItemsChequeoSeeder::class,
         ]);
 
         if (! app()->isProduction()) {

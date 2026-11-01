@@ -15,6 +15,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
@@ -46,6 +47,10 @@ final class ConductorForm
                         ->icon('heroicon-o-exclamation-triangle')
                         ->columns(['default' => 1, 'md' => 3])
                         ->schema(self::comparendos()),
+                    Tab::make('Firma')
+                        ->icon('heroicon-o-pencil')
+                        ->columns(['default' => 1, 'md' => 2])
+                        ->schema(self::firma()),
                 ]),
         ]);
     }
@@ -90,6 +95,33 @@ final class ConductorForm
             TextInput::make('contacto_emergencia')->label('Contacto de emergencia')->maxLength(255),
             TextInput::make('telefono_emergencia')->label('Teléfono de emergencia')->tel()->maxLength(30),
             Textarea::make('observaciones')->rows(2)->columnSpanFull(),
+        ];
+    }
+
+    /**
+     * Firma única del conductor (se estampa en cada preoperacional). Se dibuja aquí con el conductor
+     * presente o se sube escaneada; si no, el conductor la registra al entrar por primera vez al portal.
+     * La guardan CrearConductor / EditarConductor con App\Actions\Pesv\GuardarFirmaConductor.
+     */
+    public static function firma(): array
+    {
+        return [
+            Text::make(fn (?Conductor $record) => $record?->tieneFirma()
+                ? 'Firma registrada el ' . $record->firma_actualizada_at?->format('d/m/Y h:i a') . '. Dibuje o suba una nueva solo si quiere reemplazarla (los preoperacionales anteriores conservan la firma que tenían).'
+                : 'Pídale al conductor que firme aquí con el dedo o el mouse, o suba su firma escaneada. Se pondrá en cada preoperacional que registre con su usuario. Si no está presente, la registra él mismo al entrar al portal del conductor.')
+                ->color('gray')
+                ->columnSpanFull(),
+            ViewField::make('firma_dibujada')
+                ->label('Firma dibujada')
+                ->view('filament.campos.firma')
+                ->dehydrated(),
+            FileUpload::make('firma_archivo')
+                ->label('O suba la firma escaneada')
+                ->helperText('PNG o JPG, máximo 2 MB, preferiblemente con fondo blanco.')
+                ->image()
+                ->acceptedFileTypes(['image/png', 'image/jpeg'])
+                ->maxSize(2048)
+                ->storeFiles(false),
         ];
     }
 

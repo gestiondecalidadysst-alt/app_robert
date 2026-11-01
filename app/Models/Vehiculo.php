@@ -143,6 +143,22 @@ class Vehiculo extends Model
         return $this->hasMany(AsignacionVehiculo::class);
     }
 
+    public function inspecciones(): HasMany
+    {
+        return $this->hasMany(Inspeccion::class);
+    }
+
+    /** Último preoperacional del día (el que cuenta para operar y para ver el extracto). */
+    public function preoperacionalDelDia(?\DateTimeInterface $fecha = null): ?Inspeccion
+    {
+        return Inspeccion::query()->deEmpresa($this->empresa_id)
+            ->where('vehiculo_id', $this->id)
+            ->preoperacionales()
+            ->delDia($fecha)
+            ->latest('id')
+            ->first();
+    }
+
     public function asignacionesVigentes(): HasMany
     {
         return $this->asignaciones()->whereNull('fecha_hasta');

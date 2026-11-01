@@ -331,7 +331,7 @@ class FirmaContratoTest extends ConfiguracionTestCase
         $this->post(route('contrato.firma.codigo', $token))->assertSessionHasErrors('codigo');
         $this->artisan('ruta:firmas')->assertSuccessful();
         $this->assertNotNull($documento->fresh()->vencimiento_avisado_at);
-        $this->assertSame(1, $this->usuario('admin@demo.test')->notifications()->count());
+        $this->assertSame(1, $this->usuario('admin@demo.test')->notifications()->where('data', 'like', '%enlace de firma%')->count());
 
         // Reenviar renueva el enlace.
         $this->entrarComo('admin@demo.test');

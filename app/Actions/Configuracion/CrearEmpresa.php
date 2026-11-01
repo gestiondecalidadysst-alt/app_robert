@@ -9,6 +9,7 @@ use App\Support\Contratos\PlantillaBase;
 use App\Models\Rol;
 use App\Models\User;
 use App\Support\Permisos;
+use App\Support\Pesv\ItemsBase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -56,6 +57,7 @@ class CrearEmpresa
             (new AsignarRol)($usuario, $empresa, Rol::ADMINISTRADOR);
 
             self::crearPlantillaContrato($empresa);
+            ItemsBase::crear($empresa);
 
             return $empresa;
         });

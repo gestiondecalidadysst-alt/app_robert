@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Detrás del proxy de Easypanel (Traefik): respeta HTTPS y la IP real del visitante.
         $middleware->trustProxies(at: '*');
+        $middleware->alias(['conductor' => \App\Http\Middleware\EsConductor::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

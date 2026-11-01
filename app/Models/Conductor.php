@@ -53,6 +53,7 @@ class Conductor extends Model
             'comparendos_cantidad' => 'integer',
             'fecha_nacimiento' => 'date',
             'fecha_ingreso' => 'date',
+            'firma_actualizada_at' => 'datetime',
         ];
     }
 
@@ -117,6 +118,17 @@ class Conductor extends Model
     public function asignaciones(): HasMany
     {
         return $this->hasMany(AsignacionVehiculo::class);
+    }
+
+    public function inspecciones(): HasMany
+    {
+        return $this->hasMany(Inspeccion::class);
+    }
+
+    /** Firma registrada una sola vez; se estampa en cada preoperacional (ver RegistrarInspeccion). */
+    public function tieneFirma(): bool
+    {
+        return filled($this->firma_path);
     }
 
     public function asignacionesVigentes(): HasMany

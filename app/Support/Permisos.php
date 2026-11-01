@@ -43,6 +43,9 @@ final class Permisos
         'pagos_contrato' => ['Pagos de contratos', 'Operación', ['ver', 'crear', 'eliminar']],
         'fuecs' => ['FUEC (extractos)', 'Operación', ['ver', 'crear', 'anular']],
         'documentos_contrato' => ['Contratos: emisión y firma', 'Operación', ['ver', 'crear', 'anular']],
+        'items_chequeo' => ['Ítems de chequeo (PESV)', 'Seguridad vial', ['ver', 'crear', 'editar', 'eliminar']],
+        'inspecciones' => ['Preoperacionales e inspecciones', 'Seguridad vial', ['ver', 'crear']],
+        'portal_conductor' => ['Acceso de conductores al portal', 'Conductores', ['crear']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -104,10 +107,12 @@ final class Permisos
                 'ver_pagos_contrato', 'crear_pagos_contrato',
                 'ver_fuecs', 'crear_fuecs',
                 'ver_plantillas_contrato', 'ver_documentos_contrato', 'crear_documentos_contrato',
+                'ver_items_chequeo', 'ver_inspecciones', 'crear_inspecciones', 'crear_portal_conductor',
             ],
             Rol::MANTENIMIENTO => [
                 'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',
                 'ver_conductores', 'ver_asignaciones_vehiculo',
+                'ver_items_chequeo', 'ver_inspecciones', 'crear_inspecciones',
             ],
             Rol::CONDUCTOR => [],
         ];
