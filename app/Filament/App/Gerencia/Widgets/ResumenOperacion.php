@@ -32,7 +32,8 @@ class ResumenOperacion extends StatsOverviewWidget
         return [
             Stat::make('Extractos expedidos', $o['extractos'])
                 ->description("{$o['extractos_anulados']} anulados · {$o['contratos_nuevos']} contratos nuevos")
-                ->icon('heroicon-o-document-check')->color('primary')->url(FuecResource::getUrl()),
+                ->icon('heroicon-o-document-check')->color('primary')->url(FuecResource::getUrl())
+                ->chart($this->seccion('serie')['extractos']),
             Stat::make('Servicios', $o['servicios'])
                 ->description("{$o['servicios_con_extracto']} con extracto · {$o['servicios_sin_asignar']} sin vehículo o conductor")
                 ->icon('heroicon-o-calendar-days')->color($o['servicios_sin_asignar'] ? 'warning' : 'primary')->url(Planeador::getUrl()),

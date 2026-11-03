@@ -2,22 +2,16 @@
 
 namespace App\Filament\App\Gerencia\Widgets;
 
-use App\Filament\App\Gerencia\UsaIndicadores;
-use Filament\Widgets\ChartWidget;
+use App\Support\Graficas\Paleta;
+use Filament\Support\RawJs;
 
-class CarteraPorEdades extends ChartWidget
+class CarteraPorEdades extends Grafica
 {
-    use UsaIndicadores;
+    protected static ?int $sort = 18;
 
-    protected int|string|array $columnSpan = 'full';
-
-    protected static ?int $sort = 8;
-
-    protected ?string $heading = 'Cartera de contratos por edades (a hoy)';
+    protected ?string $heading = 'Cartera por edades (a hoy)';
 
     protected ?string $description = 'Días vencidos desde la fecha límite de pago (o el fin del contrato).';
-
-    protected ?string $maxHeight = '260px';
 
     protected function getType(): string
     {
@@ -29,17 +23,13 @@ class CarteraPorEdades extends ChartWidget
         $e = $this->seccion('cartera')['edades'];
 
         return [
-            'labels' => ['Sin vencer', '1–30 días', '31–60 días', '61–90 días', 'Más de 90 días'],
-            'datasets' => [[
-                'label' => 'Saldo',
-                'data' => array_values($e),
-                'backgroundColor' => ['#15803d', '#ca8a04', '#ea580c', '#dc2626', '#7f1d1d'],
-            ]],
+            'labels' => ['Sin vencer', '1–30 días', '31–60 días', '61–90 días', 'Más de 90'],
+            'datasets' => [Paleta::serieBarras('Saldo', array_values($e), [Paleta::BIEN, Paleta::ATENCION, Paleta::SERIO, Paleta::CRITICO, Paleta::MUY_CRITICO])],
         ];
     }
 
-    protected function getOptions(): array
+    protected function getOptions(): RawJs
     {
-        return ['plugins' => ['legend' => ['display' => false]]];
+        return Paleta::enPesos(Paleta::barras(leyenda: false));
     }
 }

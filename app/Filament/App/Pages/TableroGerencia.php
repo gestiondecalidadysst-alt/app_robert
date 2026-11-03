@@ -2,7 +2,17 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Gerencia\Widgets\CarteraPorCliente;
 use App\Filament\App\Gerencia\Widgets\CarteraPorEdades;
+use App\Filament\App\Gerencia\Widgets\ExtractosPeriodo;
+use App\Filament\App\Gerencia\Widgets\FlotaPorEstado;
+use App\Filament\App\Gerencia\Widgets\MantenimientosPorTipo;
+use App\Filament\App\Gerencia\Widgets\PagosPorTipo;
+use App\Filament\App\Gerencia\Widgets\PreoperacionalEstado;
+use App\Filament\App\Gerencia\Widgets\RecaudoPeriodo;
+use App\Filament\App\Gerencia\Widgets\ServiciosPorVehiculo;
+use App\Filament\App\Gerencia\Widgets\TendenciaExtractos;
+use App\Filament\App\Gerencia\Widgets\TendenciaPreoperacional;
 use App\Filament\App\Gerencia\Widgets\ResumenCartera;
 use App\Filament\App\Gerencia\Widgets\ResumenFlota;
 use App\Filament\App\Gerencia\Widgets\ResumenMantenimiento;
@@ -10,7 +20,6 @@ use App\Filament\App\Gerencia\Widgets\ResumenOperacion;
 use App\Filament\App\Gerencia\Widgets\ResumenSeguridadVial;
 use App\Filament\App\Gerencia\Widgets\TablasGerencia;
 use App\Filament\App\Gerencia\Widgets\TendenciaFinanciera;
-use App\Filament\App\Gerencia\Widgets\TendenciaOperativa;
 use App\Models\Oficina;
 use App\Support\Gerencia\InformeGerencia;
 use App\Support\Gerencia\Indicadores;
@@ -82,16 +91,25 @@ class TableroGerencia extends Dashboard
             ResumenCartera::class,
             ResumenSeguridadVial::class,
             ResumenMantenimiento::class,
-            TendenciaFinanciera::class,
-            TendenciaOperativa::class,
+            FlotaPorEstado::class,
+            PagosPorTipo::class,
+            PreoperacionalEstado::class,
+            RecaudoPeriodo::class,
+            ExtractosPeriodo::class,
             CarteraPorEdades::class,
+            TendenciaFinanciera::class,
+            CarteraPorCliente::class,
+            TendenciaExtractos::class,
+            TendenciaPreoperacional::class,
+            ServiciosPorVehiculo::class,
+            MantenimientosPorTipo::class,
             TablasGerencia::class,
         ];
     }
 
     public function getColumns(): int|array
     {
-        return ['md' => 2];
+        return ['md' => 2, 'xl' => 3];
     }
 
     protected function getHeaderActions(): array

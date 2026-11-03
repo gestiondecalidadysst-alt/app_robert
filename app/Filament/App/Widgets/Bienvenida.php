@@ -24,7 +24,7 @@ class Bienvenida extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?int $sort = -10;
+    protected static ?int $sort = 50;
 
     protected function getViewData(): array
     {

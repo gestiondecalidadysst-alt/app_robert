@@ -69,3 +69,46 @@
 - **Comando:** `Console/Commands/InformeMensualGerencia.php`.
 - **Pruebas:** `tests/Feature/Gerencia/GerenciaTest.php`, con 6 pruebas.
 - **Fechas:** los rangos de fecha usan `whereDate` en los dos extremos, porque en SQLite las fechas se guardan con la hora.
+
+## Más gráficas e Inicio operativo (2026-11-03)
+**Pedido del usuario:**
+- Más gráficas, con colores llamativos, en el tablero de gerencia.
+- En el Inicio, la información operativa: contratos, extractos, cartera, pendientes por cobro, y si cada pago fue abono o pago total.
+
+### Colores
+- `App\Support\Graficas\Paleta`: paleta de 7 colores validada con el verificador de la skill dataviz (separación para daltonismo y para visión normal), que se asigna siempre en el mismo orden.
+- Los estados (bien, atención, serio y crítico) tienen colores fijos y siempre van con su etiqueta.
+- **Sin gráficas de doble eje:** la gráfica de extractos con preoperacional se separó en dos.
+- Los valores en pesos se formatean en los ejes y en los recuadros emergentes con `Paleta::enPesos`. Las opciones van sin comillas dobles, porque Filament las pone dentro de un atributo HTML.
+
+### Tablero de gerencia: 12 gráficas
+- **Donas:**
+  - flota por estado;
+  - recaudo por tipo de pago (abono, abono final o pago total);
+  - preoperacional en días con extracto (apto, no apto o sin hacer);
+  - mantenimientos preventivos y correctivos.
+- **Barras del periodo:** recaudo y extractos, por día si son hasta 62 días y, si no, por mes.
+- **Barras de cartera:** cartera por edades, y pendiente por cobrar por cliente.
+- **Barras de servicio:** días de servicio por vehículo.
+- **12 meses:**
+  - recaudo frente a costo de mantenimiento;
+  - extractos (línea);
+  - cumplimiento del preoperacional (línea).
+- **Minigráficas** en los indicadores de extractos y recaudo.
+- **Métodos nuevos en `Indicadores`:** `pagosPorTipo`, `serie`, `carteraPorCliente`, `serviciosPorVehiculo` y `detallePreoperacional`.
+
+### Inicio
+Widgets en `app/Filament/App/Widgets`; cada uno se ve según el permiso del usuario:
+- **Hoy en la operación:**
+  - contratos vigentes y su valor;
+  - extractos vigentes hoy, con minigráfica del mes;
+  - servicios de hoy y cuántos van sin extracto;
+  - pendiente por cobrar y lo vencido;
+  - recaudado en el mes y en el día, con minigráfica;
+  - pagos del mes por tipo.
+- **Gráficas:** pagos del mes por tipo (dona) y recaudo por día del mes.
+- **Pendientes por cobrar:** contratos con saldo, del más vencido al que vence después, con la etiqueta «Vencido hace X días» o «Vence en X días» y el botón «Registrar pago».
+- **Últimos pagos recibidos:** con la etiqueta Abono, Abono final, Pago total o Anulado, el saldo después de cada pago y el enlace al recibo.
+- **Extractos vigentes hoy:** con el estado del preoperacional del vehículo (apto, no apto o pendiente).
+- **Accesos rápidos:** al final.
+

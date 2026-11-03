@@ -196,13 +196,15 @@ final class Indicadores
     public function pesv(): array
     {
         $servicios = $this->servicios();
-        [$exigidos, $cumplidos] = $this->cumplimientoPreoperacional($this->desde, $this->corte);
+        $detalle = $this->detallePreoperacional($this->desde, $this->corte);
+        [$exigidos, $cumplidos] = [$detalle['exigidos'], $detalle['aptos']];
         $conExtracto = $servicios->whereNotNull('fuec_id');
         $pendientes = PlanAccion::query()->deEmpresa($this->empresaId)->pendientes();
 
         return [
             'preop_cumplimiento' => $exigidos ? (int) round(100 * $cumplidos / $exigidos) : null,
             'preop_exigidos' => $exigidos,
+            'preop_detalle' => $detalle,
             'preop_cumplidos' => $cumplidos,
             'preop_no_aptos' => Inspeccion::query()->deEmpresa($this->empresaId)->preoperacionales()
                 ->where('resultado', ResultadoInspeccion::NoApto->value)
@@ -224,8 +226,22 @@ final class Indicadores
      */
     public function cumplimientoPreoperacional(Carbon $desde, Carbon $hasta): array
     {
+        $d = $this->detallePreoperacional($desde, $hasta);
+
+        return [$d['exigidos'], $d['aptos']];
+    }
+
+    /**
+     * Días-vehículo con extracto vigente (hasta $hasta) según lo que pasó ese día:
+     * preoperacional APTO, solo NO APTO, o sin preoperacional.
+     *
+     * @return array{exigidos:int, aptos:int, no_aptos:int, sin_hacer:int}
+     */
+    public function detallePreoperacional(Carbon $desde, Carbon $hasta): array
+    {
+        $vacio = ['exigidos' => 0, 'aptos' => 0, 'no_aptos' => 0, 'sin_hacer' => 0];
         if ($hasta->lt($desde)) {
-            return [0, 0];
+            return $vacio;
         }
 
         $pares = [];
@@ -242,16 +258,25 @@ final class Indicadores
             });
 
         if (! $pares) {
-            return [0, 0];
+            return $vacio;
         }
 
-        $aptos = Inspeccion::query()->deEmpresa($this->empresaId)->preoperacionales()
-            ->where('resultado', ResultadoInspeccion::Apto->value)
+        $resultados = Inspeccion::query()->deEmpresa($this->empresaId)->preoperacionales()
             ->whereDate('fecha', '>=', $desde->toDateString())->whereDate('fecha', '<=', $hasta->toDateString())
-            ->get(['vehiculo_id', 'fecha'])
-            ->mapWithKeys(fn (Inspeccion $i) => [$i->vehiculo_id . '|' . $i->fecha->toDateString() => true]);
+            ->get(['vehiculo_id', 'fecha', 'resultado'])
+            ->groupBy(fn (Inspeccion $i) => $i->vehiculo_id . '|' . $i->fecha->toDateString())
+            ->map(fn ($g) => $g->contains(fn (Inspeccion $i) => $i->resultado === ResultadoInspeccion::Apto) ? 'apto' : 'no_apto');
 
-        return [count($pares), count(array_intersect_key($pares, $aptos->all()))];
+        $aptos = $noAptos = 0;
+        foreach (array_keys($pares) as $par) {
+            match ($resultados[$par] ?? null) {
+                'apto' => $aptos++,
+                'no_apto' => $noAptos++,
+                default => null,
+            };
+        }
+
+        return ['exigidos' => count($pares), 'aptos' => $aptos, 'no_aptos' => $noAptos, 'sin_hacer' => count($pares) - $aptos - $noAptos];
     }
 
     // ── Mantenimiento ─────────────────────────────────────────────────────
@@ -353,6 +378,77 @@ final class Indicadores
             })->all(),
             'costo_mantenimiento' => $meses->map(fn (Carbon $m) => $costo[$m->format('Y-m')] ?? 0.0)->all(),
         ];
+    }
+
+    // ── Datos para gráficas ───────────────────────────────────────────────
+
+    /** Pagos del periodo por tipo de recibo: abono, abono final (deja el saldo en cero) y pago total. */
+    public function pagosPorTipo(): array
+    {
+        $tipos = ['abono' => ['n' => 0, 'valor' => 0.0], 'abono_final' => ['n' => 0, 'valor' => 0.0], 'total' => ['n' => 0, 'valor' => 0.0]];
+        $this->pagos()->whereDate('fecha', '>=', $this->desde->toDateString())->whereDate('fecha', '<=', $this->hasta->toDateString())
+            ->with('contrato')->get()
+            ->each(function (PagoContrato $p) use (&$tipos): void {
+                $tipos[$p->tipo()]['n']++;
+                $tipos[$p->tipo()]['valor'] += (float) $p->valor;
+            });
+
+        return $tipos;
+    }
+
+    /**
+     * Recaudo y extractos expedidos a lo largo del periodo: por día si son hasta 62 días, si no por mes.
+     *
+     * @return array{etiquetas: list<string>, recaudo: list<float>, extractos: list<int>}
+     */
+    public function serie(): array
+    {
+        $porDia = $this->desde->diffInDays($this->hasta) <= 62;
+        $clave = fn ($f) => Carbon::parse($f)->format($porDia ? 'Y-m-d' : 'Y-m');
+        $puntos = [];
+        for ($d = $this->desde->copy(); $d->lte($this->hasta); $porDia ? $d->addDay() : $d->addMonthNoOverflow()->startOfMonth()) {
+            $puntos[$d->format($porDia ? 'Y-m-d' : 'Y-m')] = $porDia ? $d->format('d/m') : ucfirst($d->translatedFormat('M y'));
+        }
+
+        $recaudo = $this->pagos()->whereDate('fecha', '>=', $this->desde->toDateString())->whereDate('fecha', '<=', $this->hasta->toDateString())
+            ->get(['fecha', 'valor'])->groupBy(fn ($p) => $clave($p->fecha))->map(fn ($g) => (float) $g->sum('valor'));
+        $extractos = Fuec::query()->deEmpresa($this->empresaId)->noAnulados()
+            ->when($this->oficinaId, fn ($q) => $q->where('oficina_id', $this->oficinaId))
+            ->whereBetween('created_at', [$this->desde, $this->hasta])->get(['created_at'])
+            ->groupBy(fn ($f) => $clave($f->created_at->copy()->timezone(config('app.timezone'))))->map->count();
+
+        return [
+            'etiquetas' => array_values($puntos),
+            'recaudo' => array_map(fn ($k) => $recaudo[$k] ?? 0.0, array_keys($puntos)),
+            'extractos' => array_map(fn ($k) => (int) ($extractos[$k] ?? 0), array_keys($puntos)),
+        ];
+    }
+
+    /** Saldo por cobrar a hoy de los 8 clientes que más deben. */
+    public function carteraPorCliente(): array
+    {
+        return Contrato::query()->deEmpresa($this->empresaId)->noAnulados()
+            ->when($this->oficinaId, fn ($q) => $q->where('oficina_id', $this->oficinaId))
+            ->withSum(['pagos' => fn ($q) => $q->whereNull('anulado_at')], 'valor')->with('cliente')->get()
+            ->filter(fn (Contrato $c) => $c->saldo() > 0)
+            ->groupBy('cliente_id')
+            ->map(fn ($g) => ['cliente' => \Illuminate\Support\Str::limit($g->first()->cliente?->nombre ?? '—', 28), 'saldo' => (float) $g->sum(fn (Contrato $c) => $c->saldo())])
+            ->sortByDesc('saldo')->take(8)->values()->all();
+    }
+
+    /** Días de servicio por vehículo en el periodo (los 10 más usados). */
+    public function serviciosPorVehiculo(): array
+    {
+        $dias = [];
+        foreach ($this->servicios()->whereNotNull('vehiculo_id') as $s) {
+            $inicio = $s->fecha_inicio->copy()->max($this->desde->copy()->startOfDay());
+            $fin = $s->fecha_fin->copy()->min($this->hasta->copy()->startOfDay());
+            $dias[$s->vehiculo_id] = ($dias[$s->vehiculo_id] ?? 0) + max(0, (int) $inicio->diffInDays($fin) + 1);
+        }
+        arsort($dias);
+        $placas = Vehiculo::query()->deEmpresa($this->empresaId)->withTrashed()->whereKey(array_keys($dias))->pluck('placa', 'id');
+
+        return collect(array_slice($dias, 0, 10, true))->map(fn ($n, $id) => ['placa' => $placas[$id] ?? '—', 'dias' => $n])->values()->all();
     }
 
     // ── Consultas base ────────────────────────────────────────────────────

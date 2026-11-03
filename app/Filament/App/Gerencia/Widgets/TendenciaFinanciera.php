@@ -2,18 +2,16 @@
 
 namespace App\Filament\App\Gerencia\Widgets;
 
-use App\Filament\App\Gerencia\UsaIndicadores;
-use Filament\Widgets\ChartWidget;
+use App\Support\Graficas\Paleta;
+use Filament\Support\RawJs;
 
-class TendenciaFinanciera extends ChartWidget
+class TendenciaFinanciera extends Grafica
 {
-    use UsaIndicadores;
+    protected static ?int $sort = 15;
 
-    protected static ?int $sort = 6;
+    protected ?string $heading = 'Recaudo frente a costo de mantenimiento (12 meses)';
 
-    protected ?string $heading = 'Recaudo de contratos y costo de mantenimiento (12 meses)';
-
-    protected ?string $maxHeight = '260px';
+    protected int|string|array $columnSpan = ['md' => 2];
 
     protected function getType(): string
     {
@@ -27,9 +25,14 @@ class TendenciaFinanciera extends ChartWidget
         return [
             'labels' => $t['meses'],
             'datasets' => [
-                ['label' => 'Recaudo', 'data' => $t['recaudo'], 'backgroundColor' => '#15803d'],
-                ['label' => 'Costo de mantenimiento', 'data' => $t['costo_mantenimiento'], 'backgroundColor' => '#c2410c'],
+                Paleta::serieBarras('Recaudo', $t['recaudo'], Paleta::AZUL),
+                Paleta::serieBarras('Costo de mantenimiento', $t['costo_mantenimiento'], Paleta::NARANJA),
             ],
         ];
+    }
+
+    protected function getOptions(): RawJs
+    {
+        return Paleta::enPesos(Paleta::barras());
     }
 }

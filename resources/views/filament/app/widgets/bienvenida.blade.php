@@ -7,7 +7,7 @@
                     Hola, {{ \Illuminate\Support\Str::of($usuario->name)->before(' ') }}
                 </h2>
                 <p style="margin:.25rem 0 0" class="text-gray-600 dark:text-gray-300">
-                    Estás en <strong>{{ $empresa->getFilamentName() }}</strong>. El tablero de gerencia (contratos, FUEC, servicios y cartera) aparecerá aquí cuando se construyan esos módulos.
+                    Estás en <strong>{{ $empresa->getFilamentName() }}</strong>. Accesos rápidos a lo que más usa.
                 </p>
             </div>
 

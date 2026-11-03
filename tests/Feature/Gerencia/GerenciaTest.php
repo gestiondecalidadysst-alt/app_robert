@@ -10,7 +10,6 @@ use App\Filament\App\Gerencia\Widgets\ResumenOperacion;
 use App\Filament\App\Gerencia\Widgets\ResumenSeguridadVial;
 use App\Filament\App\Gerencia\Widgets\TablasGerencia;
 use App\Filament\App\Gerencia\Widgets\TendenciaFinanciera;
-use App\Filament\App\Gerencia\Widgets\TendenciaOperativa;
 use App\Filament\App\Pages\Informes;
 use App\Mail\CorreoInformeGerencia;
 use App\Models\Contrato;
@@ -99,8 +98,7 @@ class GerenciaTest extends ConfiguracionTestCase
         $this->get('/app/cootrasec-demo/gerencia')->assertOk()->assertSee('Tablero de gerencia');
         $this->get('/app/cootrasec-demo/informes')->assertOk();
 
-        foreach ([ResumenFlota::class, ResumenOperacion::class, ResumenCartera::class, ResumenSeguridadVial::class, ResumenMantenimiento::class,
-            TendenciaFinanciera::class, TendenciaOperativa::class, CarteraPorEdades::class, TablasGerencia::class] as $widget) {
+        foreach ((new \App\Filament\App\Pages\TableroGerencia)->getWidgets() as $widget) {
             Livewire::test($widget, ['pageFilters' => ['periodo' => 'anio']])->assertOk();
         }
         Livewire::test(ResumenCartera::class, ['pageFilters' => ['periodo' => 'mes']])->assertSee('$ 12.000.000');
@@ -113,6 +111,36 @@ class GerenciaTest extends ConfiguracionTestCase
 
         Livewire::test(Informes::class)->set('data.informe', 'contratos')->call('descargar')->assertFileDownloaded();
         Livewire::test(Informes::class)->set('data.informe', 'resumen')->call('descargar')->assertFileDownloaded();
+    }
+
+    public function test_datos_de_las_graficas_e_inicio_operativo(): void
+    {
+        $this->entrarComo('admin@demo.test');
+        $i = $this->mes();
+
+        $t = $i->pagosPorTipo();
+        $this->assertSame([1, 0, 1], [$t['abono']['n'], $t['abono_final']['n'], $t['total']['n']], 'Demo: un abono y un pago total.');
+        $this->assertEquals(6000000, $t['abono']['valor']);
+
+        $s = $i->serie();
+        $this->assertCount(today()->daysInMonth, $s['etiquetas']);
+        $this->assertEquals(10500000, array_sum($s['recaudo']));
+        $this->assertSame(1, array_sum($s['extractos']));
+        $this->assertCount(12, (new Indicadores($this->demo->id, today()->startOfYear(), today()->endOfYear()))->serie()['etiquetas'], 'Más de 62 días: por mes.');
+
+        $this->assertSame('Colegio Demo del Sinú', $i->carteraPorCliente()[0]['cliente']);
+        $this->assertSame('DMO101', $i->serviciosPorVehiculo()[0]['placa']);
+
+        // Inicio con lo operativo.
+        $this->actingAs($this->usuario('admin@demo.test'));
+        $this->get('/app/cootrasec-demo')->assertOk();
+        foreach ([\App\Filament\App\Widgets\InicioOperacion::class, \App\Filament\App\Widgets\InicioPagosPorTipo::class, \App\Filament\App\Widgets\InicioRecaudoMes::class] as $w) {
+            Livewire::test($w)->assertOk();
+        }
+        Livewire::test(\App\Filament\App\Widgets\InicioOperacion::class)->assertSee('$ 12.000.000')->assertSee('1 abonos');
+        Livewire::test(\App\Filament\App\Widgets\PendientesPorCobrar::class)->assertSee('Colegio Demo del Sinú')->assertDontSee('Agroindustrial Demo');
+        Livewire::test(\App\Filament\App\Widgets\UltimosPagos::class)->assertSee('Pago total')->assertSee('Abono');
+        Livewire::test(\App\Filament\App\Widgets\ExtractosDeHoy::class)->assertSee('DMO101')->assertSee('Pendiente');
     }
 
     public function test_gerencia_ve_y_el_auxiliar_no(): void
