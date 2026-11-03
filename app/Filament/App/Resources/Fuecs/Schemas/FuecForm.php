@@ -157,7 +157,7 @@ final class FuecForm
         }
     }
 
-    private static function sugerirConductores(Set $set, ?string $vehiculoId): void
+    public static function sugerirConductores(Set $set, ?string $vehiculoId): void
     {
         if (! $vehiculoId) {
             return;
@@ -178,14 +178,14 @@ final class FuecForm
         }
     }
 
-    private static function opcionesVehiculos(): array
+    public static function opcionesVehiculos(): array
     {
         return Vehiculo::query()->enFlota()->with(['marca', 'linea', 'documentos'])->orderBy('placa')->get()
             ->mapWithKeys(fn (Vehiculo $v) => [$v->id => ($v->puedeOperar() ? '' : '⚠ ') . trim("{$v->placa} · {$v->descripcion}") . ($v->numero_interno ? " · int. {$v->numero_interno}" : '')])
             ->all();
     }
 
-    private static function opcionesConductores(): array
+    public static function opcionesConductores(): array
     {
         return Conductor::query()->vinculados()->with(['documentos.categoriaLicencia'])->orderBy('nombres')->get()
             ->mapWithKeys(fn (Conductor $c) => [$c->id => ($c->puedeOperar() ? '' : '⚠ ') . "{$c->nombre_completo} · {$c->documento}"])

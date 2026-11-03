@@ -181,3 +181,20 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
   - Saldo del contrato = valor − pagos no anulados.
 - `empresas`: `recibo_prefijo` (por defecto RC) y `recibo_numero_inicial` (por defecto 1).
 
+## Planeador de servicios (`2026_11_03_200001_create_planeador_servicios.php`)
+- `rutas`:
+  - `nombre`, `origen_municipio_id`, `destino_municipio_id`, `ida_y_vuelta` y `recorrido`.
+  - `distancia_km`, `duracion_min` y `velocidad_maxima`.
+  - `puntos` (JSON: tipo critico|parada|control|emergencia, nombre, referencia, velocidad e indicación).
+  - `rutas_alternas`, `recomendaciones`, `contactos_emergencia` y `activo`.
+- `servicios`:
+  - **Enlaces:** `contrato_id`, `fuec_id` (único), `ruta_id` y `vehiculo_id`.
+  - **Cuándo y dónde:** `fecha_inicio`, `fecha_fin`, `hora_salida`, `hora_llegada`, origen, destino y `recorrido`.
+  - **Plan:** `conduccion_min` (por día), `pasajeros` y `observaciones`.
+  - **Estado:** planificado|con_extracto|en_curso|finalizado|cancelado, con `motivo_cancelacion`.
+  - **Seguimiento:** `leido_at` y `leido_por` (conductor), `iniciado_at` y `finalizado_at`, `km_inicial` y `km_final`.
+  - `user_id`.
+- `servicio_conductor`: (`servicio_id`, `conductor_id`, `orden`).
+- `eventos_servicio`: `servicio_id`, `conductor_id`, `user_id`, `tipo` (leido|inicio|parada|novedad|fin|cancelado), `nota`, `kilometraje`, `latitud` y `longitud`.
+- `empresas`: `jornada_max_horas_dia` (10), `jornada_max_horas_continuas` (4), `jornada_descanso_horas` (8) y `planeacion_antelacion_horas` (24).
+

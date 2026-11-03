@@ -90,6 +90,29 @@ class DemoOperacionSeeder extends Seeder
         app(RegistrarPago::class)($escolar, ['fecha' => today()->toDateString(), 'valor' => 6000000, 'metodo' => MetodoPago::Transferencia, 'referencia' => 'TRF-DEMO-1']);
         app(RegistrarPago::class)($empresarial, ['fecha' => today()->toDateString(), 'valor' => 4500000, 'metodo' => MetodoPago::Efectivo]);
 
+        // Rutograma de demostración (datos ficticios): el planeador lo asigna a los servicios Montería ↔ Cereté.
+        $ruta = new \App\Models\Ruta([
+            'nombre' => 'Montería – Cereté (vía principal)',
+            'origen_municipio_id' => $monteria,
+            'destino_municipio_id' => $cerete,
+            'ida_y_vuelta' => true,
+            'recorrido' => 'Salida por la avenida principal y la vía nacional hacia Cereté.',
+            'distancia_km' => 18,
+            'duracion_min' => 35,
+            'velocidad_maxima' => 60,
+            'puntos' => [
+                ['tipo' => 'critico', 'nombre' => 'Glorieta de salida de Montería', 'referencia' => 'Km 0', 'velocidad' => 30, 'indicacion' => 'Alto flujo de motos: ceda el paso y mantenga distancia.'],
+                ['tipo' => 'critico', 'nombre' => 'Zona escolar del corregimiento', 'referencia' => 'Km 9', 'velocidad' => 30, 'indicacion' => 'Paso de estudiantes de 6:00 a 7:00 y de 12:00 a 13:00.'],
+                ['tipo' => 'parada', 'nombre' => 'Estación de servicio de la vía', 'referencia' => 'Km 11', 'indicacion' => 'Parqueadero, baños y cafetería.'],
+                ['tipo' => 'emergencia', 'nombre' => 'Hospital de Cereté', 'referencia' => 'Llegada'],
+            ],
+            'rutas_alternas' => 'Vía alterna por los corregimientos (más lenta, sin peajes).',
+            'recomendaciones' => 'En lluvia, reduzca la velocidad a 40 km/h por encharcamientos.',
+            'contactos_emergencia' => 'Policía de Carreteras #767 · Línea de emergencias 123',
+        ]);
+        $ruta->empresa_id = $empresa->id;
+        $ruta->save();
+
         $vehiculo = Vehiculo::query()->deEmpresa($empresa)->firstWhere('placa', 'DMO101');
         $conductor = Conductor::query()->deEmpresa($empresa)->firstWhere('documento', '20000001');
 
@@ -111,6 +134,18 @@ class DemoOperacionSeeder extends Seeder
             if ($expedir->validar($empresa, $datos) === []) {
                 $expedir($empresa, $datos);
             }
+
+            // Servicio planificado sin extracto todavía (para generar el extracto desde el planeador).
+            app(\App\Actions\Operacion\PlanificarServicio::class)->guardar($empresa, [
+                'contrato_id' => $escolar->id,
+                'fecha_inicio' => today()->addDays(2)->toDateString(),
+                'hora_salida' => '16:00',
+                'hora_llegada' => '17:00',
+                'origen_municipio_id' => $cerete,
+                'destino_municipio_id' => $monteria,
+                'pasajeros' => 30,
+                'observaciones' => 'Salida pedagógica (demo).',
+            ]);
         }
 
         // Plantilla con el código del formato y el contrato empresarial emitido (listo para enviar a firma).

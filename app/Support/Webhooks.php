@@ -28,6 +28,7 @@ final class Webhooks
         'plan_accion.por_verificar' => 'Plan de acción con evidencia (por verificar)',
         'plan_accion.cerrado' => 'Plan de acción cerrado',
         'preoperacional.no_apto' => 'Preoperacional NO APTO',
+        'servicio.novedad' => 'Novedad reportada por el conductor en un servicio',
     ];
 
     /** Encola el aviso si la empresa tiene el webhook activo y el evento elegido. Nunca interrumpe la operación. */

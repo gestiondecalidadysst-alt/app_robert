@@ -117,3 +117,84 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
 - **Pruebas:** `tests/Feature/Operacion/RecibosPagoTest.php`, con 6 pruebas.
 - **Nota:** el recibo de caja no reemplaza la factura electrónica de la DIAN; así lo dice al pie.
 
+## Planeador de servicios (PESV, paso 15) (2026-11-03)
+**Pedido del usuario:**
+- Un planeador de servicios conforme a la Res. 40595 de 2022.
+- Que desde él se generen extractos y que todo extracto expedido aparezca en él con su vehículo.
+
+**Decisiones del usuario:**
+- El plan es **libre**: puede ir antes o después del extracto.
+- Exceder la jornada **solo avisa**.
+- El seguimiento del conductor es **opcional**.
+- El rutograma se toma **según el origen y el destino**.
+
+**Qué pide la norma:**
+- **Paso 15** (planificación de desplazamientos laborales): un procedimiento que contemple:
+  - la antelación con que se planifica;
+  - los requisitos para iniciar y finalizar el viaje;
+  - horarios y tiempos de conducción;
+  - velocidades seguras;
+  - los documentos que se deben portar;
+  - las paradas seguras;
+  - los controles durante el recorrido;
+  - medidas contra la fatiga, la velocidad y la distracción;
+  - las rutas con puntos críticos.
+- **Paso 8** (prevención de la fatiga): controlar la jornada, la conducción y el descanso, y planificar los viajes para evitar excesos.
+
+### Qué se construyó
+- **Rutogramas** (Operación → Rutogramas):
+  - Datos de la ruta: origen y destino (opción «sirve también para el regreso»), vías, distancia, conducción estimada y velocidad máxima.
+  - **Puntos en orden**: punto crítico, parada segura, punto de control o apoyo en emergencia, cada uno con referencia, velocidad e indicación al conductor.
+  - Rutas alternas, recomendaciones y contactos de emergencia.
+  - Se descarga en PDF.
+  - `Ruta::sugerida` elige el rutograma de un servicio: el que coincide en origen y destino o, si es de ida y vuelta, el inverso.
+- **Servicios** (Operación → Servicios planificados):
+  - Fecha o rango de fechas, hora de salida y de llegada, origen y destino (con su rutograma), recorrido y pasajeros.
+  - Todo lo demás es **opcional**: contrato, vehículo, hasta 3 conductores y la conducción estimada por día.
+  - **Generar extracto:** abre «Expedir FUEC» con los datos del plan (`?servicio=`), y el FUEC queda enlazado al servicio.
+  - **Todo FUEC expedido** (desde el planeador o desde FUEC) crea o enlaza su servicio (`PlanificarServicio::desdeFuec`), así que aparece en el planeador con su vehículo.
+  - Con extracto, en el plan solo se cambian el rutograma, la conducción, los pasajeros y las observaciones.
+  - Al anular el FUEC, el servicio queda cancelado.
+  - La migración creó el servicio de los FUEC vigentes que ya existían.
+- **Planeador** (Operación → Planeador):
+  - Tablero semanal **por vehículo** o **por conductor**. En la vista por conductor muestra las horas de conducción de cada día, en rojo si superan el máximo.
+  - Fila «Sin vehículo» o «Sin conductor».
+  - Con «+» en cada celda se planifica un servicio para ese día y ese vehículo o conductor.
+  - **Indicadores de la semana:**
+    - servicios y servicios con extracto;
+    - servicios sin vehículo o sin conductor;
+    - % planificados con la antelación configurada;
+    - % de planes leídos por el conductor;
+    - servicios con avisos de jornada.
+  - **Avisos:** servicios que salen en 48 h sin extracto y avisos de jornada.
+- **Control de jornada** (`Support/Operacion/Jornada.php`), con la política de Integraciones → Planeador de servicios (por defecto 10 h al día, 4 h continuas y 8 h de descanso; la empresa debe poner los valores de su política). **Solo avisa** cuando:
+  - la conducción del día del conductor supera el máximo;
+  - hay conducción continua mayor que el máximo sin una parada segura en el rutograma;
+  - el descanso entre la última llegada de un día y la primera salida del siguiente es menor que el mínimo;
+  - el vehículo o el conductor tienen otro servicio planificado a la misma hora (el FUEC ya bloquea estos cruces).
+- **Plan de viaje en PDF**, para llevar a bordo:
+  - el servicio y el rutograma con sus puntos;
+  - requisitos para iniciar, controles durante el recorrido (fatiga, velocidad, distracción) y requisitos para finalizar;
+  - la constancia de lectura del conductor, con su firma registrada.
+- **Portal del conductor:** cada tarjeta de servicio tiene «Plan de viaje y rutograma», donde el conductor:
+  - ve los puntos del rutograma;
+  - marca **«Leí el plan de viaje»**;
+  - opcionalmente, **inicia el viaje** (km), **registra paradas**, **reporta novedades** y **finaliza** (km).
+  - Si el celular lo permite, cada reporte guarda la ubicación.
+  - Las novedades emiten el webhook `servicio.novedad` (n8n).
+- **Permisos:**
+  - `servicios`: ver, crear, editar y anular.
+  - `rutas`: ver, crear, editar y eliminar.
+  - El Auxiliar planifica y crea rutogramas; Gerencia solo ve.
+- **Datos:**
+  - tablas `rutas`, `servicios`, `servicio_conductor` y `eventos_servicio`;
+  - en `empresas`: `jornada_max_horas_dia`, `jornada_max_horas_continuas`, `jornada_descanso_horas` y `planeacion_antelacion_horas`;
+  - migración `2026_11_03_200001_create_planeador_servicios.php`.
+- **Código:**
+  - modelos `Ruta`, `Servicio` y `EventoServicio`; enums `EstadoServicio` y `TipoPuntoRuta`;
+  - `Actions/Operacion/PlanificarServicio.php` (guardar, desdeFuec, cancelar y reportar);
+  - `Pages/Planeador.php` y `Resources/{Rutas,Servicios}`;
+  - `Support/Pdf/PdfPlanViaje.php`;
+  - `Http/Controllers/Conductor/ViajeController.php`.
+- **Pruebas:** `tests/Feature/Operacion/PlaneadorTest.php`, con 7 pruebas.
+

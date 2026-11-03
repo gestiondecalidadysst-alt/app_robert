@@ -33,7 +33,8 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         // Integraciones (pantalla Configuración → Integraciones)
         'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual',
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
-        'km_diarios_defecto', 'mantenimiento_dias_aviso', 'recibo_prefijo', 'recibo_numero_inicial', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
+        'km_diarios_defecto', 'mantenimiento_dias_aviso', 'recibo_prefijo', 'recibo_numero_inicial',
+        'jornada_max_horas_dia', 'jornada_max_horas_continuas', 'jornada_descanso_horas', 'planeacion_antelacion_horas', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
     ];
 
     /** Credenciales: nunca se envían al navegador ni a la auditoría. */
@@ -205,6 +206,16 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     public function pagosContrato(): HasMany
     {
         return $this->hasMany(PagoContrato::class);
+    }
+
+    public function rutas(): HasMany
+    {
+        return $this->hasMany(Ruta::class);
+    }
+
+    public function servicios(): HasMany
+    {
+        return $this->hasMany(Servicio::class);
     }
 
     public function fuecs(): HasMany

@@ -60,6 +60,10 @@
                 <a class="boton sec" href="{{ route('conductor.inspeccion.pdf', $p) }}" target="_blank" rel="noopener">Ver preoperacional (PDF)</a>
             @endif
 
+            @if ($t['servicio'])
+                <a class="boton sec" href="{{ route('conductor.servicio', $t['servicio']) }}">{{ $t['servicio']->leido_at ? '✓ ' : '' }}Plan de viaje y rutograma{{ $t['servicio']->estado->value === 'en_curso' ? ' · en curso' : '' }}</a>
+            @endif
+
             @if ($t['puede_extracto'])
                 <a class="boton {{ $t['puede_preoperacional'] ? 'sec' : '' }}" href="{{ route('conductor.extracto', $f) }}" target="_blank" rel="noopener">Ver extracto (FUEC)</a>
             @else

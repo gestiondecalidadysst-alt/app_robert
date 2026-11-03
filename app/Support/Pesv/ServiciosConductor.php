@@ -54,7 +54,7 @@ final class ServiciosConductor
     /**
      * Tarjeta de un FUEC con lo que el conductor puede hacer hoy.
      *
-     * @return array{fuec: Fuec, estado: EstadoVigencia, preoperacional: ?Inspeccion, puede_preoperacional: bool, puede_extracto: bool, motivo_extracto: ?string}
+     * @return array{fuec: Fuec, estado: EstadoVigencia, preoperacional: ?Inspeccion, puede_preoperacional: bool, puede_extracto: bool, motivo_extracto: ?string, servicio: ?\App\Models\Servicio}
      */
     public static function tarjeta(Fuec $fuec): array
     {
@@ -78,6 +78,8 @@ final class ServiciosConductor
             'puede_preoperacional' => $vigente && ! $preop?->apta(),
             'puede_extracto' => $motivo === null,
             'motivo_extracto' => $motivo,
+            // Plan de viaje del planeador (todo FUEC tiene su servicio).
+            'servicio' => \App\Models\Servicio::query()->withoutGlobalScopes()->where('fuec_id', $fuec->id)->first(),
         ];
     }
 

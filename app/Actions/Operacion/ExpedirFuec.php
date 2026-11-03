@@ -38,7 +38,8 @@ class ExpedirFuec
 
     /**
      * @param  array{contrato_id:int, vehiculo_id:int, conductores:list<int>, fecha_inicio:string, fecha_fin:string,
-     *               origen_municipio_id:int, destino_municipio_id:int, recorrido?:?string, empresa_convenio_id?:?int}  $datos
+     *               origen_municipio_id:int, destino_municipio_id:int, recorrido?:?string, empresa_convenio_id?:?int,
+     *               servicio_id?:?int}  $datos  servicio_id: servicio del planeador desde el que se genera
      */
     public function __invoke(Empresa $empresa, array $datos): Fuec
     {
@@ -81,6 +82,9 @@ class ExpedirFuec
             $fuec->conductores()->attach(
                 $conductores->values()->mapWithKeys(fn (Conductor $c, int $i) => [$c->id => ['orden' => $i + 1]])->all()
             );
+
+            // Todo extracto aparece en el planeador: enlaza el servicio planificado o crea uno.
+            app(PlanificarServicio::class)->desdeFuec($fuec, filled($datos['servicio_id'] ?? null) ? (int) $datos['servicio_id'] : null);
 
             return $fuec;
         });

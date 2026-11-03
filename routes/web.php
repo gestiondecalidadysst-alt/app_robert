@@ -55,6 +55,10 @@ Route::prefix('conductor')->name('conductor.')->group(function () {
         Route::get('/preoperacional/{vehiculo}', [\App\Http\Controllers\Conductor\PreoperacionalController::class, 'formulario'])->name('preoperacional');
         Route::post('/preoperacional/{vehiculo}', [\App\Http\Controllers\Conductor\PreoperacionalController::class, 'guardar'])->name('preoperacional.guardar');
         Route::get('/historial', [\App\Http\Controllers\Conductor\PreoperacionalController::class, 'historial'])->name('historial');
+        Route::get('/servicio/{servicio}', [\App\Http\Controllers\Conductor\ViajeController::class, 'mostrar'])->whereNumber('servicio')->name('servicio');
+        Route::get('/servicio/{servicio}/pdf', [\App\Http\Controllers\Conductor\ViajeController::class, 'pdf'])->whereNumber('servicio')->name('servicio.pdf');
+        Route::post('/servicio/{servicio}/reporte', [\App\Http\Controllers\Conductor\ViajeController::class, 'reportar'])->whereNumber('servicio')
+            ->middleware('throttle:30,1')->name('servicio.reportar');
         Route::get('/inspeccion/{inspeccion}/pdf', [\App\Http\Controllers\Conductor\PreoperacionalController::class, 'pdf'])->name('inspeccion.pdf');
         Route::get('/mantenimiento', [\App\Http\Controllers\Conductor\MantenimientoController::class, 'inicio'])->name('mantenimiento');
         Route::get('/mantenimiento/{vehiculo}', [\App\Http\Controllers\Conductor\MantenimientoController::class, 'formulario'])->name('mantenimiento.registrar');

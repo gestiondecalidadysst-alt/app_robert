@@ -71,6 +71,10 @@ class Integraciones extends Page
             'km_diarios_defecto' => $e->km_diarios_defecto,
             'mantenimiento_dias_aviso' => $e->mantenimiento_dias_aviso,
             'recibo_prefijo' => $e->recibo_prefijo,
+            'jornada_max_horas_dia' => $e->jornada_max_horas_dia,
+            'jornada_max_horas_continuas' => $e->jornada_max_horas_continuas,
+            'jornada_descanso_horas' => $e->jornada_descanso_horas,
+            'planeacion_antelacion_horas' => $e->planeacion_antelacion_horas,
             'recibo_numero_inicial' => $e->recibo_numero_inicial,
         ]);
     }
@@ -118,6 +122,18 @@ class Integraciones extends Page
                         TextInput::make('km_diarios_defecto')->label('Km por día por defecto')->numeric()->minValue(1)->maxValue(2000)->required()
                             ->helperText('Para estimar fechas de vehículos sin lecturas de kilometraje suficientes.'),
                         TextInput::make('mantenimiento_dias_aviso')->label('Avisar actividades con (días) de anticipación')->numeric()->minValue(1)->maxValue(60)->required(),
+                    ]),
+                Section::make('Planeador de servicios (jornada y fatiga)')
+                    ->description('Política de la empresa para el control de jornada del PESV (paso 8, prevención de la fatiga). Superarla solo genera avisos en el planeador; no impide planificar ni expedir.')
+                    ->icon('heroicon-o-clock')
+                    ->columns(['default' => 1, 'md' => 4])
+                    ->schema([
+                        TextInput::make('jornada_max_horas_dia')->label('Conducción máxima al día (h)')->numeric()->minValue(1)->maxValue(24)->required(),
+                        TextInput::make('jornada_max_horas_continuas')->label('Conducción continua máxima (h)')->numeric()->minValue(1)->maxValue(24)->required()
+                            ->helperText('Más que esto sin parada segura en la ruta genera aviso.'),
+                        TextInput::make('jornada_descanso_horas')->label('Descanso mínimo entre jornadas (h)')->numeric()->minValue(1)->maxValue(24)->required(),
+                        TextInput::make('planeacion_antelacion_horas')->label('Planificar con (h) de antelación')->numeric()->minValue(0)->maxValue(720)->required()
+                            ->helperText('Para el indicador de planificación.'),
                     ]),
                 Section::make('Recibos de caja')
                     ->description('Cada pago de un contrato genera un recibo con número consecutivo para entregar al cliente.')
@@ -179,6 +195,10 @@ class Integraciones extends Page
             'mantenimiento_dias_aviso' => (int) $datos['mantenimiento_dias_aviso'],
             'recibo_prefijo' => mb_strtoupper(trim((string) ($datos['recibo_prefijo'] ?? ''))),
             'recibo_numero_inicial' => max(1, (int) $datos['recibo_numero_inicial']),
+            'jornada_max_horas_dia' => (int) $datos['jornada_max_horas_dia'],
+            'jornada_max_horas_continuas' => (int) $datos['jornada_max_horas_continuas'],
+            'jornada_descanso_horas' => (int) $datos['jornada_descanso_horas'],
+            'planeacion_antelacion_horas' => (int) $datos['planeacion_antelacion_horas'],
         ]);
         if (filled($datos['webhook_url'] ?? null)) {
             $empresa->webhook_url = trim($datos['webhook_url']);
