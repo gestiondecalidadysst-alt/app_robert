@@ -9,6 +9,7 @@ use App\Models\Empresa;
 use App\Models\PlanAccion;
 use App\Models\User;
 use App\Models\Vehiculo;
+use App\Support\Webhooks;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -40,6 +41,7 @@ final class GestionarPlanAccion
         ]);
         $plan->empresa_id = $empresa->id;
         $plan->save();
+        Webhooks::emitir($empresa, 'plan_accion.creado', RegistrarMantenimiento::datosPlan($plan, $vehiculo));
 
         return $plan;
     }
@@ -60,6 +62,7 @@ final class GestionarPlanAccion
 
         GuardarEvidencias::en($plan, $archivos, $usuario, filled($nota) ? trim($nota) : null);
         $plan->forceFill(['estado' => EstadoPlan::PorVerificar])->save();
+        Webhooks::emitir($plan->empresa_id, 'plan_accion.por_verificar', RegistrarMantenimiento::datosPlan($plan));
     }
 
     /** La empresa revisa la evidencia y cierra. */
@@ -76,6 +79,7 @@ final class GestionarPlanAccion
             'cerrado_por' => $usuario?->id,
             'observacion_cierre' => filled($observacion) ? trim($observacion) : null,
         ])->save();
+        Webhooks::emitir($plan->empresa_id, 'plan_accion.cerrado', [...RegistrarMantenimiento::datosPlan($plan), 'observacion_cierre' => $plan->observacion_cierre, 'cerrado_por' => $usuario?->name]);
     }
 
     /** La evidencia no sirve: vuelve a ejecución con el motivo. */

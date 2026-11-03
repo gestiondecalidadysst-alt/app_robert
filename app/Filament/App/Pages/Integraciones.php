@@ -5,6 +5,8 @@ namespace App\Filament\App\Pages;
 use App\Models\Empresa;
 use App\Services\Mensajeria\Mensajero;
 use App\Services\Mensajeria\OnurixSms;
+use App\Support\Webhooks;
+use Filament\Forms\Components\CheckboxList;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -64,6 +66,10 @@ class Integraciones extends Page
             'firma_dias_enlace' => $e->firma_dias_enlace,
             'firma_dias_recordatorio' => $e->firma_dias_recordatorio,
             'firma_envio_automatico' => $e->firma_envio_automatico,
+            'webhook_activo' => $e->webhook_activo,
+            'webhook_eventos' => $e->webhook_eventos ?? array_keys(Webhooks::EVENTOS),
+            'km_diarios_defecto' => $e->km_diarios_defecto,
+            'mantenimiento_dias_aviso' => $e->mantenimiento_dias_aviso,
         ]);
     }
 
@@ -90,6 +96,27 @@ class Integraciones extends Page
                             ->helperText('Opcional. Al llegar al límite, los mensajes se envían solo por correo.'),
                         Text::make('SMS enviados este mes: ' . Mensajero::smsDelMes($e))->color('gray'),
                     ]),
+                Section::make('Avisos por webhook (n8n)')
+                    ->description('El sistema envía un POST JSON a esta URL en cada evento elegido (por ejemplo, un nodo Webhook de n8n para reenviar por WhatsApp, correo o Telegram). Cada aviso va firmado con HMAC-SHA256 en la cabecera X-Ruta-Firma.')
+                    ->icon('heroicon-o-bolt')
+                    ->columns(['default' => 1, 'md' => 2])
+                    ->schema([
+                        Toggle::make('webhook_activo')->label('Enviar avisos')->inline(false)->columnSpanFull(),
+                        TextInput::make('webhook_url')->label('URL del webhook')->url()->maxLength(500)->autocomplete(false)
+                            ->placeholder('https://n8n.su-dominio.com/webhook/ruta')
+                            ->helperText(fn () => filled($e->webhook_url) ? 'Guardada: ' . self::ocultarUrl($e->webhook_url) . '. Déjela vacía para conservarla.' : 'Sin configurar.'),
+                        TextInput::make('webhook_secreto')->label('Secreto para la firma')->password()->revealable()->maxLength(200)->autocomplete('new-password')
+                            ->helperText(fn () => filled($e->webhook_secreto) ? 'Guardado. Déjelo vacío para conservarlo.' : 'Opcional pero recomendado: n8n puede verificar que el aviso viene de Ruta.'),
+                        CheckboxList::make('webhook_eventos')->label('Eventos')->options(Webhooks::EVENTOS)->columns(2)->columnSpanFull(),
+                    ]),
+                Section::make('Mantenimiento')
+                    ->icon('heroicon-o-wrench-screwdriver')
+                    ->columns(['default' => 1, 'md' => 2])
+                    ->schema([
+                        TextInput::make('km_diarios_defecto')->label('Km por día por defecto')->numeric()->minValue(1)->maxValue(2000)->required()
+                            ->helperText('Para estimar fechas de vehículos sin lecturas de kilometraje suficientes.'),
+                        TextInput::make('mantenimiento_dias_aviso')->label('Avisar actividades con (días) de anticipación')->numeric()->minValue(1)->maxValue(60)->required(),
+                    ]),
                 Section::make('Firma electrónica de contratos')
                     ->icon('heroicon-o-pencil-square')
                     ->columns(['default' => 1, 'md' => 3])
@@ -101,6 +128,19 @@ class Integraciones extends Page
                             ->helperText('Si está apagado, se envía con el botón «Enviar para firma» después de revisar los datos.'),
                     ]),
             ]);
+    }
+
+    public static function ocultarUrl(string $url): string
+    {
+        $p = parse_url($url);
+
+        return ($p['scheme'] ?? 'https') . '://' . ($p['host'] ?? '') . (isset($p['path']) ? '/…' . substr($p['path'], -6) : '');
+    }
+
+    /** Últimos avisos por webhook (para la vista). */
+    public function getEntregas()
+    {
+        return \App\Models\WebhookEntrega::query()->latest('id')->limit(10)->get();
     }
 
     public function guardar(): void
@@ -117,7 +157,22 @@ class Integraciones extends Page
             'firma_dias_enlace' => (int) $datos['firma_dias_enlace'],
             'firma_dias_recordatorio' => (int) $datos['firma_dias_recordatorio'],
             'firma_envio_automatico' => (bool) $datos['firma_envio_automatico'],
+            'webhook_activo' => (bool) ($datos['webhook_activo'] ?? false),
+            'webhook_eventos' => array_values($datos['webhook_eventos'] ?? []),
+            'km_diarios_defecto' => (int) $datos['km_diarios_defecto'],
+            'mantenimiento_dias_aviso' => (int) $datos['mantenimiento_dias_aviso'],
         ]);
+        if (filled($datos['webhook_url'] ?? null)) {
+            $empresa->webhook_url = trim($datos['webhook_url']);
+        }
+        if (filled($datos['webhook_secreto'] ?? null)) {
+            $empresa->webhook_secreto = trim($datos['webhook_secreto']);
+        }
+        if ($empresa->webhook_activo && blank($empresa->webhook_url)) {
+            Notification::make()->danger()->title('Escriba la URL del webhook para activar los avisos.')->send();
+
+            return;
+        }
 
         if (filled($datos['onurix_cliente'] ?? null)) {
             $empresa->onurix_cliente = trim($datos['onurix_cliente']);
@@ -141,7 +196,7 @@ class Integraciones extends Page
                 ->log('Actualizó las credenciales de SMS (Onurix)');
         }
 
-        $this->form->fill([...$datos, 'onurix_cliente' => null, 'onurix_clave' => null]);
+        $this->form->fill([...$datos, 'onurix_cliente' => null, 'onurix_clave' => null, 'webhook_url' => null, 'webhook_secreto' => null]);
 
         Notification::make()->success()->title('Integraciones guardadas')->send();
     }
@@ -149,6 +204,16 @@ class Integraciones extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('webhook')
+                ->label('Probar webhook')
+                ->icon('heroicon-o-bolt')
+                ->color('gray')
+                ->visible(fn () => $this->empresa()->webhookConfigurado() && $this->puedeEditar())
+                ->action(function (): void {
+                    $entrega = Webhooks::emitir($this->empresa(), 'prueba', ['mensaje' => 'Prueba de conexión desde Ruta', 'usuario' => auth()->user()->name]);
+                    Notification::make()->success()->title('Aviso de prueba en cola')
+                        ->body('Revise el resultado en «Últimos avisos enviados» en unos segundos' . ($entrega ? " (entrega #{$entrega->id})." : '.'))->send();
+                }),
             Action::make('ip')
                 ->label('Ver IP del servidor')
                 ->icon('heroicon-o-globe-alt')

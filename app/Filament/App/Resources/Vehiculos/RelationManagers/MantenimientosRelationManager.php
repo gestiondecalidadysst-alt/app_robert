@@ -39,6 +39,9 @@ class MantenimientosRelationManager extends RelationManager
             ->header(fn () => view('filament.mantenimiento.plan-preventivo-vehiculo', ['vehiculo' => $this->getOwnerRecord()]))
             ->emptyStateHeading('Sin mantenimientos registrados')
             ->headerActions([
+                Action::make('plan')->label('Plan de mantenimiento')->icon('heroicon-o-adjustments-horizontal')->color('gray')
+                    ->visible(fn () => auth()->user()?->can('ver_rutinas_mantenimiento'))
+                    ->url(fn () => \App\Filament\App\Resources\Vehiculos\VehiculoResource::getUrl('plan-mantenimiento', ['record' => $this->getOwnerRecord()])),
                 Action::make('registrar')->label('Registrar mantenimiento')->icon('heroicon-o-plus')
                     ->visible(fn () => auth()->user()?->can('crear_mantenimientos'))
                     ->url(fn () => MantenimientoResource::getUrl('create', ['vehiculo' => $this->getOwnerRecord()->id])),
@@ -46,7 +49,7 @@ class MantenimientosRelationManager extends RelationManager
             ->recordUrl(fn (Mantenimiento $r) => MantenimientoResource::getUrl('view', ['record' => $r]))
             ->columns([
                 TextColumn::make('fecha')->date('d/m/Y')->weight('bold')
-                    ->description(fn (Mantenimiento $r) => $r->anulado() ? 'Anulado' : null),
+                    ->description(fn (Mantenimiento $r) => $r->anulado() ? 'Anulado' : ($r->registro_inicial ? 'Punto de partida' : null)),
                 TextColumn::make('tipo')->badge(),
                 TextColumn::make('actividad')->wrap()->limit(80),
                 TextColumn::make('rutinas.nombre')->label('Rutinas')->badge()->visibleFrom('lg'),

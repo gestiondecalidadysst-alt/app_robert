@@ -19,5 +19,6 @@ final class AnularMantenimiento
         }
 
         $mantenimiento->forceFill(['anulado_at' => now(), 'motivo_anulacion' => trim($motivo), 'anulado_por' => $usuario?->id])->save();
+        ProgramaAnual::revertirEjecucion($mantenimiento, $usuario);
     }
 }

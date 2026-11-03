@@ -23,7 +23,7 @@ class ListarMantenimientos extends ListRecords
 
     public function getSubheading(): ?string
     {
-        $mes = Mantenimiento::query()->vigentes()->whereDate('fecha', '>=', today()->startOfMonth());
+        $mes = Mantenimiento::query()->reales()->whereDate('fecha', '>=', today()->startOfMonth());
 
         return 'Este mes: ' . (clone $mes)->count() . ' mantenimientos · $ ' . number_format((float) (clone $mes)->sum('valor'), 0, ',', '.');
     }
@@ -47,7 +47,7 @@ class ListarMantenimientos extends ListRecords
                     $desde = Carbon::parse($data['desde']);
                     $hasta = Carbon::parse($data['hasta']);
                     $vehiculo = filled($data['vehiculo_id'] ?? null) ? Vehiculo::query()->find($data['vehiculo_id']) : null;
-                    $registros = Mantenimiento::query()->vigentes()->with(['vehiculo', 'rutinas'])->withCount('evidencias')
+                    $registros = Mantenimiento::query()->reales()->with(['vehiculo', 'rutinas'])->withCount('evidencias')
                         ->when($vehiculo, fn ($q) => $q->where('vehiculo_id', $vehiculo->id))
                         ->whereDate('fecha', '>=', $desde)->whereDate('fecha', '<=', $hasta)
                         ->orderBy('fecha')->orderBy('id')->get();

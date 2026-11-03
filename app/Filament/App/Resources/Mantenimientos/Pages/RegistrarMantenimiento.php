@@ -32,8 +32,8 @@ class RegistrarMantenimiento extends CreateRecord
             'fecha' => today()->toDateString(),
             'vehiculo_id' => $vehiculo,
             'plan_accion_id' => $plan?->id,
-            'tipo' => $plan ? ($plan->origen->value === 'preventivo' ? 'preventivo' : 'correctivo') : null,
-            'rutinas' => $plan?->rutina_mantenimiento_id ? [$plan->rutina_mantenimiento_id] : null,
+            'tipo' => $plan ? ($plan->origen->value === 'preventivo' ? 'preventivo' : 'correctivo') : (request()->integer('rutina') ? 'preventivo' : null),
+            'rutinas' => $plan?->rutina_mantenimiento_id ? [$plan->rutina_mantenimiento_id] : (request()->integer('rutina') ? [request()->integer('rutina')] : null),
             'problema' => $plan ? collect($plan->hallazgos ?? [])->map(fn ($h) => $h['descripcion'] . (($h['observacion'] ?? null) ? ': ' . $h['observacion'] : ''))->implode("\n") : null,
         ], fn ($v) => $v !== null));
     }

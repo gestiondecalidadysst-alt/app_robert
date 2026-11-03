@@ -142,6 +142,9 @@ class MantenimientoResource extends Resource
                 TextColumn::make('anulado_at')->label('Anulado')->date('d/m/Y')->placeholder('—')->color('danger')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                TernaryFilter::make('inicial')->label('Puntos de partida del plan')
+                    ->queries(true: fn (Builder $query) => $query->where('registro_inicial', true), false: fn (Builder $query) => $query->where('registro_inicial', false))
+                    ->default(false),
                 TernaryFilter::make('anulados')->label('Anulados')
                     ->queries(true: fn (Builder $query) => $query->whereNotNull('anulado_at'), false: fn (Builder $query) => $query->whereNull('anulado_at'))
                     ->default(false),

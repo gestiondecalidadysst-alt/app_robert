@@ -13,6 +13,7 @@ use App\Models\PlanAccion;
 use App\Models\User;
 use App\Models\Vehiculo;
 use App\Support\Avisos;
+use App\Support\Webhooks;
 use App\Support\Mantenimiento\PlanPreventivo;
 use Filament\Notifications\Notification;
 use Illuminate\Http\UploadedFile;
@@ -144,7 +145,30 @@ class RegistrarMantenimiento
             return $mantenimiento;
         });
 
+        try {
+            ProgramaAnual::registrarEjecucion($mantenimiento->load('rutinas'), $usuario);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        Webhooks::emitir($empresa, 'mantenimiento.registrado', [
+            'mantenimiento_id' => $mantenimiento->id,
+            'placa' => $vehiculo->placa,
+            'fecha' => $mantenimiento->fecha->toDateString(),
+            'tipo' => $mantenimiento->tipo->value,
+            'accion' => $mantenimiento->accion->value,
+            'actividad' => $mantenimiento->actividad,
+            'kilometraje' => $mantenimiento->kilometraje,
+            'taller' => $mantenimiento->taller,
+            'valor' => $mantenimiento->valor !== null ? (float) $mantenimiento->valor : null,
+            'rutinas' => $mantenimiento->rutinas->pluck('nombre')->all(),
+            'evidencias' => $mantenimiento->evidencias()->count(),
+            'registrado_por' => $conductor ? "Conductor {$conductor->nombre_completo}" : $usuario?->name,
+            'plan_accion' => $plan?->numero,
+        ]);
+
         if ($plan) {
+            Webhooks::emitir($empresa, 'plan_accion.por_verificar', self::datosPlan($plan->refresh(), $vehiculo));
             Avisos::aQuienPueda($empresa, 'editar_planes_accion', Notification::make()
                 ->info()
                 ->title("Plan {$plan->numero} ({$vehiculo->placa}) por verificar")
@@ -154,6 +178,22 @@ class RegistrarMantenimiento
         SeguimientoPreventivo::revisar($vehiculo);
 
         return $mantenimiento;
+    }
+
+    /** Datos de un plan de acción para los webhooks. */
+    public static function datosPlan(PlanAccion $plan, ?Vehiculo $vehiculo = null): array
+    {
+        return [
+            'plan' => $plan->numero,
+            'placa' => ($vehiculo ?? $plan->vehiculo)?->placa,
+            'titulo' => $plan->titulo,
+            'origen' => $plan->origen->value,
+            'prioridad' => $plan->prioridad->value,
+            'estado' => $plan->estado->value,
+            'responsable' => $plan->responsable,
+            'fecha_limite' => $plan->fecha_limite?->toDateString(),
+            'hallazgos' => collect($plan->hallazgos ?? [])->map(fn ($h) => ['descripcion' => $h['descripcion'], 'critico' => (bool) ($h['critico'] ?? false), 'observacion' => $h['observacion'] ?? null, 'veces' => $h['veces'] ?? 1])->all(),
+        ];
     }
 
     private static function texto(mixed $valor): ?string

@@ -37,6 +37,7 @@ class Mantenimiento extends Model
             'accion' => AccionMantenimiento::class,
             'valor' => 'decimal:2',
             'anulado_at' => 'datetime',
+            'registro_inicial' => 'boolean',
         ];
     }
 
@@ -73,5 +74,11 @@ class Mantenimiento extends Model
     public function scopeVigentes(Builder $query): Builder
     {
         return $query->whereNull($query->qualifyColumn('anulado_at'));
+    }
+
+    /** Mantenimientos reales (excluye los puntos de partida del plan). */
+    public function scopeReales(Builder $query): Builder
+    {
+        return $query->vigentes()->where($query->qualifyColumn('registro_inicial'), false);
     }
 }

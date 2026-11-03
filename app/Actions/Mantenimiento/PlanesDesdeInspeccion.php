@@ -88,6 +88,8 @@ final class PlanesDesdeInspeccion
         $plan->empresa_id = $inspeccion->empresa_id;
         $plan->save();
 
+        \App\Support\Webhooks::emitir($plan->empresa_id, 'plan_accion.creado', RegistrarMantenimiento::datosPlan($plan, $vehiculo));
+
         return $plan;
     }
 }

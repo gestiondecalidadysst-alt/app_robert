@@ -177,6 +177,15 @@ class RegistrarInspeccion
 
         if ($noApto) {
             self::avisarNoApto($empresa, $inspeccion);
+            \App\Support\Webhooks::emitir($empresa, 'preoperacional.no_apto', [
+                'inspeccion_id' => $inspeccion->id,
+                'placa' => $vehiculo->placa,
+                'conductor' => $inspeccion->conductor_nombre,
+                'fecha' => $inspeccion->created_at->toIso8601String(),
+                'fallas' => collect($inspeccion->fallas())->map(fn ($f) => ['descripcion' => $f['descripcion'], 'critico' => (bool) $f['critico'], 'observacion' => $f['observacion']])->all(),
+                'plan_pendiente' => $inspeccion->datos['plan_pendiente'] ?? null,
+                'verificacion' => $inspeccion->urlVerificacion(),
+            ]);
         }
 
         return $inspeccion;

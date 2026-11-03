@@ -33,12 +33,13 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         // Integraciones (pantalla Configuración → Integraciones)
         'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual',
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
+        'km_diarios_defecto', 'mantenimiento_dias_aviso', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
     ];
 
     /** Credenciales: nunca se envían al navegador ni a la auditoría. */
-    protected $hidden = ['onurix_cliente', 'onurix_clave'];
+    protected $hidden = ['onurix_cliente', 'onurix_clave', 'webhook_url', 'webhook_secreto'];
 
-    protected array $noAuditar = ['onurix_cliente', 'onurix_clave'];
+    protected array $noAuditar = ['onurix_cliente', 'onurix_clave', 'webhook_url', 'webhook_secreto'];
 
     protected function casts(): array
     {
@@ -53,7 +54,19 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
             'firma_envio_automatico' => 'boolean',
             'firma_dias_enlace' => 'integer',
             'firma_dias_recordatorio' => 'integer',
+            'km_diarios_defecto' => 'integer',
+            'mantenimiento_dias_aviso' => 'integer',
+            'webhook_activo' => 'boolean',
+            'webhook_url' => 'encrypted',
+            'webhook_secreto' => 'encrypted',
+            'webhook_eventos' => 'array',
         ];
+    }
+
+    /** Webhook (n8n) listo para usar. */
+    public function webhookConfigurado(): bool
+    {
+        return $this->webhook_activo && filled($this->webhook_url);
     }
 
     /** Tiene SMS listo para usar (activado y con credenciales). */

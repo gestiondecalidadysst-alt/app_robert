@@ -2,7 +2,11 @@
 
 namespace App\Support\Mantenimiento;
 
+use App\Enums\CriterioPlantilla;
+use App\Models\Empresa;
+use App\Models\Inspeccion;
 use App\Models\Mantenimiento;
+use App\Models\PlantillaMantenimiento;
 use App\Models\RutinaMantenimiento;
 use App\Models\Vehiculo;
 use Illuminate\Support\Carbon;
@@ -13,8 +17,7 @@ use Illuminate\Support\Str;
  * Plan preventivo de un vehículo: cada rutina aplicable con su último mantenimiento, el próximo
  * (por km y por fecha, lo que ocurra primero) y su semáforo.
  *
- * - Rutinas aplicables: las de toda la flota, las de su clase y las del vehículo. Si comparten nombre,
- *   gana la más específica (vehículo > clase > flota).
+ * - Rutinas: las del plan personalizado del vehículo o las de su plantilla (rutinasDe).
  * - Kilometraje actual: Vehiculo::kilometrajeActual() (preoperacionales, inspecciones y mantenimientos).
  * - Estados: vencido (rojo) · próximo (amarillo: faltan menos de 1.000 km o 15 días) · al día (verde)
  *   · sin registro (gris: no hay un mantenimiento de esa rutina para tomar como punto de partida).
@@ -48,19 +51,79 @@ final class PlanPreventivo
         self::SIN_REGISTRO => 'gray',
     ];
 
-    /** @return Collection<int, RutinaMantenimiento> */
+    /**
+     * Rutinas del plan del vehículo:
+     * - Plan personalizado: sus propias rutinas activas.
+     * - Si no: las de su plantilla (asignada o sugerida por clase, marca/línea o la por defecto).
+     *
+     * @return Collection<int, RutinaMantenimiento>
+     */
     public static function rutinasDe(Vehiculo $vehiculo): Collection
     {
-        return RutinaMantenimiento::query()->deEmpresa($vehiculo->empresa_id)->activas()
-            ->where(fn ($q) => $q->where('vehiculo_id', $vehiculo->id)
-                ->orWhere(fn ($q) => $q->whereNull('vehiculo_id')
-                    ->where(fn ($q) => $q->whereNull('clase_vehiculo_id')->orWhere('clase_vehiculo_id', $vehiculo->clase_vehiculo_id))))
-            ->orderBy('orden')->orderBy('id')
-            ->get()
-            ->sortByDesc(fn (RutinaMantenimiento $r) => $r->vehiculo_id ? 2 : ($r->clase_vehiculo_id ? 1 : 0))
-            ->unique(fn (RutinaMantenimiento $r) => self::clave($r->nombre))
-            ->sortBy(fn (RutinaMantenimiento $r) => [$r->orden, $r->id])
-            ->values();
+        if ($vehiculo->plan_personalizado) {
+            return RutinaMantenimiento::query()->deEmpresa($vehiculo->empresa_id)->activas()
+                ->where('vehiculo_id', $vehiculo->id)->orderBy('orden')->orderBy('id')->get();
+        }
+
+        $plantilla = self::plantillaDe($vehiculo);
+
+        return $plantilla
+            ? RutinaMantenimiento::query()->deEmpresa($vehiculo->empresa_id)->activas()
+                ->where('plantilla_mantenimiento_id', $plantilla->id)->orderBy('orden')->orderBy('id')->get()
+            : collect();
+    }
+
+    /** Plantilla que sigue el vehículo: la asignada (si está activa) o la sugerida. */
+    public static function plantillaDe(Vehiculo $vehiculo): ?PlantillaMantenimiento
+    {
+        if ($vehiculo->plantilla_mantenimiento_id) {
+            $asignada = PlantillaMantenimiento::query()->deEmpresa($vehiculo->empresa_id)->activas()->find($vehiculo->plantilla_mantenimiento_id);
+            if ($asignada) {
+                return $asignada;
+            }
+        }
+
+        return self::plantillaSugerida($vehiculo);
+    }
+
+    /**
+     * Plantilla que corresponde al vehículo por sus datos, de la más específica a la más general:
+     * marca y línea → marca (todas las líneas) → clase de vehículo → la por defecto.
+     */
+    public static function plantillaSugerida(Vehiculo $vehiculo): ?PlantillaMantenimiento
+    {
+        $plantillas = PlantillaMantenimiento::query()->deEmpresa($vehiculo->empresa_id)->activas()->get();
+
+        return $plantillas->first(fn ($p) => $p->criterio === CriterioPlantilla::MarcaLinea && $p->marca_id && $p->marca_id === $vehiculo->marca_id && $p->linea_id && $p->linea_id === $vehiculo->linea_id)
+            ?? $plantillas->first(fn ($p) => $p->criterio === CriterioPlantilla::MarcaLinea && $p->marca_id && $p->marca_id === $vehiculo->marca_id && ! $p->linea_id)
+            ?? $plantillas->first(fn ($p) => $p->criterio === CriterioPlantilla::Clase && $p->clase_vehiculo_id && $p->clase_vehiculo_id === $vehiculo->clase_vehiculo_id)
+            ?? $plantillas->firstWhere('por_defecto', true);
+    }
+
+    /**
+     * Kilómetros que recorre el vehículo al día: del kilometraje reportado en los últimos 90 días
+     * (preoperacionales, inspecciones y mantenimientos). Si no hay datos suficientes, el de la empresa.
+     */
+    public static function kmDiarios(Vehiculo $vehiculo, ?int $defecto = null): int
+    {
+        $desde = today()->subDays(90);
+        $lecturas = Inspeccion::query()->deEmpresa($vehiculo->empresa_id)->where('vehiculo_id', $vehiculo->id)
+            ->whereNotNull('kilometraje')->whereDate('fecha', '>=', $desde)->get(['fecha', 'kilometraje'])->toBase()
+            ->map(fn ($i) => [$i->fecha, $i->kilometraje])
+            ->merge(Mantenimiento::query()->deEmpresa($vehiculo->empresa_id)->vigentes()->where('vehiculo_id', $vehiculo->id)
+                ->whereNotNull('kilometraje')->whereDate('fecha', '>=', $desde)->get(['fecha', 'kilometraje'])->toBase()
+                ->map(fn ($m) => [$m->fecha, $m->kilometraje]))
+            ->sortBy(fn ($l) => $l[0]->timestamp)->values();
+
+        if ($lecturas->count() >= 2) {
+            $dias = $lecturas->first()[0]->diffInDays($lecturas->last()[0]);
+            $km = $lecturas->max(fn ($l) => $l[1]) - $lecturas->min(fn ($l) => $l[1]);
+            if ($dias >= 7 && $km > 0) {
+                return max(1, (int) round($km / $dias));
+            }
+        }
+
+        return max(1, $defecto ?? (int) (Empresa::query()->whereKey($vehiculo->empresa_id)->value('km_diarios_defecto') ?: 150));
     }
 
     /**

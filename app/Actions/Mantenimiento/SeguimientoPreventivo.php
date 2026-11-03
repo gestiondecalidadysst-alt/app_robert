@@ -55,6 +55,7 @@ final class SeguimientoPreventivo
             $nuevo->empresa_id = $vehiculo->empresa_id;
             $nuevo->save();
             $abiertos++;
+            \App\Support\Webhooks::emitir($vehiculo->empresa_id, 'plan_accion.creado', RegistrarMantenimiento::datosPlan($nuevo, $vehiculo));
         }
 
         return $abiertos;

@@ -17,6 +17,7 @@ final class Permisos
         'editar' => 'Editar',
         'eliminar' => 'Eliminar',
         'anular' => 'Anular',
+        'aprobar' => 'Aprobar',
     ];
 
     /** recurso => [etiqueta, módulo, acciones permitidas] */
@@ -48,7 +49,8 @@ final class Permisos
         'portal_conductor' => ['Acceso de conductores al portal', 'Conductores', ['crear']],
         'mantenimientos' => ['Mantenimientos', 'Mantenimiento', ['ver', 'crear', 'anular']],
         'planes_accion' => ['Planes de acción', 'Mantenimiento', ['ver', 'crear', 'editar']],
-        'rutinas_mantenimiento' => ['Rutinas preventivas', 'Mantenimiento', ['ver', 'crear', 'editar', 'eliminar']],
+        'rutinas_mantenimiento' => ['Plantillas y planes de mantenimiento', 'Mantenimiento', ['ver', 'crear', 'editar', 'eliminar']],
+        'programas_mantenimiento' => ['Programa anual de mantenimiento', 'Mantenimiento', ['ver', 'crear', 'editar', 'aprobar']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -94,7 +96,7 @@ final class Permisos
 
         return [
             Rol::ADMINISTRADOR => $todos,
-            Rol::GERENCIA => $soloVer,
+            Rol::GERENCIA => [...$soloVer, 'aprobar_programas_mantenimiento'],
             Rol::AUXILIAR => [
                 'ver_empresa', 'ver_oficinas', 'ver_empresas_convenio', 'ver_valores_administracion',
                 'ver_propietarios', 'crear_propietarios', 'editar_propietarios',
@@ -112,6 +114,7 @@ final class Permisos
                 'ver_plantillas_contrato', 'ver_documentos_contrato', 'crear_documentos_contrato',
                 'ver_items_chequeo', 'ver_inspecciones', 'crear_inspecciones', 'crear_portal_conductor',
                 'ver_mantenimientos', 'crear_mantenimientos', 'ver_planes_accion', 'ver_rutinas_mantenimiento',
+                'ver_programas_mantenimiento',
             ],
             Rol::MANTENIMIENTO => [
                 'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',
@@ -120,6 +123,7 @@ final class Permisos
                 'ver_mantenimientos', 'crear_mantenimientos', 'anular_mantenimientos',
                 'ver_planes_accion', 'crear_planes_accion', 'editar_planes_accion',
                 'ver_rutinas_mantenimiento', 'crear_rutinas_mantenimiento', 'editar_rutinas_mantenimiento', 'eliminar_rutinas_mantenimiento',
+                'ver_programas_mantenimiento', 'crear_programas_mantenimiento', 'editar_programas_mantenimiento',
             ],
             Rol::CONDUCTOR => [],
         ];

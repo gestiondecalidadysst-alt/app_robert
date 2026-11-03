@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Rutina del plan de mantenimiento preventivo: cada cuántos km y/o meses (lo que ocurra primero).
- * Alcance: toda la flota (sin clase ni vehículo), una clase de vehículo, o un vehículo. Si hay varias
- * con el mismo nombre, la más específica reemplaza a la general (ver App\Support\Mantenimiento\PlanPreventivo).
+ * Rutina de un plan de mantenimiento preventivo: cada cuántos km y/o meses (lo que ocurra primero).
+ * Pertenece a una plantilla (plantilla_mantenimiento_id) o al plan personalizado de un vehículo
+ * (vehiculo_id). Ver App\Support\Mantenimiento\PlanPreventivo.
  */
 class RutinaMantenimiento extends Model
 {
@@ -20,7 +20,7 @@ class RutinaMantenimiento extends Model
     protected $table = 'rutinas_mantenimiento';
 
     protected $fillable = [
-        'empresa_id', 'nombre', 'clase_vehiculo_id', 'vehiculo_id', 'intervalo_km', 'intervalo_meses', 'descripcion', 'orden', 'activo',
+        'empresa_id', 'plantilla_mantenimiento_id', 'nombre', 'clase_vehiculo_id', 'vehiculo_id', 'intervalo_km', 'intervalo_meses', 'descripcion', 'orden', 'activo',
     ];
 
     protected $attributes = ['activo' => true, 'orden' => 0];
@@ -33,6 +33,11 @@ class RutinaMantenimiento extends Model
             'orden' => 'integer',
             'activo' => 'boolean',
         ];
+    }
+
+    public function plantilla(): BelongsTo
+    {
+        return $this->belongsTo(PlantillaMantenimiento::class, 'plantilla_mantenimiento_id');
     }
 
     public function claseVehiculo(): BelongsTo
@@ -48,9 +53,9 @@ class RutinaMantenimiento extends Model
     public function getAlcanceAttribute(): string
     {
         return match (true) {
-            $this->vehiculo_id !== null => 'Vehículo ' . $this->vehiculo?->placa,
-            $this->clase_vehiculo_id !== null => 'Clase ' . $this->claseVehiculo?->nombre,
-            default => 'Toda la flota',
+            $this->vehiculo_id !== null => 'Plan del vehículo ' . $this->vehiculo?->placa,
+            $this->plantilla_mantenimiento_id !== null => 'Plantilla ' . $this->plantilla?->nombre,
+            default => 'Sin plan',
         };
     }
 

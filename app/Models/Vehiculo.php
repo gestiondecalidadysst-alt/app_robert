@@ -54,6 +54,7 @@ class Vehiculo extends Model
     protected function casts(): array
     {
         return [
+            'plan_personalizado' => 'boolean',
             'estado' => EstadoVehiculo::class,
             'estado_desde' => 'date',
             'fecha_matricula' => 'date',
@@ -146,6 +147,17 @@ class Vehiculo extends Model
     public function inspecciones(): HasMany
     {
         return $this->hasMany(Inspeccion::class);
+    }
+
+    public function plantillaMantenimiento(): BelongsTo
+    {
+        return $this->belongsTo(PlantillaMantenimiento::class);
+    }
+
+    /** Rutinas del plan personalizado del vehículo. */
+    public function rutinasPropias(): HasMany
+    {
+        return $this->hasMany(RutinaMantenimiento::class)->orderBy('orden')->orderBy('id');
     }
 
     public function mantenimientos(): HasMany

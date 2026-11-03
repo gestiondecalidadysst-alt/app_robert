@@ -1,6 +1,6 @@
 # Módulo 6 – Mantenimiento (planes de acción, mantenimientos y plan preventivo)
 
-**Estado:** construido y probado. Tiene 11 pruebas propias y 94 en total, todas en verde en SQLite y en MySQL. Fecha: 2026-11-01.
+**Estado:** construido y probado. La primera parte es del 2026-11-01 y la segunda (plantillas, programa anual y webhooks) del 2026-11-02. Tiene 19 pruebas propias y 102 en total, todas en verde en SQLite y en MySQL.
 
 ## Decisiones del usuario (2026-11-01)
 1. **Quién hace los mantenimientos:** los hace el propietario. La empresa hace seguimiento con **planes de acción**, que se generan solos cuando el preoperacional o las inspecciones encuentran fallas.
@@ -83,6 +83,100 @@ Reemplaza tres pantallas de la app anterior (ver `legado/modulos/mantenimiento-c
 
 La **revisión preventiva bimensual** sigue controlándose como documento del vehículo.
 
+## Segunda parte (2026-11-02): plantillas, plan del vehículo, programa anual y webhooks
+### Lo que pidió el usuario
+- **Plantillas de plan por clase de vehículo**, y que el cliente también pueda armarlas por marca y línea, o libres.
+- **Un cronograma que cumpla el PESV**, de alto nivel, con estándares de calidad y trazabilidad.
+- **Avisos por webhook a n8n.**
+
+**Qué pide la norma:**
+- **Paso 17 de la Resolución 40595 de 2022 («Mantenimiento y control de vehículos seguros y equipos»):** la organización debe diseñar e implementar planes de mantenimiento preventivo.
+- **Reporte a la Supertransporte (anexo técnico, D. Vehículos):**
+  - El número de actividades de mantenimiento preventivo **programadas por trimestre** y las **ejecutadas**.
+  - La relación de los mantenimientos ejecutados, con su tipo (preventivo o correctivo) y el **establecimiento o centro especializado** que los hizo.
+
+El programa anual está diseñado para producir exactamente esos datos.
+
+### Plantillas y plan del vehículo
+- **Plantillas** (Mantenimiento → **Plantillas de plan**): cada una tiene su criterio (**por clase**, **por marca y línea**, o **libre**) y sus rutinas.
+  - Las rutinas se ordenan arrastrando y cada una tiene su interruptor de activa. No se borran: se desactivan, para no perder su historial.
+  - Hay una plantilla **por defecto**.
+  - Acciones: **Asignar a vehículos** y **Duplicar**.
+- **Las rutinas de la versión anterior se convirtieron solas** (migración):
+  - las de toda la flota pasaron a la plantilla **Plan general**, que queda como la por defecto;
+  - las de una clase, a una plantilla de esa clase;
+  - las de un vehículo, a un plan personalizado.
+- **Plantilla de cada vehículo:** la asignada o, si no tiene, la que le corresponde por sus datos, en este orden: **marca y línea → marca → clase → por defecto** (`PlanPreventivo::plantillaDe`).
+- **Plan del vehículo** (`/vehiculos/{id}/plan-mantenimiento`, con el botón «Plan de mantenimiento» en la pestaña Mantenimiento):
+  - **Seguir una plantilla:** el vehículo recibe los cambios de la plantilla.
+  - **Personalizar:** el vehículo tiene sus propias rutinas. Se pueden cambiar intervalos, quitar rutinas (se desactivan) y agregar otras. Los cambios de las plantillas no lo afectan.
+  - **Copiar de otro vehículo.**
+  - **Punto de partida:** cuándo y a cuántos km se hizo cada rutina por última vez. Con el botón **«Las que no tienen registro arrancan hoy»** se toma hoy como punto de partida de las que no tienen dato.
+- **El punto de partida se guarda como un mantenimiento marcado `registro_inicial`:**
+  - Sirve para calcular el plan.
+  - **No cuenta** como mantenimiento real: no aparece en el listado (salvo con el filtro), ni en los informes, ni en los indicadores.
+- **Km por día del vehículo:** se calculan con sus lecturas de los últimos 90 días (preoperacionales, inspecciones y mantenimientos). Si no hay lecturas suficientes, se usa el valor por defecto de la empresa (Integraciones → Mantenimiento, 150 al empezar).
+
+### Programa anual (Mantenimiento → **Programa anual**)
+1. **Generar programa** (año en curso o siguiente):
+   - Proyecta cada rutina de cada vehículo de la flota. Cada actividad cae en la primera de estas dos fechas: la que da su intervalo de km según los km por día del vehículo, o la que da su intervalo de meses.
+   - **Año en curso:** se programa desde hoy, y lo que ya está vencido se programa para hoy.
+   - **Año siguiente:** se supone que lo de este año se hará a tiempo y el ciclo continúa.
+   - El programa queda en **borrador**, con quién lo elaboró. Se puede **regenerar**.
+2. **Aprobar** (permiso `aprobar_programas_mantenimiento`, que tienen Gerencia y el Administrador):
+   - Las fechas quedan como **línea base**, en `fecha_original`, que no cambia más.
+   - Queda registrado quién aprobó y cuándo.
+   - Si había otra versión aprobada del mismo año, queda **reemplazada** y lo que ya se ejecutó o canceló pasa a la nueva versión.
+3. **Trazabilidad de cada actividad:** todo queda en su `historial` (quién, cuándo y qué), que se ve con el botón del reloj.
+   - **Ejecución automática:** al registrar un mantenimiento real con la rutina, se ejecuta la actividad pendiente más cercana (hasta 45 días de adelanto). Queda ligada al mantenimiento y a su evidencia, con los días de desviación.
+   - **Ajuste automático:** las actividades siguientes de esa rutina se recalculan desde lo ejecutado.
+   - **Anular el mantenimiento** devuelve la actividad a «programada».
+   - **Reprogramar** y **cancelar** exigen un motivo.
+   - **Incorporar vehículo** agrega al programa aprobado un vehículo vinculado después; sus actividades quedan marcadas como «incorporadas».
+4. **Indicadores por trimestre**, según la fecha de la línea base:
+   - **Programadas:** las que no están canceladas.
+   - **Ejecutadas.**
+   - **% de cumplimiento a la fecha:** ejecutadas dividido entre las ya exigibles (ejecutadas más pendientes cuya fecha ya pasó).
+   - **Vencidas sin ejecutar.**
+5. **Descargas:**
+   - **Cronograma anual en PDF**, de toda la flota o de un vehículo:
+     - Muestra rutinas por 12 meses, con las marcas P (programada), E (ejecutada), R (reprogramada), V (vencida) y C (cancelada).
+     - Encabezado con el código del formato, la versión y el estado.
+     - Indicadores y firmas de quién elaboró y quién aprobó.
+   - **Excel para la Supertransporte**, con tres hojas:
+     - el indicador trimestral;
+     - las actividades con su trazabilidad;
+     - los mantenimientos ejecutados, con su tipo y el establecimiento.
+- **Calendario** (Mantenimiento → **Calendario**): vista mensual de las actividades por estado, con filtro por vehículo.
+- **Portal del conductor:** muestra los **próximos mantenimientos programados** de sus vehículos (30 días) y los vencidos.
+- **Seguimiento diario:** `ruta:mantenimiento`, a las 6:10 a. m., avisa una sola vez por actividad las **próximas** (con los días de anticipación que configure la empresa, 7 al empezar) y las **vencidas**. Envía un resumen a la campana y un webhook por actividad.
+
+### Webhooks (Configuración → **Integraciones → Avisos por webhook (n8n)**)
+- **Configuración:**
+  - La URL, que se guarda cifrada.
+  - Un secreto opcional (cifrado) para firmar los avisos.
+  - Los eventos que se quieren recibir.
+- **Pruebas e historial:** el botón **Probar webhook** envía un aviso de prueba, y la sección **Últimos avisos enviados** muestra el estado de cada envío y la respuesta HTTP.
+- **Eventos:**
+  - `mantenimiento.actividad_proxima`
+  - `mantenimiento.actividad_vencida`
+  - `mantenimiento.registrado`
+  - `mantenimiento.programa_aprobado`
+  - `plan_accion.creado`
+  - `plan_accion.por_verificar`
+  - `plan_accion.cerrado`
+  - `preoperacional.no_apto`
+- **Cada aviso:**
+  - Es un `POST` JSON.
+  - Su cuerpo trae `{id, evento, descripcion, fecha, empresa: {id, nombre, nit}, datos: {...}}`.
+  - Lleva las cabeceras `X-Ruta-Evento` y `X-Ruta-Entrega`, y `X-Ruta-Firma: sha256=<HMAC-SHA256 del cuerpo con el secreto>`.
+- **Envío:** va en cola (worker) con 5 intentos, a los 30 s, 2 min, 10 min y 30 min. Cada envío queda en `webhook_entregas`.
+- **En n8n:**
+  1. Un nodo **Webhook** (POST) recibe el aviso.
+  2. Opcional: un nodo **Crypto** (HMAC SHA256 con el secreto) o un nodo **Code** compara la firma con la cabecera.
+  3. Un nodo **Switch** reparte por `evento` hacia WhatsApp (Evolution API), correo o Telegram.
+- **Datos útiles en los avisos de actividad:** placa, rutina, fecha y km programados, días que faltan, y el responsable (propietario) con su teléfono.
+
 ## Pantallas
 | Dónde | Qué hace | Permiso |
 |---|---|---|
@@ -90,7 +184,10 @@ La **revisión preventiva bimensual** sigue controlándose como documento del ve
 | Plan de acción (detalle) | Hallazgos (reincidencias), mantenimientos y evidencias. Acciones:<br>• **Registrar mantenimiento**<br>• **Adjuntar evidencia**<br>• **En ejecución**<br>• **Rechazar**<br>• **Verificar y cerrar** | `editar_planes_accion` |
 | Mantenimiento → **Mantenimientos** | Listado con filtros. **Registrar mantenimiento**: acepta `?vehiculo=` y `?plan=`, que llenan el vehículo, el tipo, las rutinas y el problema. **Informe PDF** por vehículo (o toda la flota) y fechas, con el total. Detalle con evidencias y la acción **Anular**. | `*_mantenimientos` |
 | Mantenimiento → **Plan preventivo** | Semáforo de toda la flota: kilometraje actual, estado, la rutina más próxima, vencidas y sin registro. | `ver_mantenimientos` |
-| Mantenimiento → **Rutinas preventivas** | Lista ordenable arrastrando, con alcance (flota, clase o vehículo) y frecuencia. | `*_rutinas_mantenimiento` |
+| Mantenimiento → **Plantillas de plan** | Plantillas (clase, marca y línea, o libres) con sus rutinas. Acciones: asignar a vehículos y duplicar. | `*_rutinas_mantenimiento` |
+| Vehículo → **Plan de mantenimiento** | Seguir una plantilla o personalizar el plan, copiar de otro vehículo y registrar el punto de partida. | `ver/editar_rutinas_mantenimiento` |
+| Mantenimiento → **Programa anual** | Generar, aprobar, regenerar e incorporar vehículos. Muestra indicadores por trimestre y las actividades, con estas acciones:<br>• registrar<br>• reprogramar<br>• cancelar<br>• historial<br>Descarga el PDF y el Excel. | `*_programas_mantenimiento`, `aprobar_programas_mantenimiento` |
+| Mantenimiento → **Calendario** | Calendario mensual del programa. | `ver_programas_mantenimiento` |
 | Vehículo → pestañas **Mantenimiento** y **Planes de acción** | Plan preventivo del vehículo (semáforo por rutina), historial de mantenimientos y sus planes. | |
 | Portal `/conductor/mantenimiento` | **Mantenimiento** en el menú del portal:<br>• Planes pendientes de sus vehículos, con **Registrar arreglo con evidencia**. Si fue rechazado, muestra el motivo.<br>• Registrar un mantenimiento: en el celular se pueden tomar fotos con la cámara, en varias tandas.<br>• Lo que el conductor ha registrado.<br>En «Servicios» aparece un aviso si hay planes de prioridad alta. | conductor del vehículo |
 
@@ -126,7 +223,17 @@ La **revisión preventiva bimensual** sigue controlándose como documento del ve
   - `resources/views/conductor/mantenimiento*.blade.php`
   - `conductor/partes/menu.blade.php`
 - **Evidencias:** `app/Http/Controllers/EvidenciaController.php`.
-- **Comando:** `app/Console/Commands/SeguimientoMantenimiento.php` (`ruta:mantenimiento`).
+- **Comando:** `app/Console/Commands/SeguimientoMantenimiento.php` (`ruta:mantenimiento`). También envía los avisos del programa (`AvisosPrograma`).
+- **Segunda parte:**
+  - **Modelos:** `PlantillaMantenimiento`, `ProgramaMantenimiento`, `ActividadMantenimiento` y `WebhookEntrega`.
+  - **Enums:** `CriterioPlantilla`, `EstadoPrograma` y `EstadoActividad`.
+  - **Acciones:** `PlanDeVehiculo`, `ProgramaAnual` y `AvisosPrograma`.
+  - **Soporte:** `Support/Webhooks.php`, `Jobs/EnviarWebhook.php`, `Support/Pdf/PdfProgramaMantenimiento.php` (con su vista `pdf/programa-mantenimiento.blade.php`) y `Support/Mantenimiento/ExportarPrograma.php` (OpenSpout).
+  - **Panel:**
+    - `Resources/{PlantillasMantenimiento,ProgramasMantenimiento}/*`
+    - `Vehiculos/Pages/PlanMantenimientoVehiculo.php`
+    - `Pages/CalendarioMantenimiento.php`
+  - **Base de datos:** la migración `2026_11_02_100001_create_programa_mantenimiento.php` es idempotente y convierte las rutinas existentes.
 - **Base de datos:** la migración `2026_11_01_300001_create_mantenimiento.php` es idempotente. El esquema está en `nuevo/datos.md`.
 - **Arranque:** las empresas nuevas reciben las rutinas base al crearse (`CrearEmpresa`) y las existentes al desplegar (`ItemsChequeoSeeder`).
 - **Datos de demostración:** `DemoPesvSeeder` deja la falla crítica de la demo corregida con un mantenimiento y su plan cerrado.
@@ -136,11 +243,13 @@ La **revisión preventiva bimensual** sigue controlándose como documento del ve
 - **Recursos nuevos:**
   - `mantenimientos`: ver, crear y anular.
   - `planes_accion`: ver, crear y editar. Editar significa gestionar: iniciar, rechazar y cerrar.
-  - `rutinas_mantenimiento`: ver, crear, editar y eliminar.
+  - `rutinas_mantenimiento` (ahora «Plantillas y planes de mantenimiento»): ver, crear, editar y eliminar.
+  - `programas_mantenimiento`: ver, crear, editar y **aprobar**. «Aprobar» es una acción nueva del catálogo de permisos.
 - **Roles:**
   - **Mantenimiento:** todo lo anterior.
   - **Auxiliar:** ver y registrar mantenimientos, y ver planes y rutinas.
-  - **Gerencia:** solo ver.
+  - **Gerencia:** solo ver, y además **aprobar** el programa anual.
+  - El rol Mantenimiento ve, genera y edita el programa; no lo aprueba.
 
 ## Pendientes / ideas
 - **Combustible:** tanqueos y rendimiento en km por galón.

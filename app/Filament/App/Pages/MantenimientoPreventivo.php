@@ -73,6 +73,10 @@ class MantenimientoPreventivo extends Page implements HasTable
                 TextColumn::make('placa')->weight('bold')->searchable()
                     ->url(fn (Vehiculo $r) => VehiculoResource::getUrl('view', ['record' => $r])),
                 TextColumn::make('numero_interno')->label('No. interno')->placeholder('—'),
+                TextColumn::make('plan')->label('Plan')
+                    ->state(fn (Vehiculo $r) => $r->plan_personalizado ? 'Personalizado' : (PlanPreventivo::plantillaDe($r)?->nombre ?? 'Sin plan'))
+                    ->url(fn (Vehiculo $r) => auth()->user()?->can('ver_rutinas_mantenimiento') ? VehiculoResource::getUrl('plan-mantenimiento', ['record' => $r]) : null)
+                    ->color('primary'),
                 TextColumn::make('km')->label('Km actual')
                     ->state(fn (Vehiculo $r) => $this->plan($r)->first()['km_actual'] ?? $r->kilometrajeActual())
                     ->numeric(thousandsSeparator: '.')->placeholder('Sin reporte'),

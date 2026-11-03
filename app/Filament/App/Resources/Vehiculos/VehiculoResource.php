@@ -168,6 +168,7 @@ class VehiculoResource extends Resource
             'create' => CrearVehiculo::route('/crear'),
             'view' => VerVehiculo::route('/{record}'),
             'edit' => EditarVehiculo::route('/{record}/editar'),
+            'plan-mantenimiento' => \App\Filament\App\Resources\Vehiculos\Pages\PlanMantenimientoVehiculo::route('/{record}/plan-mantenimiento'),
         ];
     }
 }

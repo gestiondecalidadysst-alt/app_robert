@@ -3,11 +3,12 @@
 namespace App\Support\Mantenimiento;
 
 use App\Models\Empresa;
+use App\Models\PlantillaMantenimiento;
 use App\Models\RutinaMantenimiento;
 
 /**
  * Rutinas preventivas por defecto (aprobadas por el usuario el 2026-11-01). Son valores de
- * referencia: cada empresa las ajusta al manual del fabricante en Mantenimiento → Rutinas preventivas.
+ * referencia: cada empresa las ajusta al manual del fabricante en Mantenimiento → Plantillas de plan.
  */
 final class RutinasBase
 {
@@ -25,14 +26,25 @@ final class RutinasBase
         ['Batería y sistema eléctrico', 20000, 12],
     ];
 
+    /** Crea la plantilla "Plan general" (por defecto) con las rutinas base, si la empresa no tiene plantillas. */
     public static function crear(Empresa $empresa): void
     {
-        if (RutinaMantenimiento::query()->deEmpresa($empresa)->exists()) {
+        if (PlantillaMantenimiento::query()->deEmpresa($empresa)->exists()) {
             return;
         }
 
+        $plantilla = new PlantillaMantenimiento([
+            'nombre' => 'Plan general',
+            'criterio' => 'libre',
+            'por_defecto' => true,
+            'descripcion' => 'Plan para los vehículos que no tienen una plantilla más específica. Ajuste los intervalos al manual del fabricante.',
+        ]);
+        $plantilla->empresa_id = $empresa->id;
+        $plantilla->save();
+
         foreach (self::RUTINAS as $i => [$nombre, $km, $meses]) {
             $rutina = new RutinaMantenimiento([
+                'plantilla_mantenimiento_id' => $plantilla->id,
                 'nombre' => $nombre,
                 'intervalo_km' => $km,
                 'intervalo_meses' => $meses,

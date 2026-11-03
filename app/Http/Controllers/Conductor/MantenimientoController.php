@@ -31,6 +31,11 @@ class MantenimientoController extends Controller
             'vehiculos' => $vehiculos,
             'planes' => PlanAccion::query()->withoutGlobalScopes()->whereIn('vehiculo_id', $vehiculos->pluck('id'))->pendientes()
                 ->with('vehiculo')->orderByRaw("case prioridad when 'alta' then 0 when 'media' then 1 else 2 end")->latest('id')->get(),
+            'programadas' => \App\Models\ActividadMantenimiento::query()->withoutGlobalScopes()
+                ->whereIn('vehiculo_id', $vehiculos->pluck('id'))->pendientes()
+                ->whereHas('programa', fn ($q) => $q->whereIn('estado', ['aprobado', 'borrador']))
+                ->whereDate('fecha_programada', '<=', today()->addDays(30))
+                ->with('vehiculo')->orderBy('fecha_programada')->limit(10)->get(),
             'recientes' => Mantenimiento::query()->withoutGlobalScopes()
                 ->whereIn('conductor_id', ServiciosConductor::conductores($request->user())->pluck('id'))
                 ->with(['vehiculo', 'plan'])->withCount('evidencias')->latest('id')->limit(15)->get(),

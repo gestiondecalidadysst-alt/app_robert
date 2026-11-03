@@ -41,7 +41,7 @@ class MantenimientoTest extends ConfiguracionTestCase
 
     private function rutina(string $nombre = 'Aceite de motor y filtro de aceite'): RutinaMantenimiento
     {
-        return RutinaMantenimiento::query()->deEmpresa($this->demo)->where('nombre', $nombre)->firstOrFail();
+        return RutinaMantenimiento::query()->deEmpresa($this->demo)->whereNotNull('plantilla_mantenimiento_id')->where('nombre', $nombre)->firstOrFail();
     }
 
     private function registrar(array $datos = [], array $archivos = [], ?Conductor $conductor = null, ?Vehiculo $vehiculo = null): Mantenimiento
@@ -74,7 +74,7 @@ class MantenimientoTest extends ConfiguracionTestCase
             "/app/cootrasec-demo/mantenimientos/{$mantenimiento->id}",
             '/app/cootrasec-demo/planes-accion',
             "/app/cootrasec-demo/planes-accion/{$plan->id}",
-            '/app/cootrasec-demo/rutinas-preventivas',
+            '/app/cootrasec-demo/plantillas-mantenimiento',
             '/app/cootrasec-demo/plan-preventivo',
             "/app/cootrasec-demo/vehiculos/{$vehiculo->id}",
         ] as $url) {
@@ -99,6 +99,7 @@ class MantenimientoTest extends ConfiguracionTestCase
     public function test_cada_empresa_recibe_las_rutinas_base_una_vez(): void
     {
         $this->assertSame(count(RutinasBase::RUTINAS), RutinaMantenimiento::query()->deEmpresa($this->otra)->count());
+        $this->assertTrue(\App\Models\PlantillaMantenimiento::query()->deEmpresa($this->otra)->where('por_defecto', true)->exists());
         RutinasBase::crear($this->otra);
         $this->assertSame(count(RutinasBase::RUTINAS), RutinaMantenimiento::query()->deEmpresa($this->otra)->count());
     }
@@ -121,9 +122,11 @@ class MantenimientoTest extends ConfiguracionTestCase
         $this->assertSame(PlanPreventivo::PROXIMO, PlanPreventivo::para($vehiculo, 104200)->firstWhere('rutina.id', $aceite->id)['estado']);
         $this->assertSame(PlanPreventivo::VENCIDO, PlanPreventivo::para($vehiculo, 105000)->firstWhere('rutina.id', $aceite->id)['estado']);
 
-        // Una rutina propia del vehículo con el mismo nombre reemplaza a la general.
-        RutinaMantenimiento::create(['empresa_id' => $this->demo->id, 'nombre' => $aceite->nombre, 'vehiculo_id' => $vehiculo->id, 'intervalo_km' => 8000]);
-        $fila = PlanPreventivo::para($vehiculo, 101000)->firstWhere('rutina.nombre', $aceite->nombre);
+        // Plan personalizado: cambia el intervalo; el mantenimiento hecho con la rutina de la plantilla cuenta.
+        \App\Actions\Mantenimiento\PlanDeVehiculo::personalizar($vehiculo, PlanPreventivo::rutinasDe($vehiculo)->map(fn ($r) => [
+            'nombre' => $r->nombre, 'intervalo_km' => $r->nombre === $aceite->nombre ? 8000 : $r->intervalo_km, 'intervalo_meses' => $r->intervalo_meses,
+        ])->all());
+        $fila = PlanPreventivo::para($vehiculo->refresh(), 101000)->firstWhere('rutina.nombre', $aceite->nombre);
         $this->assertSame(108000, $fila['proximo_km'], 'El mantenimiento hecho con la rutina general cuenta.');
         $this->assertSame(1, PlanPreventivo::rutinasDe($vehiculo)->where('nombre', $aceite->nombre)->count());
     }

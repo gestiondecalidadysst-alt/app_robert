@@ -32,6 +32,20 @@
     <div class="tarjeta"><p class="tenue" style="margin:0">No hay planes de acción pendientes para sus vehículos.</p></div>
 @endforelse
 
+@if ($programadas->isNotEmpty())
+    <h1 style="margin-top:22px">Próximos mantenimientos programados</h1>
+    @foreach ($programadas as $a)
+        @php $s = $a->situacion(); @endphp
+        <div class="tarjeta" style="padding:12px 16px">
+            <div class="fila">
+                <strong>{{ $a->vehiculo?->placa }} · {{ $a->rutina_nombre }}</strong>
+                <span class="estado {{ $s === 'vencida' ? 'mal' : ($s === 'proxima' ? 'pend' : 'info') }}">{{ $s === 'vencida' ? 'Vencido' : $a->fecha_programada->format('d/m') }}</span>
+            </div>
+            <p class="tenue" style="font-size:13px; margin:4px 0 0">Programado para el {{ $a->fecha_programada->format('d/m/Y') }}{{ $a->km_programado ? ' o a los '.number_format($a->km_programado, 0, ',', '.').' km' : '' }}. Cuando se haga, regístrelo con la evidencia.</p>
+        </div>
+    @endforeach
+@endif
+
 @if ($vehiculos->isNotEmpty())
     <h1 style="margin-top:22px">Registrar un mantenimiento</h1>
     <div class="tarjeta">

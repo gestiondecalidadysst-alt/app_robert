@@ -136,3 +136,39 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 | Número de factura | `factura_numero` |
 | Adjunto de la factura | Una fila en `evidencias` |
 
+## Módulo 6 – Programa de mantenimiento (`2026_11_02_100001_create_programa_mantenimiento.php`)
+- `plantillas_mantenimiento`:
+  - `nombre`.
+  - `criterio`: clase | marca_linea | libre.
+  - `clase_vehiculo_id`, `marca_id` y `linea_id`.
+  - `descripcion`, `por_defecto` y `activo`.
+- `rutinas_mantenimiento.plantilla_mantenimiento_id`: la plantilla a la que pertenece la rutina. Si no tiene, `vehiculo_id` indica que es del plan personalizado de un vehículo. `clase_vehiculo_id` ya no se usa.
+- `vehiculos` (columnas nuevas):
+  - `plantilla_mantenimiento_id`: la plantilla asignada, o la base del plan personalizado.
+  - `plan_personalizado`.
+- `mantenimientos.registro_inicial`: marca el punto de partida del plan, que no cuenta como mantenimiento real.
+- `empresas` (columnas nuevas):
+  - `km_diarios_defecto` (150) y `mantenimiento_dias_aviso` (7).
+  - `webhook_activo`.
+  - `webhook_url` y `webhook_secreto`, guardados cifrados.
+  - `webhook_eventos` (JSON).
+- `programas_mantenimiento`:
+  - `anio` y `version`; estos dos con la empresa no se pueden repetir.
+  - `estado`: borrador | aprobado | reemplazado.
+  - `codigo_formato`, `km_diarios_defecto` y `observaciones`.
+  - `elaborado_por` / `elaborado_at` y `aprobado_por` / `aprobado_at`.
+- `actividades_mantenimiento`:
+  - **Qué se programó:**
+    - `programa_mantenimiento_id`, `vehiculo_id` y `rutina_mantenimiento_id`.
+    - `rutina_nombre` y `frecuencia`, que son copias.
+  - **Fechas:**
+    - `fecha_original` y `km_original`: la línea base.
+    - `fecha_programada` y `km_programado`: la fecha vigente.
+  - **Ejecución:**
+    - `estado`: programada | ejecutada | cancelada. «Vencida» y «próxima» no se guardan: se calculan por la fecha.
+    - `mantenimiento_id`, `fecha_ejecucion` y `km_ejecucion`.
+  - **Trazabilidad y avisos:**
+    - `incorporada`, `motivo` e `historial` (JSON: fecha, tipo, detalle y usuario).
+    - `avisado_proximo_at` y `avisado_vencido_at`.
+- `webhook_entregas`: `evento`, `payload`, `estado` (pendiente | enviado | fallido), `codigo_respuesta`, `error`, `intentos` y `enviado_at`.
+
