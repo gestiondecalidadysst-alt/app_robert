@@ -41,7 +41,7 @@ final class Permisos
         'asignaciones_vehiculo' => ['Asignación de vehículos', 'Conductores', ['ver', 'crear', 'editar']],
         'clientes' => ['Clientes', 'Operación', ['ver', 'crear', 'editar', 'eliminar']],
         'contratos' => ['Contratos', 'Operación', ['ver', 'crear', 'editar', 'anular']],
-        'pagos_contrato' => ['Pagos de contratos', 'Operación', ['ver', 'crear', 'eliminar']],
+        'pagos_contrato' => ['Pagos de contratos y recibos', 'Operación', ['ver', 'crear', 'anular']],
         'fuecs' => ['FUEC (extractos)', 'Operación', ['ver', 'crear', 'anular']],
         'documentos_contrato' => ['Contratos: emisión y firma', 'Operación', ['ver', 'crear', 'anular']],
         'items_chequeo' => ['Ítems de chequeo (PESV)', 'Seguridad vial', ['ver', 'crear', 'editar', 'eliminar']],

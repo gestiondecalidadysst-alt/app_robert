@@ -172,3 +172,12 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
     - `avisado_proximo_at` y `avisado_vencido_at`.
 - `webhook_entregas`: `evento`, `payload`, `estado` (pendiente | enviado | fallido), `codigo_respuesta`, `error`, `intentos` y `enviado_at`.
 
+## Recibos de caja (`2026_11_03_100001_create_recibos_pago.php`)
+- `pagos_contrato`:
+  - `prefijo` y `numero` (con la empresa, no se pueden repetir).
+  - `codigo_verificacion`: único, para el QR.
+  - `saldo_anterior` y `saldo_despues`.
+  - `anulado_at`, `anulado_por` y `motivo_anulacion`.
+  - Saldo del contrato = valor − pagos no anulados.
+- `empresas`: `recibo_prefijo` (por defecto RC) y `recibo_numero_inicial` (por defecto 1).
+

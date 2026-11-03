@@ -33,7 +33,8 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
 - `app/Models/Cliente.php` (`identificacion` formateada, DV si es NIT), `Contrato.php` (`estado()`, `totalPagado()`, `saldo()`, `numero_formateado`, scopes `noAnulados`, `disponiblesParaFuec`), `PagoContrato.php`, `Fuec.php` (`datos` = copia al expedir, `estado()`, `numero_formateado`, `urlVerificacion()`).
 - `app/Models/Empresa.php`: `faltantesHabilitacion()` (código territorial, resolución y año de habilitación, que forman el número).
 - `app/Actions/Operacion/CrearContrato.php`: consecutivo por empresa con bloqueo (`lockForUpdate`).
-- `app/Actions/Operacion/RegistrarPago.php`: no admite pagos a contratos anulados ni mayores que el saldo.
+- `app/Actions/Operacion/RegistrarPago.php`: no admite pagos a contratos anulados ni mayores que el saldo. Bloquea el contrato y la empresa, y asigna el recibo de caja: el consecutivo, el código de verificación y el saldo antes y después del pago.
+- `AnularPago.php`: los pagos no se borran, se anulan con un motivo. `EnviarRecibo.php` envía el recibo por correo (PDF adjunto) y por SMS (enlace), y el estado de cuenta o el paz y salvo por correo.
 - `app/Actions/Operacion/AnularContrato.php`: exige motivo y que no tenga FUEC sin anular.
 - **`app/Actions/Operacion/ExpedirFuec.php`**: única forma de crear un FUEC.
   - `validar($empresa, $datos)`: errores por campo (la pantalla los muestra en vivo).
@@ -83,3 +84,36 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
 - Comparendos: no bloquean (pendiente que el usuario confirme si cobro coactivo o embargo deben bloquear).
 - Firma digital del gerente en el PDF (art. 8 permite firma digital).
 - ~~Plantilla del contrato en PDF~~: hecho, con firma electrónica (ver `contratos-firma.md`). Falta el recibo de pago.
+
+## Recibos de caja, estado de cuenta y paz y salvo (2026-11-03)
+**Pedido del usuario:** que cada pago o abono de un contrato produzca un comprobante para entregar al cliente, tanto del abono como del pago total.
+
+- **Recibo de caja por cada pago** (pestaña **Pagos y recibos** del contrato):
+  - Lleva un número consecutivo por empresa con prefijo, por ejemplo `RC-0001`. El prefijo y el número inicial (para continuar el talonario de papel) se configuran en Integraciones → Recibos de caja.
+  - Media carta horizontal.
+  - Contenido:
+    - recibimos de (cliente e identificación);
+    - la suma de (en números y en letras);
+    - por concepto de (abono, abono final o pago total del contrato No.);
+    - forma de pago y referencia;
+    - un cuadro con el valor del contrato, lo abonado antes, este pago y el saldo pendiente;
+    - el sello «CONTRATO PAGADO EN SU TOTALIDAD» cuando el saldo queda en cero;
+    - las firmas de quien recibe y del cliente, y un QR de verificación.
+  - **Tipo de pago:** «pago total» si se pagó todo de una vez, «abono final» si el abono deja el saldo en cero y «abono» si queda saldo.
+- **Al registrar el pago:** el recibo queda listo con el botón «Ver recibo» y se puede enviar en el mismo paso (casilla «Enviar el recibo al cliente», con el correo y el celular del cliente ya puestos).
+- **Acciones por pago:** **Recibo** (descargar), **Enviar al cliente** y **Anular**.
+  - **Enviar:** por correo va el PDF adjunto; por SMS, un enlace a `/verificar/recibo/{codigo}`, donde se ve y se descarga.
+  - **Anular** exige un motivo. El pago deja de sumar al saldo y el recibo conserva su número, marcado ANULADO. El número nunca se reutiliza.
+- **Estado de cuenta / paz y salvo** (botón en el encabezado del contrato):
+  - Relaciona todos los recibos; los anulados aparecen tachados.
+  - Muestra el total pagado y el saldo.
+  - **Si el saldo es cero:** es la **constancia de pago total (paz y salvo)**, con el texto de certificación y la firma del representante legal.
+  - Se descarga o se envía por correo.
+- **Datos:**
+  - `pagos_contrato` (columnas nuevas): `prefijo`, `numero` (no se repite por empresa), `codigo_verificacion`, `saldo_anterior`, `saldo_despues`, `anulado_at`, `anulado_por` y `motivo_anulacion`.
+  - `empresas` (columnas nuevas): `recibo_prefijo` (RC) y `recibo_numero_inicial` (1).
+  - La migración `2026_11_03_100001_create_recibos_pago.php` numera los pagos que ya existían, en orden de fecha.
+- **Código:** `Support/Pdf/PdfRecibo.php` (vistas `pdf/recibo-pago.blade.php` y `pdf/estado-cuenta.blade.php`), `Http/Controllers/VerificarReciboController.php` (vista `recibo/verificar.blade.php`) y `Mail/CorreoReciboPago.php`.
+- **Pruebas:** `tests/Feature/Operacion/RecibosPagoTest.php`, con 6 pruebas.
+- **Nota:** el recibo de caja no reemplaza la factura electrónica de la DIAN; así lo dice al pie.
+

@@ -106,10 +106,15 @@ class Contrato extends Model
         return EstadoVigencia::para($this->fecha_inicio, $this->fecha_fin, $this->anulado(), $hoy);
     }
 
-    /** Total abonado (usa pagos_sum_valor si se cargó con withSum). */
+    /** Total abonado sin pagos anulados (usa pagos_sum_valor si se cargó con withSum de vigentes). */
     public function totalPagado(): float
     {
-        return (float) ($this->pagos_sum_valor ?? $this->pagos()->sum('valor'));
+        return (float) ($this->pagos_sum_valor ?? $this->pagos()->vigentes()->sum('valor'));
+    }
+
+    public function pagado(): bool
+    {
+        return (float) $this->valor > 0 && $this->saldo() <= 0;
     }
 
     public function saldo(): float

@@ -69,7 +69,7 @@ class ContratoResource extends Resource
         $pesos = fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.');
 
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['cliente.tipoIdentificacion', 'documentos'])->withSum('pagos', 'valor')->withCount(['fuecs' => fn ($q) => $q->noAnulados()]))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['cliente.tipoIdentificacion', 'documentos'])->withSum(['pagos' => fn ($q) => $q->whereNull('anulado_at')], 'valor')->withCount(['fuecs' => fn ($q) => $q->noAnulados()]))
             ->defaultSort('numero', 'desc')
             ->recordUrl(fn (Contrato $record) => static::getUrl('view', ['record' => $record]))
             ->columns([
@@ -113,8 +113,8 @@ class ContratoResource extends Resource
                     ->trueLabel('Con saldo pendiente')
                     ->falseLabel('Pagados')
                     ->queries(
-                        true: fn (Builder $q) => $q->noAnulados()->whereRaw('valor > (select coalesce(sum(valor), 0) from pagos_contrato where pagos_contrato.contrato_id = contratos.id)'),
-                        false: fn (Builder $q) => $q->whereRaw('valor <= (select coalesce(sum(valor), 0) from pagos_contrato where pagos_contrato.contrato_id = contratos.id)'),
+                        true: fn (Builder $q) => $q->noAnulados()->whereRaw('valor > (select coalesce(sum(valor), 0) from pagos_contrato where pagos_contrato.contrato_id = contratos.id and pagos_contrato.anulado_at is null)'),
+                        false: fn (Builder $q) => $q->whereRaw('valor <= (select coalesce(sum(valor), 0) from pagos_contrato where pagos_contrato.contrato_id = contratos.id and pagos_contrato.anulado_at is null)'),
                         blank: fn (Builder $q) => $q,
                     ),
                 SelectFilter::make('objeto')->options(ObjetoContrato::class),

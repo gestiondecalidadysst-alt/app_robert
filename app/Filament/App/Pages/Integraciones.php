@@ -70,6 +70,8 @@ class Integraciones extends Page
             'webhook_eventos' => $e->webhook_eventos ?? array_keys(Webhooks::EVENTOS),
             'km_diarios_defecto' => $e->km_diarios_defecto,
             'mantenimiento_dias_aviso' => $e->mantenimiento_dias_aviso,
+            'recibo_prefijo' => $e->recibo_prefijo,
+            'recibo_numero_inicial' => $e->recibo_numero_inicial,
         ]);
     }
 
@@ -117,6 +119,20 @@ class Integraciones extends Page
                             ->helperText('Para estimar fechas de vehículos sin lecturas de kilometraje suficientes.'),
                         TextInput::make('mantenimiento_dias_aviso')->label('Avisar actividades con (días) de anticipación')->numeric()->minValue(1)->maxValue(60)->required(),
                     ]),
+                Section::make('Recibos de caja')
+                    ->description('Cada pago de un contrato genera un recibo con número consecutivo para entregar al cliente.')
+                    ->icon('heroicon-o-receipt-percent')
+                    ->columns(['default' => 1, 'md' => 2])
+                    ->schema([
+                        TextInput::make('recibo_prefijo')->label('Prefijo')->maxLength(10)->alphaDash()->placeholder('RC')
+                            ->helperText('Aparece antes del número: RC-0001. Puede dejarlo vacío.'),
+                        TextInput::make('recibo_numero_inicial')->label('Empezar en el número')->numeric()->minValue(1)->required()
+                            ->helperText(function () use ($e) {
+                                $ultimo = (int) \App\Models\PagoContrato::query()->deEmpresa($e)->max('numero');
+
+                                return 'Para continuar su talonario actual. ' . ($ultimo ? "Último recibo emitido: {$ultimo}." : 'Aún no hay recibos.') . ' Nunca se repite un número.';
+                            }),
+                    ]),
                 Section::make('Firma electrónica de contratos')
                     ->icon('heroicon-o-pencil-square')
                     ->columns(['default' => 1, 'md' => 3])
@@ -161,6 +177,8 @@ class Integraciones extends Page
             'webhook_eventos' => array_values($datos['webhook_eventos'] ?? []),
             'km_diarios_defecto' => (int) $datos['km_diarios_defecto'],
             'mantenimiento_dias_aviso' => (int) $datos['mantenimiento_dias_aviso'],
+            'recibo_prefijo' => mb_strtoupper(trim((string) ($datos['recibo_prefijo'] ?? ''))),
+            'recibo_numero_inicial' => max(1, (int) $datos['recibo_numero_inicial']),
         ]);
         if (filled($datos['webhook_url'] ?? null)) {
             $empresa->webhook_url = trim($datos['webhook_url']);

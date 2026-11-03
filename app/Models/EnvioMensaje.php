@@ -19,6 +19,8 @@ class EnvioMensaje extends Model
         'codigo_firma' => 'Código de verificación',
         'contrato_firmado' => 'Contrato firmado',
         'recordatorio_firma' => 'Recordatorio de firma',
+        'recibo_pago' => 'Recibo de pago',
+        'estado_cuenta' => 'Estado de cuenta / paz y salvo',
         'prueba' => 'Mensaje de prueba',
     ];
 

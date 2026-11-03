@@ -32,6 +32,12 @@ Route::get('/verificar/inspeccion/{codigo}', \App\Http\Controllers\VerificarInsp
     ->middleware('throttle:30,1')
     ->name('inspeccion.verificar');
 
+// Verificación pública y descarga de un recibo de caja (QR del recibo y enlace enviado al cliente).
+Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(function () {
+    Route::get('/verificar/recibo/{codigo}', [\App\Http\Controllers\VerificarReciboController::class, 'mostrar'])->name('recibo.verificar');
+    Route::get('/verificar/recibo/{codigo}/pdf', [\App\Http\Controllers\VerificarReciboController::class, 'pdf'])->name('recibo.pdf');
+});
+
 // Portal del conductor: ingreso con documento y clave; servicios, preoperacional y extracto.
 Route::prefix('conductor')->name('conductor.')->group(function () {
     Route::get('/ingresar', [\App\Http\Controllers\Conductor\AccesoController::class, 'formulario'])->name('ingresar');
