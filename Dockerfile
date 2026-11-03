@@ -13,7 +13,9 @@ FROM php:8.3-apache
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \
     COMPOSER_ALLOW_SUPERUSER=1 \
-    LOG_STACK=single,stderr
+    LOG_STACK=daily,stderr \
+    LOG_DAILY_DAYS=14 \
+    LOG_LEVEL=warning
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev unzip \

@@ -41,10 +41,21 @@ fi
 
 if [ "$ROLE" = "worker" ]; then
   php artisan optimize
-  # Tareas programadas en segundo plano y cola en primer plano.
-  php artisan schedule:work &
-  exec php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+  # Las tareas programadas van en su propio servicio (CONTAINER_ROLE=scheduler). Mientras no exista,
+  # el worker también las corre: ponga SCHEDULE_EN_WORKER=false en el worker cuando cree el scheduler.
+  if [ "${SCHEDULE_EN_WORKER:-true}" != "false" ]; then
+    php artisan schedule:work &
+  fi
+  # Cola: primero la fila alta (SMS y correos), luego default y la baja (webhooks).
+  # Se reinicia cada hora (Easypanel lo vuelve a levantar) para liberar memoria.
+  exec php artisan queue:work --queue=alta,default,baja --sleep=3 --tries=3 --max-time=3600
 fi
 
-echo "CONTAINER_ROLE no válido: $ROLE (use web o worker)" >&2
+if [ "$ROLE" = "scheduler" ]; then
+  php artisan optimize
+  # Tareas programadas en primer plano: si el proceso se cae, Easypanel reinicia el servicio.
+  exec php artisan schedule:work
+fi
+
+echo "CONTAINER_ROLE no válido: $ROLE (use web, worker o scheduler)" >&2
 exit 1

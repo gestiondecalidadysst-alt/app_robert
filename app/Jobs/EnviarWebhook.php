@@ -5,14 +5,18 @@ namespace App\Jobs;
 use App\Models\Empresa;
 use App\Models\WebhookEntrega;
 use App\Support\Webhooks;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Throwable;
 
-/** Envía un aviso por webhook (POST JSON firmado) con reintentos. */
-class EnviarWebhook implements ShouldQueue
+/**
+ * Envía un aviso por webhook (POST JSON firmado) con reintentos. Va cifrado en la cola (los datos
+ * pueden traer nombres y teléfonos) y en la fila baja.
+ */
+class EnviarWebhook implements ShouldBeEncrypted, ShouldQueue
 {
     use Queueable;
 
@@ -20,7 +24,10 @@ class EnviarWebhook implements ShouldQueue
 
     public array $backoff = [30, 120, 600, 1800];
 
-    public function __construct(public int $entregaId) {}
+    public function __construct(public int $entregaId)
+    {
+        $this->onQueue(\App\Support\Sistema\Colas::BAJA);
+    }
 
     public function handle(): void
     {

@@ -83,8 +83,11 @@ class EmitirDocumentoContrato
         if ($empresa->firma_envio_automatico) {
             try {
                 app(EnviarParaFirma::class)($documento, EnviarParaFirma::firmantePorDefecto($contrato));
-            } catch (Throwable) {
-                // Sin datos de contacto válidos: queda emitido y se envía a mano.
+            } catch (ValidationException) {
+                // Sin datos de contacto válidos (o SMS sin configurar): queda emitido y se envía a mano.
+            } catch (Throwable $e) {
+                // Falla inesperada del envío: el documento queda emitido y el error se registra.
+                report($e);
             }
         }
 

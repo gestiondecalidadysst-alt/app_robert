@@ -24,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Cola: latido del worker (Estado del sistema) y referencia de error nueva por cada trabajo.
+        \Illuminate\Support\Facades\Queue::looping(fn () => \App\Support\Sistema\Latidos::marcar(\App\Support\Sistema\Latidos::WORKER));
+        \Illuminate\Support\Facades\Queue::before(function (\Illuminate\Queue\Events\JobProcessing $evento): void {
+            // Los trabajos síncronos (sync) son parte de la misma petición: conservan su referencia.
+            if ($evento->connectionName !== 'sync') {
+                \App\Support\Sistema\Referencia::reiniciar();
+            }
+        });
+
         // Páginas públicas de firma: límites por IP, cada uno con su propia clave.
         foreach (['firma' => 60, 'firma-codigo' => 8, 'firma-firmar' => 20, 'verificar-archivo' => 10, 'conductor-ingreso' => 10] as $nombre => $porMinuto) {
             RateLimiter::for($nombre, fn (Request $request) => Limit::perMinute($porMinuto)->by($nombre . '|' . $request->ip()));

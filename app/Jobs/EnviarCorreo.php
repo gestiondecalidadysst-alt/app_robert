@@ -25,7 +25,10 @@ class EnviarCorreo implements ShouldBeEncrypted, ShouldQueue
         public int $envioId,
         public string $correo,
         public Mailable $mensaje,
-    ) {}
+    )
+    {
+        $this->onQueue(\App\Support\Sistema\Colas::ALTA);
+    }
 
     public function handle(): void
     {

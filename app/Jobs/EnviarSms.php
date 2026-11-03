@@ -25,7 +25,10 @@ class EnviarSms implements ShouldBeEncrypted, ShouldQueue
         public int $envioId,
         public string $celular,
         public string $texto,
-    ) {}
+    )
+    {
+        $this->onQueue(\App\Support\Sistema\Colas::ALTA);
+    }
 
     public function handle(): void
     {

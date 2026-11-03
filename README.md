@@ -46,7 +46,9 @@ La clave de los usuarios demo es `Ruta2026*`.
    ```
 4. **Volumen** (*Mounts*): monte un volumen en `/var/www/html/storage/app`, para que los logos y documentos no se pierdan entre despliegues.
 5. **Correo (SMTP)** en *Environment* (`MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`): lo usan la recuperación de contraseñas y la firma de contratos. Los SMS (Onurix) se configuran dentro de la app, en Configuración → Integraciones de cada empresa.
-6. **Worker:** cree un segundo servicio desde el mismo repositorio, con las mismas variables y `CONTAINER_ROLE=worker`. Procesa las colas y las tareas programadas (alertas). Este servicio no necesita dominio.
+6. **Worker:** cree un segundo servicio desde el mismo repositorio, con las mismas variables y `CONTAINER_ROLE=worker`. Procesa la cola (SMS, correos y webhooks). Este servicio no necesita dominio.
+7. **Tareas programadas (recomendado):** cree un tercer servicio igual con `CONTAINER_ROLE=scheduler` y ponga `SCHEDULE_EN_WORKER=false` en el worker. Mientras no exista, el worker también corre las tareas programadas.
+8. **Alertas (opcional):** `ALERTAS_CORREO=<correo>` recibe los errores inesperados y los problemas de la cola. También llegan a la campana de los superadministradores. El estado se ve en `/admin/estado-sistema`.
 
 **Qué hace el contenedor web al arrancar:**
 - Espera a que la base de datos responda y aplica las migraciones.

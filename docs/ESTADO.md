@@ -20,6 +20,7 @@
 - [x] **Recibos de caja de los contratos:** recibo por cada pago (abono, abono final o pago total) con consecutivo y QR; envío por correo y SMS; anulación con motivo; estado de cuenta y paz y salvo. Detalle en `nuevo/modulos/operacion.md`.
 - [x] **Planeador de servicios (PESV, paso 15):** tablero semanal por vehículo o conductor; rutogramas por origen y destino; servicios libres desde los que se genera el extracto (todo FUEC aparece en el planeador); avisos de jornada y fatiga; plan de viaje en PDF; seguimiento opcional en el portal. Detalle en `nuevo/modulos/operacion.md`.
 - [x] **Módulo de gerencia:** tablero con filtros de periodo y oficina, informes en Excel, resumen en PDF y envío mensual automático (correo y webhook). Detalle en `nuevo/modulos/gerencia.md`.
+- [x] **Colas y errores:** filas alta y baja, servicio scheduler, latidos y vigilante, páginas de error en español con referencia, registro y alerta de errores, y la pantalla Estado del sistema. Detalle en `nuevo/modulos/sistema.md`.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
@@ -39,4 +40,5 @@
 2. Siguiente módulo sugerido: **Módulo 7 – Pagos de administración** (cuota mensual por vehículo, estado de cuenta; la app anterior bloqueaba el FUEC con administración atrasada). Después: combustible y liquidación de vehículos; planillas, tiquetes y caja (el tablero de gerencia ya está construido).
 3. En cada vehículo: registrar el punto de partida del plan (o «arrancan hoy»), generar el programa anual y aprobarlo; configurar el webhook de n8n en Integraciones.
 4. Crear los rutogramas de las rutas frecuentes y poner la política de jornada de la empresa en Integraciones → Planeador de servicios.
-5. Montar el volumen de `storage/app` en Easypanel (firmas, evidencias, logos) — sin él se pierden en cada despliegue.
+5. En Easypanel: crear el servicio `scheduler` (`CONTAINER_ROLE=scheduler`), poner `SCHEDULE_EN_WORKER=false` en el worker y, si se quiere, `ALERTAS_CORREO`.
+6. Montar el volumen de `storage/app` en Easypanel (firmas, evidencias, logos) — sin él se pierden en cada despliegue.
