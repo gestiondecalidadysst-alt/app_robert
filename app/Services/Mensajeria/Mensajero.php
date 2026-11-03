@@ -117,6 +117,8 @@ final class Mensajero
             'enviado_at' => $resultado->exito ? now() : null,
         ])->save();
 
+        self::avisarSiEsDeLaCuenta($envio);
+
         return $resultado->exito;
     }
 
@@ -131,8 +133,17 @@ final class Mensajero
             return true;
         } catch (Throwable $e) {
             $envio->forceFill(['proveedor' => config('mail.default'), 'estado' => 'fallido', 'error' => mb_substr($e->getMessage(), 0, 500)])->save();
+            self::avisarSiEsDeLaCuenta($envio);
 
             return false;
+        }
+    }
+
+    /** Falla de la cuenta del proveedor (sin créditos, IP, credenciales): aviso a la empresa, una vez al día. */
+    private static function avisarSiEsDeLaCuenta(EnvioMensaje $envio): void
+    {
+        if ($envio->estado === 'fallido' && ($tipo = \App\Support\Sistema\FallasEnvio::permanente($envio->error))) {
+            rescue(fn () => \App\Support\Sistema\FallasEnvio::avisar($envio, $tipo), report: false);
         }
     }
 

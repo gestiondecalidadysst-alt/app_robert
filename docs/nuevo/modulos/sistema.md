@@ -48,6 +48,19 @@
 - **Log en producción** (Dockerfile): `LOG_STACK=daily,stderr`, `LOG_DAILY_DAYS=14` y `LOG_LEVEL=warning`. El canal `stderr` es el que muestra Easypanel.
 - **Corrección:** al emitir un contrato con envío automático ya no se ocultan las fallas inesperadas. Solo se ignora la falta de datos de contacto (`ValidationException`); lo demás se registra.
 
+## Fallas de envío que no son del sistema (2026-11-03)
+**Contexto:** en producción, un SMS falló porque la cuenta de Onurix no tenía créditos («Necesita más créditos…») y se registró como error del sistema con su código REF.
+
+**Cómo se maneja ahora** (`App\Support\Sistema\FallasEnvio`):
+- **Fallas permanentes:** sin créditos, IP no autorizada, credenciales inválidas, límite del mes, o número o correo inválido.
+  - **No se reintentan**, porque no se arreglan solas.
+  - **No se registran** como error del sistema.
+  - El envío queda «fallido» en el historial, con el mensaje del proveedor.
+  - Quien tiene `ver_integraciones` en la empresa recibe un aviso en la campana, por ejemplo «Los SMS no se están enviando: recargue créditos». Llega máximo una vez al día por cada tipo de falla, también cuando el envío es inmediato.
+- **Fallas pasajeras** (red caída, el proveedor no responde):
+  - Se reintentan con `release()` (a los 30 s y a los 2 min) **sin lanzar excepción**, así que no ensucian el log ni generan alertas de error.
+  - Si se agotan los intentos, quedan «fallidas» en el historial.
+
 ## Pantalla «Estado del sistema» (`/admin/estado-sistema`, solo superadministrador)
 - **Procesos:** worker y tareas programadas, con la hora de la última señal y si están funcionando o detenidos.
 - **Cola:** trabajos pendientes por fila, desde cuándo esperan y cuántos están atascados.

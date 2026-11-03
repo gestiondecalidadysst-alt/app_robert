@@ -115,7 +115,7 @@ class SistemaTest extends ConfiguracionTestCase
         // Un trabajo real que falló: se encola, se toma su contenido y se pasa a fallidos.
         config(['queue.default' => 'database']);
         dispatch(new EnviarSms(999999, '3000000000', 'Hola'));
-        $trabajo = DB::table('jobs')->first();
+        $trabajo = DB::table('jobs')->where('queue', 'alta')->first();
         $uuid = json_decode($trabajo->payload, true)['uuid'];
         DB::table('jobs')->delete();
         DB::table('failed_jobs')->insert(['uuid' => $uuid, 'connection' => 'database', 'queue' => 'alta', 'payload' => $trabajo->payload,
@@ -139,5 +139,51 @@ class SistemaTest extends ConfiguracionTestCase
         // Un usuario de empresa no entra.
         $this->actingAs($this->usuario('admin@demo.test'));
         $this->get('/admin/estado-sistema')->assertForbidden();
+    }
+
+    public function test_sin_creditos_en_onurix_no_es_error_del_sistema_ni_se_reintenta(): void
+    {
+        $this->demo->forceFill(['sms_habilitado' => true, 'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba'])->save();
+        $intentos = 0;
+        \Illuminate\Support\Facades\Http::fake(function () use (&$intentos) {
+            $intentos++;
+
+            return \Illuminate\Support\Facades\Http::response(['status' => 'error', 'msg' => 'Necesita mas créditos para hacer el envió'], 400);
+        });
+
+        config(['queue.default' => 'database']);
+        $envio = \App\Services\Mensajeria\Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Hola');
+        $this->artisan('queue:work', ['--once' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
+
+        $envio->refresh();
+        $this->assertSame('fallido', $envio->estado);
+        $this->assertStringContainsString('créditos', $envio->error);
+        $this->assertSame(1, $intentos);
+        $this->assertSame(0, DB::table('jobs')->where('queue', 'alta')->count(), 'No queda pendiente de reintento.');
+        $this->assertSame(0, DB::table('failed_jobs')->count());
+        $this->assertSame(0, ErrorSistema::count(), 'No es un error del sistema.');
+
+        // La empresa recibe un aviso (una vez al día). La campana también va por la cola.
+        $this->artisan('queue:work', ['--stop-when-empty' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
+        $admin = $this->usuario('admin@demo.test');
+        $this->assertSame(1, $admin->notifications()->where('data', 'like', '%Los SMS no se est%')->count());
+        \App\Services\Mensajeria\Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Otra', ahora: true);
+        $this->artisan('queue:work', ['--stop-when-empty' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
+        $this->assertSame(1, $admin->notifications()->where('data', 'like', '%Los SMS no se est%')->count());
+    }
+
+    public function test_falla_pasajera_se_reintenta_sin_registrar_error(): void
+    {
+        $this->demo->forceFill(['sms_habilitado' => true, 'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba'])->save();
+        \Illuminate\Support\Facades\Http::fake(fn () => \Illuminate\Support\Facades\Http::response('Bad gateway', 502));
+
+        config(['queue.default' => 'database']);
+        \App\Services\Mensajeria\Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Hola');
+        $this->artisan('queue:work', ['--once' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
+
+        $trabajo = DB::table('jobs')->where('queue', 'alta')->first();
+        $this->assertNotNull($trabajo, 'Vuelve a la cola para reintentar.');
+        $this->assertGreaterThan(now()->getTimestamp() + 20, $trabajo->available_at, 'Con espera de 30 s.');
+        $this->assertSame(0, ErrorSistema::count());
     }
 }

@@ -8,7 +8,6 @@ use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Mail\Mailable;
-use RuntimeException;
 
 /**
  * Envía un correo en segundo plano con reintentos y deja el resultado en el historial.
@@ -38,8 +37,21 @@ class EnviarCorreo implements ShouldBeEncrypted, ShouldQueue
             return;
         }
 
-        if (! Mensajero::enviarCorreoAhora($envio, $this->correo, $this->mensaje) && $this->attempts() < $this->tries) {
-            throw new RuntimeException($envio->error ?? 'No se pudo enviar el correo.');
+        if (Mensajero::enviarCorreoAhora($envio, $this->correo, $this->mensaje)) {
+            return;
+        }
+
+        $envio->refresh();
+
+        // Sin créditos, IP no autorizada, credenciales o destino inválido: no se arregla reintentando y no
+        // es un error del sistema. Queda «fallido» en el historial (Mensajero ya avisó a la empresa).
+        if (\App\Support\Sistema\FallasEnvio::permanente($envio->error)) {
+            return;
+        }
+
+        // Falla pasajera (red, proveedor sin respuesta): se reintenta más tarde sin registrarla como error.
+        if ($this->attempts() < $this->tries) {
+            $this->release($this->backoff[$this->attempts() - 1] ?? 120);
         }
     }
 }
