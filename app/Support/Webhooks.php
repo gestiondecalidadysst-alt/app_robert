@@ -29,6 +29,7 @@ final class Webhooks
         'plan_accion.cerrado' => 'Plan de acción cerrado',
         'preoperacional.no_apto' => 'Preoperacional NO APTO',
         'servicio.novedad' => 'Novedad reportada por el conductor en un servicio',
+        'gerencia.informe_mensual' => 'Resumen mensual de gerencia (día 1 de cada mes)',
     ];
 
     /** Encola el aviso si la empresa tiene el webhook activo y el evento elegido. Nunca interrumpe la operación. */

@@ -16,7 +16,7 @@ use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
 
 /**
- * Inicio provisional: el tablero de gerencia se construye en el módulo 8.
+ * Inicio: accesos rápidos según los permisos del usuario (el tablero de gerencia está en Gerencia → Tablero).
  */
 class Bienvenida extends Widget
 {
@@ -29,6 +29,8 @@ class Bienvenida extends Widget
     protected function getViewData(): array
     {
         $accesos = collect([
+            ['Tablero de gerencia', 'Flota, operación, cartera, seguridad vial y mantenimiento', \App\Filament\App\Pages\TableroGerencia::getUrl(), 'ver_gerencia'],
+            ['Planeador', 'Servicios de la semana por vehículo y conductor', \App\Filament\App\Pages\Planeador::getUrl(), 'ver_servicios'],
             ['Expedir FUEC', 'Extracto del contrato con validación', FuecResource::getUrl('create'), 'crear_fuecs'],
             ['Contratos', 'Clientes, contratos y pagos', ContratoResource::getUrl(), 'ver_contratos'],
             ['Vehículos', 'Flota, hoja de vida y estado', VehiculoResource::getUrl(), 'ver_vehiculos'],

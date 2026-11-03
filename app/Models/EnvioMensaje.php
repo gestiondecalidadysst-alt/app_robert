@@ -21,6 +21,7 @@ class EnvioMensaje extends Model
         'recordatorio_firma' => 'Recordatorio de firma',
         'recibo_pago' => 'Recibo de pago',
         'estado_cuenta' => 'Estado de cuenta / paz y salvo',
+        'informe_gerencia' => 'Resumen mensual de gerencia',
         'prueba' => 'Mensaje de prueba',
     ];
 

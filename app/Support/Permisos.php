@@ -53,6 +53,7 @@ final class Permisos
         'planes_accion' => ['Planes de acción', 'Mantenimiento', ['ver', 'crear', 'editar']],
         'rutinas_mantenimiento' => ['Plantillas y planes de mantenimiento', 'Mantenimiento', ['ver', 'crear', 'editar', 'eliminar']],
         'programas_mantenimiento' => ['Programa anual de mantenimiento', 'Mantenimiento', ['ver', 'crear', 'editar', 'aprobar']],
+        'gerencia' => ['Tablero e informes de gerencia', 'Gerencia', ['ver']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
