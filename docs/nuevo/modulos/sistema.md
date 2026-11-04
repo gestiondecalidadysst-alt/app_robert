@@ -7,7 +7,7 @@
 | `CONTAINER_ROLE` | Qué hace |
 |---|---|
 | `web` | Sirve la aplicación. Al arrancar aplica las migraciones y carga catálogos y permisos. |
-| `worker` | Procesa la cola: `queue:work --queue=alta,default,baja`, y se reinicia cada hora. Mientras no exista el servicio scheduler, también corre las tareas programadas; cuando se cree el scheduler, ponerle `SCHEDULE_EN_WORKER=false` al worker. |
+| `worker` | Procesa la cola: `queue:work --queue=alta,default,baja`. Cada hora el proceso termina para liberar memoria y un ciclo en `entrypoint.sh` lo vuelve a lanzar, así que el contenedor no se detiene ni depende de la política de reinicio de Easypanel. Las tareas programadas en segundo plano también se relanzan si se caen. Mientras no exista el servicio scheduler, también corre las tareas programadas; cuando se cree el scheduler, ponerle `SCHEDULE_EN_WORKER=false` al worker. |
 | `scheduler` (nuevo) | Corre solo las tareas programadas (`schedule:work`) en primer plano. Si el proceso se cae, Easypanel reinicia el servicio. |
 
 ## Filas de la cola (`App\Support\Sistema\Colas`)

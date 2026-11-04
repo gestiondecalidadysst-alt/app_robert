@@ -44,11 +44,17 @@ if [ "$ROLE" = "worker" ]; then
   # Las tareas programadas van en su propio servicio (CONTAINER_ROLE=scheduler). Mientras no exista,
   # el worker también las corre: ponga SCHEDULE_EN_WORKER=false en el worker cuando cree el scheduler.
   if [ "${SCHEDULE_EN_WORKER:-true}" != "false" ]; then
-    php artisan schedule:work &
+    # En segundo plano y, si se cae, se vuelve a lanzar.
+    ( while true; do php artisan schedule:work; echo "Tareas programadas reiniciadas."; sleep 5; done ) &
   fi
   # Cola: primero la fila alta (SMS y correos), luego default y la baja (webhooks).
-  # Se reinicia cada hora (Easypanel lo vuelve a levantar) para liberar memoria.
-  exec php artisan queue:work --queue=alta,default,baja --sleep=3 --tries=3 --max-time=3600
+  # Cada hora el proceso termina para liberar memoria y este ciclo lo vuelve a lanzar enseguida:
+  # el contenedor nunca se detiene, así que no depende de que Easypanel lo reinicie.
+  while true; do
+    php artisan queue:work --queue=alta,default,baja --sleep=3 --tries=3 --max-time=3600
+    echo "Worker reiniciado (ciclo de una hora o salida con código $?)."
+    sleep 2
+  done
 fi
 
 if [ "$ROLE" = "scheduler" ]; then
