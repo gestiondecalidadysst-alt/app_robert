@@ -66,6 +66,7 @@ class EstadoSistema extends Page implements HasTable
     protected function getViewData(): array
     {
         return [
+            'urlSinConfigurar' => \App\Support\Sistema\UrlApp::sinConfigurar() ? (string) config('app.url') : null,
             'procesos' => [
                 ['Worker de la cola', Latidos::ultimo(Latidos::WORKER), Latidos::vivo(Latidos::WORKER),
                     'Servicio con CONTAINER_ROLE=worker. Envía SMS, correos y webhooks.'],

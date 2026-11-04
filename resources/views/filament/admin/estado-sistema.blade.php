@@ -1,5 +1,12 @@
 @php $nombresFila = ['alta' => 'Alta (SMS y correos)', 'default' => 'Normal', 'baja' => 'Baja (webhooks)']; @endphp
 <x-filament-panels::page>
+    @if ($urlSinConfigurar)
+        <div style="border: 2px solid rgb(185 28 28); border-radius: .75rem; padding: .85rem 1rem; color: rgb(127 29 29); background: rgb(254 242 242)">
+            <strong>APP_URL está en «{{ $urlSinConfigurar }}».</strong>
+            Los enlaces de los SMS y correos que envía la cola, los QR y los archivos públicos apuntan a esa dirección y no funcionan.
+            En Easypanel, agregue <code>APP_URL=https://su-dominio</code> en las variables de entorno del servicio web, del worker y del scheduler, y redespliegue.
+        </div>
+    @endif
     <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))">
         @foreach ($procesos as [$nombre, $ultimo, $vivo, $ayuda])
             <x-filament::section>

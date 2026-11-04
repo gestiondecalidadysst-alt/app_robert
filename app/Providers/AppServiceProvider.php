@@ -24,6 +24,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Si APP_URL quedó en localhost (sin configurar en el servidor), los archivos públicos (logos)
+        // se enlazan con la dirección por la que entró el usuario, no con «localhost».
+        if (! $this->app->runningInConsole() && \App\Support\Sistema\UrlApp::sinConfigurar()) {
+            config(['filesystems.disks.public.url' => request()->getSchemeAndHttpHost() . '/storage']);
+        }
+
         // Cola: latido del worker (Estado del sistema) y referencia de error nueva por cada trabajo.
         \Illuminate\Support\Facades\Queue::looping(fn () => \App\Support\Sistema\Latidos::marcar(\App\Support\Sistema\Latidos::WORKER));
         \Illuminate\Support\Facades\Queue::before(function (\Illuminate\Queue\Events\JobProcessing $evento): void {

@@ -141,6 +141,19 @@ class SistemaTest extends ConfiguracionTestCase
         $this->get('/admin/estado-sistema')->assertForbidden();
     }
 
+    public function test_aviso_si_app_url_quedo_en_localhost(): void
+    {
+        $this->actingAs($this->superadmin());
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        config(['app.url' => 'http://localhost']);
+        $this->assertTrue(\App\Support\Sistema\UrlApp::sinConfigurar());
+        $this->get('/admin/estado-sistema')->assertOk()->assertSee('APP_URL está en');
+
+        config(['app.url' => 'https://prueba.ejemplo.test']);
+        $this->assertFalse(\App\Support\Sistema\UrlApp::sinConfigurar());
+        $this->get('/admin/estado-sistema')->assertOk()->assertDontSee('APP_URL está en');
+    }
+
     public function test_sin_creditos_en_onurix_no_es_error_del_sistema_ni_se_reintenta(): void
     {
         $this->demo->forceFill(['sms_habilitado' => true, 'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba'])->save();
