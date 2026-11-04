@@ -31,6 +31,7 @@ class Conductor extends Model
     protected $table = 'conductores';
 
     protected $fillable = [
+        'transito_auto',
         'empresa_id', 'tipo_identificacion_id', 'documento', 'nombres', 'apellidos', 'fecha_nacimiento', 'genero',
         'grupo_sanguineo', 'telefono', 'email', 'direccion', 'municipio_id', 'foto_path', 'nivel_academico_id',
         'oficina_id', 'fecha_ingreso', 'eps_id', 'arl_id', 'fondo_pensiones', 'contacto_emergencia',
@@ -46,6 +47,8 @@ class Conductor extends Model
     protected function casts(): array
     {
         return [
+            'transito_auto' => 'boolean',
+            'transito_resumen' => 'array',
             'estado' => EstadoConductor::class,
             'estado_desde' => 'date',
             'comparendos_estado' => EstadoComparendos::class,
@@ -168,9 +171,46 @@ class Conductor extends Model
 
         $bloqueos = [...$bloqueos, ...$this->bloqueosDocumentales($fecha)];
 
+        $bloqueos = [...$bloqueos, ...$this->bloqueosTransito()];
+
         $categoria = $this->licencia()?->categoriaLicencia;
         if ($categoria && ! $categoria->esServicioPublico()) {
             $bloqueos[] = "La licencia es categoría {$categoria->codigo} (servicio particular); el transporte especial exige categoría C.";
+        }
+
+        return $bloqueos;
+    }
+
+    /**
+     * Bloqueos por la última consulta de tránsito, solo si la empresa los activó:
+     * licencia suspendida en el RUNT y comparendos pendientes (desde el valor que defina).
+     */
+    public function bloqueosTransito(): array
+    {
+        $resumen = $this->transito_resumen ?? [];
+        if ($resumen === []) {
+            return [];
+        }
+        $empresa = $this->relationLoaded('empresa') ? $this->empresa : Empresa::query()->find($this->empresa_id);
+        if (! $empresa?->transito_habilitado) {
+            return [];
+        }
+
+        $bloqueos = [];
+        $fecha = fn (?string $f) => $f ? \Illuminate\Support\Carbon::parse($f)->timezone(config('app.timezone'))->format('d/m/Y') : '';
+
+        if ($empresa->transito_bloquear_licencia && ($resumen['licencia']['suspendida'] ?? false)) {
+            $bloqueos[] = 'Licencia de conducción SUSPENDIDA según el RUNT (consulta del ' . $fecha($resumen['licencia']['consultado_at'] ?? null) . ').';
+        }
+
+        $comparendos = $resumen['comparendos'] ?? null;
+        if ($empresa->transito_bloquear_comparendos && $comparendos && ($comparendos['pendientes'] ?? 0) > 0) {
+            $deuda = (float) ($comparendos['deuda'] ?? 0);
+            $desde = $empresa->transito_bloquear_desde !== null ? (float) $empresa->transito_bloquear_desde : 0;
+            if ($deuda >= $desde) {
+                $bloqueos[] = "Tiene {$comparendos['pendientes']} comparendo(s) pendiente(s) por $ " . number_format($deuda, 0, ',', '.')
+                    . ' según el SIMIT (consulta del ' . $fecha($comparendos['consultado_at'] ?? null) . ').';
+            }
         }
 
         return $bloqueos;
@@ -199,5 +239,17 @@ class Conductor extends Model
     public function scopeVinculados(Builder $query): Builder
     {
         return $query->where($query->qualifyColumn('estado'), '!=', EstadoConductor::Retirado->value);
+    }
+
+    // Consultas de tránsito
+
+    public function comparendosTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(ComparendoTransito::class, 'consultable');
+    }
+
+    public function consultasTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(ConsultaTransito::class, 'consultable');
     }
 }

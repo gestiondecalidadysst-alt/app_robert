@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Enums\TipoConsultaTransito;
 use App\Models\Empresa;
 use App\Services\Mensajeria\Mensajero;
 use App\Services\Mensajeria\OnurixSms;
@@ -76,6 +77,14 @@ class Integraciones extends Page
             'jornada_descanso_horas' => $e->jornada_descanso_horas,
             'planeacion_antelacion_horas' => $e->planeacion_antelacion_horas,
             'recibo_numero_inicial' => $e->recibo_numero_inicial,
+            'transito_tipos' => $e->transito_tipos ?? [],
+            'transito_auto' => $e->transito_auto,
+            'transito_auto_tipos' => $e->transito_auto_tipos ?? [],
+            'transito_frecuencia_dias' => $e->transito_frecuencia_dias,
+            'transito_tope_mensual' => $e->transito_tope_mensual,
+            'transito_bloquear_licencia' => $e->transito_bloquear_licencia,
+            'transito_bloquear_comparendos' => $e->transito_bloquear_comparendos,
+            'transito_bloquear_desde' => $e->transito_bloquear_desde,
         ]);
     }
 
@@ -149,6 +158,7 @@ class Integraciones extends Page
                                 return 'Para continuar su talonario actual. ' . ($ultimo ? "Último recibo emitido: {$ultimo}." : 'Aún no hay recibos.') . ' Nunca se repite un número.';
                             }),
                     ]),
+                self::seccionTransito($e),
                 Section::make('Firma electrónica de contratos')
                     ->icon('heroicon-o-pencil-square')
                     ->columns(['default' => 1, 'md' => 3])
@@ -159,6 +169,38 @@ class Integraciones extends Page
                         Toggle::make('firma_envio_automatico')->label('Enviar para firma al emitir')->inline(false)
                             ->helperText('Si está apagado, se envía con el botón «Enviar para firma» después de revisar los datos.'),
                     ]),
+            ]);
+    }
+
+    /** Consultas de tránsito: solo si el superadministrador habilitó el módulo para la empresa. */
+    private static function seccionTransito(Empresa $e): Section
+    {
+        $tipos = collect(TipoConsultaTransito::cases());
+        $precios = $tipos->map(fn (TipoConsultaTransito $t) => $t->getLabel() . ': ' . (($v = $e->precioTransito($t)) !== null ? '$ ' . number_format($v, 0, ',', '.') : 'sin precio'))->implode(' · ');
+        $gasto = $e->gastoTransitoDelMes();
+
+        return Section::make('Consultas de tránsito (comparendos y RUNT)')
+            ->description('Cada consulta tiene costo y se cobra en la factura de la plataforma. Solo se cobran las que traen datos; si el sistema de tránsito no tiene información, no se cobra. Ninguna consulta se hace sola a menos que active las automáticas.')
+            ->icon('heroicon-o-magnifying-glass-circle')
+            ->visible($e->transito_habilitado)
+            ->columns(['default' => 1, 'md' => 3])
+            ->schema([
+                Text::make('Precio por consulta — ' . $precios)->columnSpanFull(),
+                Text::make('Gastado este mes: $ ' . number_format($gasto, 0, ',', '.') . ($e->transito_tope_mensual ? ' de $ ' . number_format((float) $e->transito_tope_mensual, 0, ',', '.') . ' (tope)' : ' (sin tope)'))->color('gray')->columnSpanFull(),
+                CheckboxList::make('transito_tipos')->label('Consultas que usa la empresa')->options($tipos->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()])->all())->columns(2)->columnSpanFull()
+                    ->helperText('Las que no marque no aparecen en conductores ni vehículos.'),
+                TextInput::make('transito_tope_mensual')->label('Tope de gasto al mes')->numeric()->minValue(0)->prefix('$')
+                    ->helperText('Al llegar al tope se bloquean todas las consultas hasta el mes siguiente. Vacío = sin tope.'),
+                Toggle::make('transito_auto')->label('Consultas automáticas')->inline(false)->live()
+                    ->helperText('Solo a los conductores y vehículos que marque con «Incluir en consultas automáticas».'),
+                TextInput::make('transito_frecuencia_dias')->label('Repetir cada (días)')->numeric()->minValue(1)->maxValue(365)->required()
+                    ->visible(fn ($get) => (bool) $get('transito_auto')),
+                CheckboxList::make('transito_auto_tipos')->label('Consultas automáticas a realizar')->options($tipos->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()])->all())->columns(2)->columnSpanFull()
+                    ->visible(fn ($get) => (bool) $get('transito_auto')),
+                Toggle::make('transito_bloquear_licencia')->label('Bloquear extractos si la licencia está suspendida')->inline(false),
+                Toggle::make('transito_bloquear_comparendos')->label('Bloquear extractos si el conductor tiene comparendos pendientes')->inline(false)->live(),
+                TextInput::make('transito_bloquear_desde')->label('Solo si la deuda es desde')->numeric()->minValue(0)->prefix('$')
+                    ->visible(fn ($get) => (bool) $get('transito_bloquear_comparendos'))->helperText('Vacío = cualquier valor.'),
             ]);
     }
 
@@ -200,6 +242,18 @@ class Integraciones extends Page
             'jornada_descanso_horas' => (int) $datos['jornada_descanso_horas'],
             'planeacion_antelacion_horas' => (int) $datos['planeacion_antelacion_horas'],
         ]);
+        if ($empresa->transito_habilitado) {
+            $empresa->fill([
+                'transito_tipos' => array_values($datos['transito_tipos'] ?? []),
+                'transito_auto' => (bool) ($datos['transito_auto'] ?? false),
+                'transito_auto_tipos' => array_values($datos['transito_auto_tipos'] ?? []),
+                'transito_frecuencia_dias' => max(1, (int) ($datos['transito_frecuencia_dias'] ?? 30)),
+                'transito_tope_mensual' => filled($datos['transito_tope_mensual'] ?? null) ? (float) $datos['transito_tope_mensual'] : null,
+                'transito_bloquear_licencia' => (bool) ($datos['transito_bloquear_licencia'] ?? false),
+                'transito_bloquear_comparendos' => (bool) ($datos['transito_bloquear_comparendos'] ?? false),
+                'transito_bloquear_desde' => filled($datos['transito_bloquear_desde'] ?? null) ? (float) $datos['transito_bloquear_desde'] : null,
+            ]);
+        }
         if (filled($datos['webhook_url'] ?? null)) {
             $empresa->webhook_url = trim($datos['webhook_url']);
         }

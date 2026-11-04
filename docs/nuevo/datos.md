@@ -198,3 +198,25 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 - `eventos_servicio`: `servicio_id`, `conductor_id`, `user_id`, `tipo` (leido|inicio|parada|novedad|fin|cancelado), `nota`, `kilometraje`, `latitud` y `longitud`.
 - `empresas`: `jornada_max_horas_dia` (10), `jornada_max_horas_continuas` (4), `jornada_descanso_horas` (8) y `planeacion_antelacion_horas` (24).
 
+
+## Consultas de tránsito (`2026_11_04_100001_create_consultas_transito.php`)
+- **`proveedor_transito`** guarda una sola fila, la de la plataforma, con:
+  - `proveedor`, `url` y `api_key` (cifrada);
+  - `activo`;
+  - `costo_credito` (COP);
+  - `creditos` (json por tipo);
+  - `precios` (json por tipo: precio de venta).
+- **`empresas`** (nuevas columnas):
+  - las que decide el superadministrador: `transito_habilitado` y `transito_precios` (precios especiales);
+  - las que decide la empresa: `transito_tipos`, `transito_auto`, `transito_auto_tipos`, `transito_frecuencia_dias` (30 por defecto), `transito_tope_mensual`, `transito_bloquear_licencia` (encendido por defecto), `transito_bloquear_comparendos` y `transito_bloquear_desde`.
+- **`conductores` y `vehiculos`:**
+  - `transito_auto`, que indica si el registro entra en las automáticas;
+  - `transito_resumen` (json), con el último resultado de comparendos, licencia y RUNT.
+- **`consultas_transito`** guarda una fila por consulta:
+  - empresa, tipo, sujeto (morph), referencia (cédula o placa), origen (`manual` o `automatica`) y usuario;
+  - `estado` (`ok`, `sin_datos` o `error`), `creditos`, `cobrada`, `precio` (al cliente), `costo` (del proveedor) y `desde_cache`;
+  - respuesta (json) y error.
+- **`comparendos_transito`** guarda cada comparendo de un sujeto:
+  - número, fecha, código, infracción, valor, estado (`pendiente`, `acuerdo`, `pagada` u `otro`), tipo, organismo y placa;
+  - `primera_vez_at`, `ultima_vez_at` y `ya_no_aparece_at`;
+  - es único por empresa, sujeto y número.

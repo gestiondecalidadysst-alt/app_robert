@@ -21,12 +21,23 @@
 - [x] **Planeador de servicios (PESV, paso 15):** tablero semanal por vehículo o conductor; rutogramas por origen y destino; servicios libres desde los que se genera el extracto (todo FUEC aparece en el planeador); avisos de jornada y fatiga; plan de viaje en PDF; seguimiento opcional en el portal. Detalle en `nuevo/modulos/operacion.md`.
 - [x] **Módulo de gerencia:** tablero con filtros de periodo y oficina, informes en Excel, resumen en PDF y envío mensual automático (correo y webhook). Detalle en `nuevo/modulos/gerencia.md`.
 - [x] **Colas y errores:** filas alta y baja, servicio scheduler, latidos y vigilante, páginas de error en español con referencia, registro y alerta de errores, y la pantalla Estado del sistema. Detalle en `nuevo/modulos/sistema.md`.
+- [x] **Consultas de tránsito (comparendos y RUNT) con PlacApi:**
+  - la plataforma habilita el módulo y fija los precios por empresa;
+  - consumo por mes con Excel para facturar;
+  - la empresa elige los tipos, el tope, las automáticas y los bloqueos (la licencia suspendida bloquea el FUEC);
+  - consultas con el precio a la vista.
+
+  Detalle en `nuevo/modulos/consultas-transito.md`.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
 ## Pendiente / bloqueos
 - [ ] Redesplegar en Easypanel para publicar los módulos 2, 3 y 4 (las migraciones corren solas al arrancar). En «Mi empresa» completar código territorial, resolución y año de habilitación: sin ellos no se expide FUEC.
-- [ ] Confirmar con el usuario: campos extra del registro de operadores en la app actual y si algún estado de comparendos debe bloquear el FUEC.
+- [ ] Confirmar con el usuario los campos extra del registro de operadores en la app actual.
+- [ ] Consultas de tránsito:
+  - poner la API key de PlacApi y los precios en `/admin/consultas-transito`;
+  - habilitar el módulo en cada empresa;
+  - revisar la primera respuesta real en el historial.
 - [ ] Configurar el correo (SMTP) en Easypanel: recuperación de contraseñas y correos de firma (enlace, código, copia firmada).
 - [ ] Crear la cuenta de Onurix, poner sus credenciales en Configuración → Integraciones y probar con "Enviar SMS de prueba" (la URL del API no está verificada con documentación oficial).
 - [ ] Confirmar la finalidad del tratamiento de datos (cláusula 19 del contrato) y revisar con el abogado las correcciones del texto y la cláusula de firma electrónica.

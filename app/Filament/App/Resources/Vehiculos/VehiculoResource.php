@@ -158,6 +158,8 @@ class VehiculoResource extends Resource
             NovedadesRelationManager::class,
             \App\Filament\App\Resources\Vehiculos\RelationManagers\MantenimientosRelationManager::class,
             \App\Filament\App\Resources\Vehiculos\RelationManagers\PlanesAccionRelationManager::class,
+            \App\Filament\App\Transito\ComparendosRelationManager::class,
+            \App\Filament\App\Transito\ConsultasRelationManager::class,
         ];
     }
 

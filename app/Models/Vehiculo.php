@@ -40,6 +40,7 @@ class Vehiculo extends Model
     protected $table = 'vehiculos';
 
     protected $fillable = [
+        'transito_auto',
         'empresa_id', 'placa', 'numero_interno', 'propietario_id', 'marca_id', 'linea_id', 'modelo',
         'clase_vehiculo_id', 'carroceria_id', 'combustible_id', 'tipo_servicio_id', 'color', 'cilindraje',
         'capacidad_pasajeros', 'capacidad_kg', 'puertas', 'numero_motor', 'vin', 'numero_chasis',
@@ -54,6 +55,8 @@ class Vehiculo extends Model
     protected function casts(): array
     {
         return [
+            'transito_auto' => 'boolean',
+            'transito_resumen' => 'array',
             'plan_personalizado' => 'boolean',
             'estado' => EstadoVehiculo::class,
             'estado_desde' => 'date',
@@ -253,5 +256,17 @@ class Vehiculo extends Model
     public function scopeEnEstado(Builder $query, EstadoVehiculo $estado): Builder
     {
         return $query->where($query->qualifyColumn('estado'), $estado->value);
+    }
+
+    // Consultas de tránsito
+
+    public function comparendosTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(ComparendoTransito::class, 'consultable');
+    }
+
+    public function consultasTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(ConsultaTransito::class, 'consultable');
     }
 }

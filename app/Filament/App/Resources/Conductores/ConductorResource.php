@@ -174,6 +174,8 @@ class ConductorResource extends Resource
             DocumentosRelationManager::class,
             VehiculosRelationManager::class,
             NovedadesRelationManager::class,
+            \App\Filament\App\Transito\ComparendosRelationManager::class,
+            \App\Filament\App\Transito\ConsultasRelationManager::class,
         ];
     }
 

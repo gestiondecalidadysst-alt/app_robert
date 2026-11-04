@@ -63,6 +63,19 @@ class EmpresaResource extends Resource
                         ->required(),
                 ]),
 
+            Section::make('Consultas de tránsito (comparendos y RUNT)')
+                ->columnSpanFull()
+                ->visibleOn('edit')
+                ->icon('heroicon-o-magnifying-glass-circle')
+                ->description('Si se habilita, la empresa puede consultar comparendos, licencias y RUNT con la cuenta de la plataforma y se le cobra el precio por consulta. Deje vacío un precio para usar el general (Plataforma → Consultas de tránsito).')
+                ->columns(['default' => 1, 'md' => 5])
+                ->schema([
+                    Toggle::make('transito_habilitado')->label('Módulo habilitado')->inline(false),
+                    ...collect(\App\Enums\TipoConsultaTransito::cases())->map(fn (\App\Enums\TipoConsultaTransito $t) => TextInput::make("transito_precios.{$t->value}")
+                        ->label('Precio especial · ' . $t->getLabel())->numeric()->minValue(0)->prefix('$')
+                        ->placeholder(fn () => ($general = \App\Models\ProveedorTransito::actual()->precioDe($t)) !== null ? number_format($general, 0, ',', '.') . ' (general)' : 'Sin precio general'))->all(),
+                ]),
+
             Section::make('Estado')
                 ->columnSpanFull()
                 ->visibleOn('edit')

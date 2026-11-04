@@ -30,6 +30,8 @@ final class Webhooks
         'preoperacional.no_apto' => 'Preoperacional NO APTO',
         'servicio.novedad' => 'Novedad reportada por el conductor en un servicio',
         'gerencia.informe_mensual' => 'Resumen mensual de gerencia (día 1 de cada mes)',
+        'transito.comparendo_nuevo' => 'Comparendo nuevo de un conductor o vehículo (consultas de tránsito)',
+        'transito.licencia_suspendida' => 'Licencia de conducción suspendida según el RUNT',
     ];
 
     /** Encola el aviso si la empresa tiene el webhook activo y el evento elegido. Nunca interrumpe la operación. */

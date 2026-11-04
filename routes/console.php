@@ -21,3 +21,6 @@ Artisan::command('inspire', function () {
     ->name('latido-programadas')->everyMinute()->onOneServer();
 \Illuminate\Support\Facades\Schedule::command('ruta:vigilar')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
 
+// Consultas automáticas de tránsito (solo empresas que las activaron), a las 5:20 a. m.
+\Illuminate\Support\Facades\Schedule::command('ruta:consultas-transito')->dailyAt('05:20')->withoutOverlapping()->onOneServer();
+

@@ -34,7 +34,9 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual',
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
         'km_diarios_defecto', 'mantenimiento_dias_aviso', 'recibo_prefijo', 'recibo_numero_inicial',
-        'jornada_max_horas_dia', 'jornada_max_horas_continuas', 'jornada_descanso_horas', 'planeacion_antelacion_horas', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
+        'jornada_max_horas_dia', 'jornada_max_horas_continuas', 'jornada_descanso_horas', 'planeacion_antelacion_horas',
+        'transito_habilitado', 'transito_precios', 'transito_tipos', 'transito_auto', 'transito_auto_tipos', 'transito_frecuencia_dias',
+        'transito_tope_mensual', 'transito_bloquear_licencia', 'transito_bloquear_comparendos', 'transito_bloquear_desde', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
     ];
 
     /** Credenciales: nunca se envían al navegador ni a la auditoría. */
@@ -46,6 +48,16 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     {
         return [
             'activa' => 'boolean',
+            'transito_habilitado' => 'boolean',
+            'transito_precios' => 'array',
+            'transito_tipos' => 'array',
+            'transito_auto' => 'boolean',
+            'transito_auto_tipos' => 'array',
+            'transito_frecuencia_dias' => 'integer',
+            'transito_tope_mensual' => 'decimal:2',
+            'transito_bloquear_licencia' => 'boolean',
+            'transito_bloquear_comparendos' => 'boolean',
+            'transito_bloquear_desde' => 'decimal:2',
             'dv' => 'integer',
             'anio_habilitacion' => 'integer',
             'sms_habilitado' => 'boolean',
@@ -206,6 +218,28 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     public function pagosContrato(): HasMany
     {
         return $this->hasMany(PagoContrato::class);
+    }
+
+    // Consultas de tránsito
+
+    /** Precio que se le cobra a la empresa por una consulta de ese tipo (especial o el de la plataforma). */
+    public function precioTransito(\App\Enums\TipoConsultaTransito $tipo): ?float
+    {
+        $especial = $this->transito_precios[$tipo->value] ?? null;
+
+        return $especial !== null && $especial !== '' ? (float) $especial : ProveedorTransito::actual()->precioDe($tipo);
+    }
+
+    /** Tipos de consulta que la empresa decidió usar. */
+    public function usaTransito(\App\Enums\TipoConsultaTransito $tipo): bool
+    {
+        return $this->transito_habilitado && in_array($tipo->value, $this->transito_tipos ?? [], true);
+    }
+
+    /** Valor cobrado en el mes (consultas que el proveedor cobró). */
+    public function gastoTransitoDelMes(?\DateTimeInterface $mes = null): float
+    {
+        return (float) ConsultaTransito::query()->deEmpresa($this->id)->cobradas()->delMes($mes)->sum('precio');
     }
 
     public function rutas(): HasMany
