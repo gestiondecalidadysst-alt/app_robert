@@ -296,7 +296,8 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
 
     public function getFilamentAvatarUrl(): ?string
     {
-        return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
+        // Si el archivo no está (p. ej. se perdió en un despliegue sin volumen), se muestran las iniciales y no una imagen rota.
+        return $this->logo_path && Storage::disk('public')->exists($this->logo_path) ? Storage::disk('public')->url($this->logo_path) : null;
     }
 
     public function getCurrentTenantLabel(): string

@@ -77,6 +77,16 @@
 .fi-sidebar-item-btn .fi-badge { font-size: .6875rem; padding-block: 0 !important; min-height: 0; }
 .fi-sidebar.fi-sidebar-open .fi-sidebar-nav-groups > .fi-sidebar-group.fi-collapsed { margin-top: -.25rem; }
 
+/* Barra de desplazamiento del menú: delgada, oscura y solo visible al pasar el mouse. */
+.fi-sidebar-nav { scrollbar-width: thin; scrollbar-color: transparent transparent; scrollbar-gutter: stable; }
+.fi-sidebar-nav:hover { scrollbar-color: #3a4e6b transparent; }
+.fi-sidebar-nav::-webkit-scrollbar { width: 6px; }
+.fi-sidebar-nav::-webkit-scrollbar-button { display: none; height: 0; }
+.fi-sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.fi-sidebar-nav::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+.fi-sidebar-nav:hover::-webkit-scrollbar-thumb { background: #3a4e6b; }
+.fi-sidebar-nav::-webkit-scrollbar-thumb:hover { background: #4b6283; }
+
 /* Marca */
 .ruta-logo { font-weight: 800; font-size: 1.6rem; letter-spacing: -.04em; line-height: 1; color: #ffffff; }
 .ruta-logo span { color: var(--ruta-acento); }
