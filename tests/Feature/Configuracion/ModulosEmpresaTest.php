@@ -106,7 +106,7 @@ class ModulosEmpresaTest extends ConfiguracionTestCase
         $this->actingAs($this->usuario('superadmin@ruta.test'));
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
-        $this->get('/admin/empresas/' . $this->demo->id . '/editar')->assertOk()->assertSee('Módulos contratados')->assertSee('Manifiestos de carga');
+        $this->get('/admin/empresas/' . $this->demo->id . '/editar')->assertOk()->assertSee('Módulos contratados')->assertSee('Carga (RNDC)');
         Livewire::test(EditarEmpresa::class, ['record' => $this->demo->getRouteKey()])
             ->fillForm(['modulos' => [ModuloEmpresa::Mantenimiento->value]])
             ->call('save')->assertHasNoFormErrors();

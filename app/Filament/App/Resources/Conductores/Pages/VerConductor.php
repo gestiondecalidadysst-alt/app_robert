@@ -40,6 +40,7 @@ class VerConductor extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\App\Carga\AccionesRndc::grupo(),
             Action::make('portal')
                 ->label(fn () => $this->getRecord()->user_id ? 'Restablecer clave del portal' : 'Acceso al portal')
                 ->icon('heroicon-o-device-phone-mobile')

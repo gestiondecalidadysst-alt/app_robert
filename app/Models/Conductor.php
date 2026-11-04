@@ -20,9 +20,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * El estado (activo, suspendido, retirado) no se edita en el formulario: se cambia con
  * App\Actions\Conductores\CambiarEstadoConductor, que deja la novedad en el historial.
  */
-class Conductor extends Model
+class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
 {
-    use Auditable, PerteneceAEmpresa, SoftDeletes, TieneDocumentosConVencimiento;
+    use Auditable, PerteneceAEmpresa, \App\Models\Concerns\SeRegistraEnRndc, SoftDeletes, TieneDocumentosConVencimiento;
 
     public const GENEROS = ['F' => 'Femenino', 'M' => 'Masculino', 'O' => 'Otro'];
 
@@ -251,5 +251,65 @@ class Conductor extends Model
     public function consultasTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(ConsultaTransito::class, 'consultable');
+    }
+
+    // RNDC (módulo de carga): se registra como tercero, proceso 11.
+
+    public function procesoRndc(): int
+    {
+        return 11;
+    }
+
+    public function etiquetaRndc(): string
+    {
+        return trim($this->nombres . ' ' . $this->apellidos) . ' · ' . ($this->tipoIdentificacion?->codigo ?? '') . ' ' . $this->documento;
+    }
+
+    /** Nombres y apellidos como los pide el RNDC (el primer apellido y el resto). */
+    private function apellidosRndc(): array
+    {
+        $partes = preg_split('/\s+/', trim((string) $this->apellidos), 2) ?: [];
+
+        return [$partes[0] ?? null, $partes[1] ?? null];
+    }
+
+    /** Conductor: con los datos de su licencia vigente (categoría, número y vencimiento). */
+    public function variablesRndc(Empresa $empresa): array
+    {
+        $this->loadMissing(['tipoIdentificacion', 'municipio']);
+        $c = \App\Support\Carga\CatalogoRndc::class;
+        $licencia = $this->licencia();
+        $licencia?->loadMissing('categoriaLicencia');
+        $tel = $c::digitos($this->telefono);
+        [$a1, $a2] = $this->apellidosRndc();
+
+        return array_filter([
+            'NUMNITEMPRESATRANSPORTE' => $c::digitos($empresa->nit),
+            'CODTIPOIDTERCERO' => $c::tipoId($this->tipoIdentificacion?->codigo),
+            'NUMIDTERCERO' => $c::digitos($this->documento),
+            'NOMIDTERCERO' => $c::texto($this->nombres, 100),
+            'PRIMERAPELLIDOIDTERCERO' => $c::texto($a1, 100),
+            'SEGUNDOAPELLIDOIDTERCERO' => $c::texto($a2, 100),
+            'NUMTELEFONOCONTACTO' => strlen($tel) <= 7 ? $tel : null,
+            'NUMCELULARPERSONA' => strlen($tel) === 10 ? $tel : null,
+            'NOMENCLATURADIRECCION' => $c::texto($this->direccion, 60),
+            'CODMUNICIPIORNDC' => $c::municipio($this->municipio?->codigo_dane),
+            'CODCATEGORIALICENCIACONDUCCION' => strtoupper((string) $licencia?->categoriaLicencia?->codigo),
+            'NUMLICENCIACONDUCCION' => $c::digitos($licencia?->numero),
+            'FECHAVENCIMIENTOLICENCIA' => $licencia?->fecha_vencimiento?->format('d/m/Y'),
+        ], fn ($v) => $v !== null && $v !== '');
+    }
+
+    public function validarRndc(): array
+    {
+        $c = \App\Support\Carga\CatalogoRndc::class;
+        $licencia = $this->licencia();
+        $licencia?->loadMissing('categoriaLicencia');
+        $tel = $c::digitos($this->telefono);
+        [$a1] = $this->apellidosRndc();
+
+        return \App\Services\Rndc\ValidarTercero::errores($c::tipoId($this->tipoIdentificacion?->codigo), $this->documento, $this->nombres, $a1,
+            strlen($tel) <= 7 ? $tel : null, strlen($tel) > 7 ? $tel : null, $this->direccion, $this->municipio_id, null,
+            $licencia?->categoriaLicencia?->codigo, $licencia?->numero, $licencia?->fecha_vencimiento, esConductor: true);
     }
 }

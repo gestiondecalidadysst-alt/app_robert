@@ -58,8 +58,42 @@ final class VehiculoForm
                         ->icon('heroicon-o-link')
                         ->columns(['default' => 1, 'md' => 3])
                         ->schema(self::vinculacion()),
+                    Tab::make('Carga (RNDC)')
+                        ->icon('heroicon-o-cube')
+                        ->visible(fn () => auth()->user()?->can('ver_rndc') ?? false)
+                        ->columns(['default' => 1, 'md' => 3])
+                        ->schema(self::carga()),
                 ]),
         ]);
+    }
+
+    /** Datos que pide el RNDC para registrar el vehículo (camión rígido o tractocamión). */
+    private static function carga(): array
+    {
+        $c = \App\Support\Carga\CatalogoRndc::class;
+        $propietarios = fn () => \App\Models\Propietario::query()->where('activo', true)->orderBy('nombres')->get()
+            ->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento]);
+
+        return [
+            \Filament\Schemas\Components\Text::make('Solo para vehículos de carga. Los códigos de marca, línea, color, carrocería y aseguradora son los de las tablas del anexo del RNDC. La capacidad se toma de «Ficha técnica».')->columnSpanFull()->color('gray'),
+            Select::make('rndc_configuracion')->label('Configuración')->options($c::CONFIGURACIONES_VEHICULO)->live()
+                ->helperText('Vacío = no es vehículo de carga.'),
+            TextInput::make('numero_ejes')->label('Número de ejes')->numeric()->minValue(1)->maxValue(20)
+                ->visible(fn ($get) => in_array((int) $get('rndc_configuracion'), $c::CON_EJES, true)),
+            TextInput::make('peso_vacio')->label('Peso vacío (kg)')->numeric()->minValue(201)->maxValue(52999),
+            Select::make('unidad_capacidad')->label('Unidad de la capacidad')->options($c::UNIDADES_CAPACIDAD)->default(1),
+            TextInput::make('rndc_marca')->label('Código RNDC de la marca')->maxLength(10),
+            TextInput::make('rndc_linea')->label('Código RNDC de la línea')->maxLength(10),
+            TextInput::make('rndc_color')->label('Código RNDC del color')->maxLength(5),
+            TextInput::make('rndc_carroceria')->label('Código RNDC de la carrocería')->maxLength(3)
+                ->helperText('En tractocamiones se envía S.R.S. (0) automáticamente.'),
+            Select::make('rndc_combustible')->label('Combustible')->options($c::COMBUSTIBLES),
+            TextInput::make('ano_repotenciacion')->label('Año de repotenciación')->numeric()->minValue(1901)->maxValue((int) date('Y') + 1),
+            TextInput::make('soat_nit_aseguradora')->label('NIT de la aseguradora del SOAT')->maxLength(11)
+                ->helperText('Si la aseguradora del SOAT ya tiene NIT en el catálogo, se toma de allí.'),
+            Select::make('tenedor_id')->label('Tenedor (poseedor)')->searchable()->options($propietarios)
+                ->helperText('Vacío = el mismo propietario.'),
+        ];
     }
 
     private static function identificacion(): array

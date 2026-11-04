@@ -34,6 +34,7 @@ class VerVehiculo extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\App\Carga\AccionesRndc::grupo(),
             CambiarEstadoAction::make()->after(fn () => $this->refrescar()),
             EditAction::make(),
         ];

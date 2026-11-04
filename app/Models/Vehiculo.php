@@ -19,9 +19,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * El estado (operando, suspendido, taller, desvinculado) no se edita en el formulario:
  * se cambia con App\Actions\Flota\CambiarEstadoVehiculo, que deja la novedad en el historial.
  */
-class Vehiculo extends Model
+class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
 {
-    use Auditable, PerteneceAEmpresa, SoftDeletes, TieneDocumentosConVencimiento;
+    use Auditable, PerteneceAEmpresa, \App\Models\Concerns\SeRegistraEnRndc, SoftDeletes, TieneDocumentosConVencimiento;
 
     /** Campos de la ficha técnica (columna JSON ficha_tecnica). */
     public const FICHA_TECNICA = [
@@ -46,6 +46,8 @@ class Vehiculo extends Model
         'capacidad_pasajeros', 'capacidad_kg', 'puertas', 'numero_motor', 'vin', 'numero_chasis',
         'fecha_matricula', 'organismo_transito_id', 'foto_path', 'ficha_tecnica', 'tipo_vinculacion',
         'empresa_convenio_id', 'fecha_vinculacion', 'observaciones',
+        'rndc_configuracion', 'numero_ejes', 'rndc_marca', 'rndc_linea', 'rndc_color', 'rndc_carroceria', 'rndc_combustible',
+        'peso_vacio', 'unidad_capacidad', 'ano_repotenciacion', 'soat_nit_aseguradora', 'tenedor_id',
     ];
 
     protected $attributes = [
@@ -268,5 +270,101 @@ class Vehiculo extends Model
     public function consultasTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(ConsultaTransito::class, 'consultable');
+    }
+
+    // RNDC (módulo de carga): se registra como vehículo, proceso 12.
+
+    public function tenedor(): BelongsTo
+    {
+        return $this->belongsTo(Propietario::class, 'tenedor_id')->withoutGlobalScopes();
+    }
+
+    public function esDeCarga(): bool
+    {
+        return $this->rndc_configuracion !== null;
+    }
+
+    public function procesoRndc(): int
+    {
+        return 12;
+    }
+
+    public function etiquetaRndc(): string
+    {
+        return 'Vehículo ' . $this->placa . ' · ' . (\App\Support\Carga\CatalogoRndc::CONFIGURACIONES_VEHICULO[$this->rndc_configuracion] ?? 'sin configuración de carga');
+    }
+
+    public function variablesRndc(Empresa $empresa): array
+    {
+        $c = \App\Support\Carga\CatalogoRndc::class;
+        $propietario = $this->propietario()->withoutGlobalScopes()->with('tipoIdentificacion')->first();
+        $tenedor = $this->tenedor()->with('tipoIdentificacion')->first() ?? $propietario;
+        $soat = $this->documentoVigente(TipoDocumentoVehiculo::Soat);
+        $soat?->loadMissing('aseguradora');
+        $config = $this->rndc_configuracion;
+
+        return array_filter([
+            'NUMNITEMPRESATRANSPORTE' => $c::digitos($empresa->nit),
+            'NUMPLACA' => \Illuminate\Support\Str::upper($this->placa),
+            'CODCONFIGURACIONUNIDADCARGA' => $config,
+            'CODMARCAVEHICULOCARGA' => $this->rndc_marca,
+            'CODLINEAVEHICULOCARGA' => $this->rndc_linea,
+            'NUMEJES' => in_array($config, $c::CON_EJES, true) ? $this->numero_ejes : null,
+            'ANOFABRICACIONVEHICULOCARGA' => $this->modelo,
+            'ANOREPOTENCIACION' => $this->ano_repotenciacion,
+            'CODCOLORVEHICULOCARGA' => $this->rndc_color,
+            'PESOVEHICULOVACIO' => $this->peso_vacio,
+            'CAPACIDADUNIDADCARGA' => in_array($config, $c::CON_CAPACIDAD, true) ? $this->capacidad_kg : null,
+            'UNIDADMEDIDACAPACIDAD' => $this->unidad_capacidad ?: 1,
+            'CODTIPOCARROCERIA' => in_array($config, $c::TRACTOCAMIONES, true) ? '0' : $this->rndc_carroceria,
+            'NUMCHASIS' => $this->numero_chasis ?: $this->vin,
+            'CODTIPOCOMBUSTIBLE' => $this->rndc_combustible,
+            'NUMSEGUROSOAT' => $soat?->numero,
+            'FECHAVENCIMIENTOSOAT' => $soat?->fecha_vencimiento?->format('d/m/Y'),
+            'NUMNITASEGURADORASOAT' => $c::digitos($this->soat_nit_aseguradora ?: $soat?->aseguradora?->nit) ?: null,
+            'CODTIPOIDPROPIETARIO' => $c::tipoId($propietario?->tipoIdentificacion?->codigo),
+            'NUMIDPROPIETARIO' => $c::digitos($propietario?->documento),
+            'CODTIPOIDTENEDOR' => $c::tipoId($tenedor?->tipoIdentificacion?->codigo),
+            'NUMIDTENEDOR' => $c::digitos($tenedor?->documento),
+        ], fn ($v) => $v !== null && $v !== '');
+    }
+
+    public function validarRndc(): array
+    {
+        $c = \App\Support\Carga\CatalogoRndc::class;
+        $propietario = $this->propietario()->withoutGlobalScopes()->with('tipoIdentificacion')->first();
+        $tenedor = $this->tenedor()->with('tipoIdentificacion')->first() ?? $propietario;
+        $e = \App\Services\Rndc\ValidarVehiculo::comunes($this->placa, $this->rndc_configuracion, $this->rndc_marca, (int) $this->modelo,
+            $this->peso_vacio, $this->capacidad_kg, $this->numero_ejes, $propietario, $tenedor);
+        if ($this->rndc_configuracion && ! isset($c::CONFIGURACIONES_VEHICULO[$this->rndc_configuracion])) {
+            $e[] = 'La configuración no es de camión rígido o tractocamión.';
+        }
+        if (! preg_match('/^[A-Z]{3}\d{3}$/', \Illuminate\Support\Str::upper((string) $this->placa))) {
+            $e[] = 'La placa de un camión o tractocamión es de 3 letras y 3 números.';
+        }
+        if (blank($this->rndc_linea)) {
+            $e[] = 'Falta el código RNDC de la línea.';
+        }
+        if (blank($this->rndc_color)) {
+            $e[] = 'Falta el código RNDC del color.';
+        }
+        if (! $this->rndc_combustible) {
+            $e[] = 'Falta el tipo de combustible.';
+        }
+        if (blank($this->numero_chasis ?: $this->vin)) {
+            $e[] = 'Falta el número de chasis (serie).';
+        }
+        $soat = $this->documentoVigente(TipoDocumentoVehiculo::Soat);
+        if (! $soat || blank($soat->numero) || ! $soat->fecha_vencimiento) {
+            $e[] = 'Falta el SOAT vigente con número y fecha de vencimiento (documentos del vehículo).';
+        }
+        if (blank($this->soat_nit_aseguradora) && blank($soat?->aseguradora?->nit)) {
+            $e[] = 'Falta el NIT de la aseguradora del SOAT.';
+        }
+        if (! in_array($this->rndc_configuracion, $c::TRACTOCAMIONES, true) && blank($this->rndc_carroceria)) {
+            $e[] = 'Falta el código RNDC del tipo de carrocería.';
+        }
+
+        return $e;
     }
 }

@@ -55,6 +55,9 @@ final class Permisos
         'rutinas_mantenimiento' => ['Plantillas y planes de mantenimiento', 'Mantenimiento', ['ver', 'crear', 'editar', 'eliminar']],
         'programas_mantenimiento' => ['Programa anual de mantenimiento', 'Mantenimiento', ['ver', 'crear', 'editar', 'aprobar']],
         'gerencia' => ['Tablero e informes de gerencia', 'Gerencia', ['ver']],
+        'terceros_carga' => ['Terceros de carga (remitentes y destinatarios)', 'Carga', ['ver', 'crear', 'editar', 'eliminar']],
+        'remolques' => ['Remolques y semirremolques', 'Carga', ['ver', 'crear', 'editar', 'eliminar']],
+        'rndc' => ['Registro en el RNDC', 'Carga', ['ver', 'crear']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -122,6 +125,8 @@ final class Permisos
                 'ver_items_chequeo', 'ver_inspecciones', 'crear_inspecciones', 'crear_portal_conductor',
                 'ver_mantenimientos', 'crear_mantenimientos', 'ver_planes_accion', 'ver_rutinas_mantenimiento',
                 'ver_programas_mantenimiento',
+                'ver_terceros_carga', 'crear_terceros_carga', 'editar_terceros_carga',
+                'ver_remolques', 'crear_remolques', 'editar_remolques', 'ver_rndc', 'crear_rndc',
             ],
             Rol::MANTENIMIENTO => [
                 'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',

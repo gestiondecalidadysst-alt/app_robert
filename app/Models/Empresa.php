@@ -35,20 +35,24 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
         'km_diarios_defecto', 'mantenimiento_dias_aviso', 'recibo_prefijo', 'recibo_numero_inicial',
         'jornada_max_horas_dia', 'jornada_max_horas_continuas', 'jornada_descanso_horas', 'planeacion_antelacion_horas',
-        'modulos', 'transito_habilitado', 'transito_precios', 'transito_tipos', 'transito_auto', 'transito_auto_tipos', 'transito_frecuencia_dias',
+        'modulos', 'rndc_usuario', 'rndc_clave', 'rndc_ambiente', 'rndc_conectado', 'carga_rol', 'carga_cobro_modo', 'carga_cobro_valor', 'transito_habilitado', 'transito_precios', 'transito_tipos', 'transito_auto', 'transito_auto_tipos', 'transito_frecuencia_dias',
         'transito_tope_mensual', 'transito_bloquear_licencia', 'transito_bloquear_comparendos', 'transito_bloquear_desde', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
     ];
 
     /** Credenciales: nunca se envían al navegador ni a la auditoría. */
-    protected $hidden = ['onurix_cliente', 'onurix_clave', 'webhook_url', 'webhook_secreto'];
+    protected $hidden = ['onurix_cliente', 'onurix_clave', 'webhook_url', 'webhook_secreto', 'rndc_usuario', 'rndc_clave'];
 
-    protected array $noAuditar = ['onurix_cliente', 'onurix_clave', 'webhook_url', 'webhook_secreto'];
+    protected array $noAuditar = ['onurix_cliente', 'onurix_clave', 'webhook_url', 'webhook_secreto', 'rndc_usuario', 'rndc_clave'];
 
     protected function casts(): array
     {
         return [
             'activa' => 'boolean',
             'modulos' => 'array',
+            'rndc_usuario' => 'encrypted',
+            'rndc_clave' => 'encrypted',
+            'rndc_conectado' => 'boolean',
+            'carga_cobro_valor' => 'decimal:2',
             'transito_habilitado' => 'boolean',
             'transito_precios' => 'array',
             'transito_tipos' => 'array',
@@ -228,6 +232,21 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     // Consultas de tránsito
 
     /** Precio que se le cobra a la empresa por una consulta de ese tipo (especial o el de la plataforma). */
+    public function tercerosCarga(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TerceroCarga::class);
+    }
+
+    public function remolques(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Remolque::class);
+    }
+
+    public function registrosRndc(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RegistroRndc::class);
+    }
+
     public function tieneModulo(\App\Enums\ModuloEmpresa $modulo): bool
     {
         return in_array($modulo->value, $this->modulos ?? \App\Enums\ModuloEmpresa::porDefecto(), true);

@@ -221,3 +221,10 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
   - número, fecha, código, infracción, valor, estado (`pendiente`, `acuerdo`, `pagada` u `otro`), tipo, organismo y placa;
   - `primera_vez_at`, `ultima_vez_at` y `ya_no_aparece_at`;
   - es único por empresa, sujeto y número.
+
+## Módulo de carga, fase 1 (`2026_11_05_100001_create_carga_maestros.php`)
+- **`terceros_carga`:** tipo de identificación, documento, nombre o razón social, apellidos, sede (código y nombre), teléfono fijo, celular, correo, dirección, municipio, roles (json), activo. Es único por empresa, tipo, documento y sede.
+- **`remolques`:** placa R+5, configuración RNDC, ejes, marca (código y nombre), modelo, peso vacío, capacidad y unidad, carrocería, propietario, tenedor.
+- **`vehiculos` (nuevas columnas):** `rndc_configuracion`, `numero_ejes`, `rndc_marca`, `rndc_linea`, `rndc_color`, `rndc_carroceria`, `rndc_combustible`, `peso_vacio`, `unidad_capacidad`, `ano_repotenciacion`, `soat_nit_aseguradora`, `tenedor_id`.
+- **`registros_rndc`:** registrable (morph), proceso, estado (`registrado`, `manual` o `error`), `ingresoid`, ambiente, variables, respuesta, errores, usuario y duración.
+- **`empresas` (nuevas columnas):** `rndc_usuario` y `rndc_clave` (cifrados), `rndc_ambiente`, `rndc_conectado`, `carga_rol`, `carga_cobro_modo`, `carga_cobro_valor`.

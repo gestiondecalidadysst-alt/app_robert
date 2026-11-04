@@ -93,6 +93,7 @@ class VehiculoResource extends Resource
                     ->toggleable()
                     ->visibleFrom('lg'),
                 TextColumn::make('estado')->badge()->sortable(),
+                \App\Filament\App\Carga\AccionesRndc::columnaEstado()->toggleable(),
                 TextColumn::make('documentos_estado')
                     ->label('Documentos')
                     ->badge()

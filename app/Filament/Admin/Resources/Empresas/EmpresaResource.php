@@ -75,7 +75,16 @@ class EmpresaResource extends Resource
                         ->disableOptionWhen(fn (string $value) => ! \App\Enums\ModuloEmpresa::from($value)->disponible())
                         ->default(\App\Enums\ModuloEmpresa::porDefecto())
                         ->columns(['default' => 1, 'md' => 2])
+                        ->live()
                         ->bulkToggleable(),
+                    \Filament\Schemas\Components\Grid::make(['default' => 1, 'md' => 2])
+                        ->visible(fn ($get) => in_array('carga', (array) $get('modulos'), true))
+                        ->schema([
+                            \Filament\Forms\Components\Select::make('carga_cobro_modo')->label('Cobro del módulo de carga')
+                                ->options(['fijo' => 'Valor fijo mensual', 'por_manifiesto' => 'Por manifiesto expedido']),
+                            TextInput::make('carga_cobro_valor')->label('Valor')->numeric()->minValue(0)->prefix('$')
+                                ->helperText('Lo que la plataforma cobra a esta empresa por el módulo de carga.'),
+                        ]),
                 ]),
 
             Section::make('Consultas de tránsito (comparendos y RUNT)')

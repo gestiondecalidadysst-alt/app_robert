@@ -59,6 +59,7 @@ class AppPanelProvider extends PanelProvider
             ->navigationGroups([
                 // Lo de todos los días arriba; lo ocasional al final y cerrado (Filament recuerda lo que el usuario abre).
                 NavigationGroup::make('Operación'),
+                NavigationGroup::make('Carga'),
                 NavigationGroup::make('Flota y conductores'),
                 NavigationGroup::make('Seguridad vial'),
                 NavigationGroup::make('Mantenimiento')->collapsed(),

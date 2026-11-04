@@ -89,6 +89,9 @@ class Integraciones extends Page
             'transito_bloquear_licencia' => $e->transito_bloquear_licencia,
             'transito_bloquear_comparendos' => $e->transito_bloquear_comparendos,
             'transito_bloquear_desde' => $e->transito_bloquear_desde,
+            'carga_rol' => $e->carga_rol,
+            'rndc_ambiente' => $e->rndc_ambiente,
+            'rndc_conectado' => $e->rndc_conectado,
         ];
     }
 
@@ -165,6 +168,7 @@ class Integraciones extends Page
                                 return 'Para continuar su talonario actual. ' . ($ultimo ? "Último recibo emitido: {$ultimo}." : 'Aún no hay recibos.') . ' Nunca se repite un número.';
                             }),
                     ]),
+                self::seccionRndc($e, $oculto),
                 self::seccionTransito($e),
                 Section::make('Firma electrónica de contratos')
                     ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros))
@@ -177,6 +181,27 @@ class Integraciones extends Page
                         Toggle::make('firma_envio_automatico')->label('Enviar para firma al emitir')->inline(false)
                             ->helperText('Si está apagado, se envía con el botón «Enviar para firma» después de revisar los datos.'),
                     ]),
+            ]);
+    }
+
+    /** RNDC (módulo de carga): credenciales del web service del Ministerio, cifradas. */
+    private static function seccionRndc(Empresa $e, \Closure $oculto): Section
+    {
+        return Section::make('RNDC – Registro Nacional de Despachos de Carga')
+            ->description('Usuario delegado del RNDC de la empresa (lo crea el representante legal en el RNDC). Mientras no se active la conexión, los registros se hacen en la web del RNDC con la ficha en PDF y aquí se anota el número de radicado.')
+            ->icon('heroicon-o-cloud-arrow-up')
+            ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Carga))
+            ->columns(['default' => 1, 'md' => 3])
+            ->schema([
+                \Filament\Forms\Components\Select::make('carga_rol')->label('La empresa es')->required()
+                    ->options(['transportadora' => 'Empresa de transporte habilitada', 'generador' => 'Generador de carga', 'ambos' => 'Ambos']),
+                TextInput::make('rndc_usuario')->label('Usuario del RNDC')->maxLength(60)->autocomplete(false)->helperText($oculto($e->rndc_usuario)),
+                TextInput::make('rndc_clave')->label('Clave del RNDC')->password()->maxLength(100)->autocomplete('new-password')->helperText($oculto($e->rndc_clave)),
+                \Filament\Forms\Components\Select::make('rndc_ambiente')->label('Ambiente')->required()
+                    ->options(['pruebas' => 'Pruebas', 'produccion' => 'Producción'])
+                    ->helperText('Use pruebas hasta confirmar con el Ministerio que todo se registra bien.'),
+                Toggle::make('rndc_conectado')->label('Conexión por web service activa')->inline(false)
+                    ->helperText('Encendida, el botón «Registrar en el RNDC» envía los datos directamente.'),
             ]);
     }
 
@@ -232,6 +257,7 @@ class Integraciones extends Page
         $empresa = $this->empresa();
         $datos = [...$this->valores($empresa), ...$this->form->getState()];
         $cambiaronCredenciales = filled($datos['onurix_cliente'] ?? null) || filled($datos['onurix_clave'] ?? null);
+        $cambioRndc = filled($datos['rndc_usuario'] ?? null) || filled($datos['rndc_clave'] ?? null);
 
         $empresa->fill([
             'sms_habilitado' => (bool) $datos['sms_habilitado'],
@@ -250,6 +276,24 @@ class Integraciones extends Page
             'jornada_descanso_horas' => (int) $datos['jornada_descanso_horas'],
             'planeacion_antelacion_horas' => (int) $datos['planeacion_antelacion_horas'],
         ]);
+        if ($empresa->tieneModulo(\App\Enums\ModuloEmpresa::Carga)) {
+            $empresa->fill([
+                'carga_rol' => $datos['carga_rol'] ?? 'transportadora',
+                'rndc_ambiente' => $datos['rndc_ambiente'] ?? 'pruebas',
+                'rndc_conectado' => (bool) ($datos['rndc_conectado'] ?? false),
+            ]);
+            if (filled($datos['rndc_usuario'] ?? null)) {
+                $empresa->rndc_usuario = trim($datos['rndc_usuario']);
+            }
+            if (filled($datos['rndc_clave'] ?? null)) {
+                $empresa->rndc_clave = trim($datos['rndc_clave']);
+            }
+            if ($empresa->rndc_conectado && (blank($empresa->rndc_usuario) || blank($empresa->rndc_clave))) {
+                Notification::make()->danger()->title('Escriba el usuario y la clave del RNDC para activar la conexión.')->send();
+
+                return;
+            }
+        }
         if ($empresa->transito_habilitado) {
             $empresa->fill([
                 'transito_tipos' => array_values($datos['transito_tipos'] ?? []),
@@ -289,6 +333,12 @@ class Integraciones extends Page
 
         $empresa->save();
 
+        if ($cambioRndc) {
+            activity('Empresa')->performedOn($empresa)->causedBy(auth()->user())
+                ->tap(fn ($a) => $a->empresa_id = $empresa->id)
+                ->log('Actualizó las credenciales del RNDC');
+        }
+
         if ($cambiaronCredenciales) {
             // La auditoría registra quién cambió las credenciales, nunca su valor.
             activity('Empresa')->performedOn($empresa)->causedBy(auth()->user())
@@ -296,7 +346,7 @@ class Integraciones extends Page
                 ->log('Actualizó las credenciales de SMS (Onurix)');
         }
 
-        $this->form->fill([...$datos, 'onurix_cliente' => null, 'onurix_clave' => null, 'webhook_url' => null, 'webhook_secreto' => null]);
+        $this->form->fill([...$datos, 'onurix_cliente' => null, 'onurix_clave' => null, 'webhook_url' => null, 'webhook_secreto' => null, 'rndc_usuario' => null, 'rndc_clave' => null]);
 
         Notification::make()->success()->title('Integraciones guardadas')->send();
     }

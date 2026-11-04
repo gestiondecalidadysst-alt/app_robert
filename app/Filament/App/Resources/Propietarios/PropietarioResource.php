@@ -108,12 +108,15 @@ class PropietarioResource extends Resource
                     ->badge()
                     ->color(fn (int $state) => $state > 0 ? 'primary' : 'gray')
                     ->sortable(),
+                \App\Filament\App\Carga\AccionesRndc::columnaEstado(),
                 IconColumn::make('activo')->boolean(),
             ])
             ->filters([
                 TernaryFilter::make('activo'),
             ])
+            ->toolbarActions([\Filament\Actions\BulkActionGroup::make([\App\Filament\App\Carga\AccionesRndc::fichasMasivas()])])
             ->recordActions([
+                \App\Filament\App\Carga\AccionesRndc::grupo(),
                 Action::make('vehiculos')
                     ->label('Vehículos')
                     ->icon('heroicon-o-truck')

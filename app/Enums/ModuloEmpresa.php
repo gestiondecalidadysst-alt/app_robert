@@ -38,6 +38,9 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
         'rutinas_mantenimiento' => 'mantenimiento',
         'programas_mantenimiento' => 'mantenimiento',
         'gerencia' => 'gerencia',
+        'terceros_carga' => 'carga',
+        'remolques' => 'carga',
+        'rndc' => 'carga',
     ];
 
     public function getLabel(): string
@@ -47,7 +50,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
             self::SeguridadVial => 'Seguridad vial (PESV)',
             self::Mantenimiento => 'Mantenimiento',
             self::Gerencia => 'Gerencia',
-            self::Carga => 'Manifiestos de carga (en construcción)',
+            self::Carga => 'Carga (RNDC)',
         };
     }
 
@@ -58,7 +61,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
             self::SeguridadVial => 'Preoperacionales e inspecciones, ítems de chequeo; preoperacional en el portal del conductor.',
             self::Mantenimiento => 'Planes de acción, mantenimientos, plan preventivo, programa anual y calendario.',
             self::Gerencia => 'Tablero de gerencia, informes en Excel y resumen mensual.',
-            self::Carga => 'Remesas, manifiestos electrónicos y cumplidos reportados al RNDC.',
+            self::Carga => 'Terceros, vehículos de carga y remolques registrados en el RNDC. Próximas fases: remesas, manifiestos y cumplidos.',
         };
     }
 
@@ -73,9 +76,8 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
         return isset(self::RECURSOS[$recurso]) ? self::from(self::RECURSOS[$recurso]) : null;
     }
 
-    /** Aún sin pantallas: no se puede contratar. */
     public function disponible(): bool
     {
-        return $this !== self::Carga;
+        return true;
     }
 }
