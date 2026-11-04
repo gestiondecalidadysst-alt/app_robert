@@ -59,9 +59,13 @@ class Integraciones extends Page
 
     public function mount(): void
     {
-        $e = $this->empresa();
+        $this->form->fill($this->valores($this->empresa()));
+    }
 
-        $this->form->fill([
+    /** Valores actuales (también para conservar los de secciones ocultas por módulos no contratados). */
+    private function valores(Empresa $e): array
+    {
+        return [
             'sms_habilitado' => $e->sms_habilitado,
             'sms_limite_mensual' => $e->sms_limite_mensual,
             'firma_dias_enlace' => $e->firma_dias_enlace,
@@ -85,7 +89,7 @@ class Integraciones extends Page
             'transito_bloquear_licencia' => $e->transito_bloquear_licencia,
             'transito_bloquear_comparendos' => $e->transito_bloquear_comparendos,
             'transito_bloquear_desde' => $e->transito_bloquear_desde,
-        ]);
+        ];
     }
 
     public function form(Schema $schema): Schema
@@ -125,6 +129,7 @@ class Integraciones extends Page
                         CheckboxList::make('webhook_eventos')->label('Eventos')->options(Webhooks::EVENTOS)->columns(2)->columnSpanFull(),
                     ]),
                 Section::make('Mantenimiento')
+                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Mantenimiento))
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->columns(['default' => 1, 'md' => 2])
                     ->schema([
@@ -133,6 +138,7 @@ class Integraciones extends Page
                         TextInput::make('mantenimiento_dias_aviso')->label('Avisar actividades con (días) de anticipación')->numeric()->minValue(1)->maxValue(60)->required(),
                     ]),
                 Section::make('Planeador de servicios (jornada y fatiga)')
+                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros))
                     ->description('Política de la empresa para el control de jornada del PESV (paso 8, prevención de la fatiga). Superarla solo genera avisos en el planeador; no impide planificar ni expedir.')
                     ->icon('heroicon-o-clock')
                     ->columns(['default' => 1, 'md' => 4])
@@ -145,6 +151,7 @@ class Integraciones extends Page
                             ->helperText('Para el indicador de planificación.'),
                     ]),
                 Section::make('Recibos de caja')
+                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros))
                     ->description('Cada pago de un contrato genera un recibo con número consecutivo para entregar al cliente.')
                     ->icon('heroicon-o-receipt-percent')
                     ->columns(['default' => 1, 'md' => 2])
@@ -160,6 +167,7 @@ class Integraciones extends Page
                     ]),
                 self::seccionTransito($e),
                 Section::make('Firma electrónica de contratos')
+                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros))
                     ->icon('heroicon-o-pencil-square')
                     ->columns(['default' => 1, 'md' => 3])
                     ->schema([
@@ -221,8 +229,8 @@ class Integraciones extends Page
     {
         abort_unless($this->puedeEditar(), 403);
 
-        $datos = $this->form->getState();
         $empresa = $this->empresa();
+        $datos = [...$this->valores($empresa), ...$this->form->getState()];
         $cambiaronCredenciales = filled($datos['onurix_cliente'] ?? null) || filled($datos['onurix_clave'] ?? null);
 
         $empresa->fill([

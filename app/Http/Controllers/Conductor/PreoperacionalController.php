@@ -27,6 +27,7 @@ class PreoperacionalController extends Controller
     {
         $usuario = $request->user();
         abort_unless(ServiciosConductor::puedeInspeccionar($usuario, $vehiculo), 404);
+        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial), 404);
 
         $conductor = ServiciosConductor::conductorPara($usuario, $vehiculo->empresa_id);
         abort_unless($conductor, 404);
@@ -61,6 +62,7 @@ class PreoperacionalController extends Controller
     {
         $usuario = $request->user();
         abort_unless(ServiciosConductor::puedeInspeccionar($usuario, $vehiculo), 404);
+        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial), 404);
         $conductor = ServiciosConductor::conductorPara($usuario, $vehiculo->empresa_id);
         abort_unless($conductor, 404);
 
@@ -103,6 +105,7 @@ class PreoperacionalController extends Controller
 
     public function historial(Request $request): View
     {
+        abort_unless(ServiciosConductor::conModulo($request->user(), \App\Enums\ModuloEmpresa::SeguridadVial), 404);
         $ids = ServiciosConductor::conductores($request->user())->pluck('id');
 
         return view('conductor.historial', [

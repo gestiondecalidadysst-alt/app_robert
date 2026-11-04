@@ -127,7 +127,9 @@ class RegistrarInspeccion
         $noApto = collect($copia)->contains(fn (array $r) => $r['critico'] && $r['respuesta'] === 'no');
 
         // Un plan de acción de prioridad alta pendiente (falla crítica sin corregir) deja el vehículo NO APTO.
-        $planAlta = $preoperacional ? $vehiculo->planAltaPendiente() : null;
+        // Solo si la empresa tiene el módulo de mantenimiento (sin él no hay cómo cerrar el plan).
+        $conMantenimiento = \App\Support\Modulos::activo($empresa->id, \App\Enums\ModuloEmpresa::Mantenimiento);
+        $planAlta = $preoperacional && $conMantenimiento ? $vehiculo->planAltaPendiente() : null;
         $noApto = $noApto || $planAlta !== null;
 
         $inspeccion = DB::transaction(function () use ($empresa, $tipo, $vehiculo, $conductor, $fuec, $fecha, $kilometraje, $observaciones, $contexto, $usuario, $copia, $noApto, $planAlta) {
@@ -167,8 +169,10 @@ class RegistrarInspeccion
 
         // Fallas → plan de acción; nuevo kilometraje → revisa el preventivo. Un error aquí no deshace la inspección.
         try {
-            \App\Actions\Mantenimiento\PlanesDesdeInspeccion::procesar($inspeccion);
-            if ($kilometraje !== null) {
+            if ($conMantenimiento) {
+                \App\Actions\Mantenimiento\PlanesDesdeInspeccion::procesar($inspeccion);
+            }
+            if ($conMantenimiento && $kilometraje !== null) {
                 \App\Actions\Mantenimiento\SeguimientoPreventivo::revisar($vehiculo);
             }
         } catch (\Throwable $e) {

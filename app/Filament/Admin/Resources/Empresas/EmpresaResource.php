@@ -63,6 +63,21 @@ class EmpresaResource extends Resource
                         ->required(),
                 ]),
 
+            Section::make('Módulos contratados')
+                ->columnSpanFull()
+                ->icon('heroicon-o-squares-2x2')
+                ->description('Lo que la empresa ve. Mi empresa, configuración, vehículos, propietarios y conductores van siempre. Lo que se desmarca desaparece del menú y deja de funcionar, pero sus datos se conservan.')
+                ->schema([
+                    \Filament\Forms\Components\CheckboxList::make('modulos')
+                        ->hiddenLabel()
+                        ->options(\App\Enums\ModuloEmpresa::class)
+                        ->descriptions(collect(\App\Enums\ModuloEmpresa::cases())->mapWithKeys(fn ($m) => [$m->value => $m->getDescription()])->all())
+                        ->disableOptionWhen(fn (string $value) => ! \App\Enums\ModuloEmpresa::from($value)->disponible())
+                        ->default(\App\Enums\ModuloEmpresa::porDefecto())
+                        ->columns(['default' => 1, 'md' => 2])
+                        ->bulkToggleable(),
+                ]),
+
             Section::make('Consultas de tránsito (comparendos y RUNT)')
                 ->columnSpanFull()
                 ->visibleOn('edit')
@@ -101,6 +116,8 @@ class EmpresaResource extends Resource
                     ->description(fn (Empresa $record) => 'NIT ' . $record->nit_formateado),
                 TextColumn::make('municipio.nombre_completo')->label('Municipio'),
                 TextColumn::make('usuarios_count')->label('Usuarios')->badge(),
+                TextColumn::make('modulos')->label('Módulos')->badge()->color('gray')
+                    ->formatStateUsing(fn ($state) => \App\Enums\ModuloEmpresa::tryFrom($state)?->getLabel() ?? $state)->wrap()->visibleFrom('lg'),
                 TextColumn::make('slug')->label('Dirección')->prefix('/app/')->color('gray')->toggleable(),
                 IconColumn::make('activa')->boolean(),
                 TextColumn::make('created_at')->label('Alta')->date('d/m/Y')->sortable()->toggleable(isToggledHiddenByDefault: true),

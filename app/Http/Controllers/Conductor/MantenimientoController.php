@@ -25,6 +25,7 @@ class MantenimientoController extends Controller
 {
     public function inicio(Request $request): View
     {
+        abort_unless(ServiciosConductor::conModulo($request->user(), \App\Enums\ModuloEmpresa::Mantenimiento), 404);
         $vehiculos = $this->vehiculos($request);
 
         return view('conductor.mantenimiento', [
@@ -45,6 +46,7 @@ class MantenimientoController extends Controller
     public function formulario(Request $request, Vehiculo $vehiculo): View
     {
         abort_unless(ServiciosConductor::puedeInspeccionar($request->user(), $vehiculo), 404);
+        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::Mantenimiento), 404);
 
         $planes = PlanAccion::query()->withoutGlobalScopes()->where('vehiculo_id', $vehiculo->id)->pendientes()->latest('id')->get();
         $plan = $planes->firstWhere('id', $request->integer('plan'));
@@ -63,6 +65,7 @@ class MantenimientoController extends Controller
     {
         $usuario = $request->user();
         abort_unless(ServiciosConductor::puedeInspeccionar($usuario, $vehiculo), 404);
+        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::Mantenimiento), 404);
         $conductor = ServiciosConductor::conductorPara($usuario, $vehiculo->empresa_id);
         abort_unless($conductor, 404);
 

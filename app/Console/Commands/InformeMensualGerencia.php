@@ -20,6 +20,9 @@ class InformeMensualGerencia extends Command
     public function handle(): int
     {
         Empresa::query()->where('activa', true)->each(function (Empresa $empresa): void {
+            if (! $empresa->tieneModulo(\App\Enums\ModuloEmpresa::Gerencia)) {
+                return;
+            }
             try {
                 $r = InformeGerencia::enviarMensual($empresa);
                 $this->info("{$empresa->razon_social}: {$r['correos']} correo(s)" . ($r['webhook'] ? ' y webhook' : ''));

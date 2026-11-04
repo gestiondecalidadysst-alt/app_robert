@@ -24,7 +24,20 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaultTenant, HasTenants
 {
     /** @use HasFactory<UserFactory> */
-    use Auditable, HasFactory, HasRoles, Notifiable;
+    use Auditable, HasFactory, Notifiable;
+    use HasRoles {
+        checkPermissionTo as protected checkPermissionToBase;
+    }
+
+    /** Módulos contratados: un permiso de un módulo que la empresa activa no tiene se niega (ver Modulos). */
+    public function checkPermissionTo($permission, ?string $guardName = null): bool
+    {
+        if (is_string($permission) && \App\Support\Modulos::permisoBloqueado($permission)) {
+            return false;
+        }
+
+        return $this->checkPermissionToBase($permission, $guardName);
+    }
 
     protected $fillable = [
         'name', 'email', 'password', 'tipo_identificacion_id', 'documento', 'telefono',

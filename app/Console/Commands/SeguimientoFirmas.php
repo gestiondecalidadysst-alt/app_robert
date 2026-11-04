@@ -34,7 +34,7 @@ class SeguimientoFirmas extends Command
         foreach ($pendientes as $documento) {
             $empresa = Empresa::find($documento->empresa_id);
 
-            if (! $empresa?->activa) {
+            if (! $empresa?->activa || ! $empresa->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros)) {
                 continue;
             }
 

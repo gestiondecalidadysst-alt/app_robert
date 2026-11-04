@@ -60,11 +60,15 @@ class RolResource extends Resource
     {
         $secciones = [];
         foreach (Permisos::agrupados() as $grupo => $opciones) {
+            // Los permisos de módulos no contratados no se muestran, pero se conservan al guardar.
+            $bloqueado = \App\Support\Modulos::permisoBloqueado((string) array_key_first($opciones));
             $secciones[] = Section::make(Str::after($grupo, ' · '))
                 ->description(Str::before($grupo, ' · '))
                 ->compact()
+                ->hidden($bloqueado)
                 ->schema([
                     CheckboxList::make(static::campoPermisos($grupo))
+                        ->dehydratedWhenHidden()
                         ->hiddenLabel()
                         ->options($opciones)
                         ->columns(['default' => 2, 'sm' => 4])

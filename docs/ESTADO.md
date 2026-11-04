@@ -28,6 +28,8 @@
   - consultas con el precio a la vista.
 
   Detalle en `nuevo/modulos/consultas-transito.md`.
+- [x] **Módulos por empresa** (fase 0 de carga): cada empresa ve solo lo contratado. Detalle en `nuevo/modulos/modulos-empresa.md`.
+- [ ] **Módulo de carga (RNDC):** fases 1 a 4 según el plan. Falta el manual técnico de interoperabilidad del RNDC y las respuestas del usuario: usuario del RNDC, tipo de cliente, tipos de manifiesto, tiempos logísticos y cobro.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 

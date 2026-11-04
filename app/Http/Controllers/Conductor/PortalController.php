@@ -26,7 +26,8 @@ class PortalController extends Controller
         return view('conductor.inicio', [
             'usuario' => $usuario,
             'conductores' => $conductores,
-            'sinFirma' => $conductores->reject->tieneFirma(),
+            // La firma se usa en los preoperacionales: solo se pide si la empresa tiene seguridad vial.
+            'sinFirma' => $conductores->reject->tieneFirma()->filter(fn ($c) => \App\Support\Modulos::activo($c->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial)),
             'tarjetas' => ServiciosConductor::fuecs($usuario)->map(fn (Fuec $f) => ServiciosConductor::tarjeta($f)),
             'vehiculos' => ServiciosConductor::vehiculosAsignados($usuario),
         ]);

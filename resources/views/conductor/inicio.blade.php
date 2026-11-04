@@ -14,7 +14,7 @@
 @endif
 
 @php
-    $planesAltos = \App\Models\PlanAccion::query()->withoutGlobalScopes()->pendientes()->where('prioridad', 'alta')
+    $planesAltos = ! \App\Support\Pesv\ServiciosConductor::conModulo(auth()->user(), \App\Enums\ModuloEmpresa::Mantenimiento) ? 0 : \App\Models\PlanAccion::query()->withoutGlobalScopes()->pendientes()->where('prioridad', 'alta')
         ->whereIn('vehiculo_id', $vehiculos->pluck('vehiculo.id')->merge($tarjetas->pluck('fuec.vehiculo_id'))->filter()->unique())->count();
 @endphp
 @if ($planesAltos)

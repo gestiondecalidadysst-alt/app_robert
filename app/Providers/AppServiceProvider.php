@@ -53,7 +53,21 @@ class AppServiceProvider extends ServiceProvider
         Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
 
         // El superadministrador de la plataforma tiene todos los permisos.
-        Gate::before(fn (User $user) => $user->es_superadmin ? true : null);
+        // Módulos contratados: los permisos de un módulo que la empresa no tiene se niegan a todos
+        // (también al superadministrador dentro de esa empresa). Así desaparece del menú y no abre.
+        Gate::before(function (User $user, string $habilidad, array $argumentos = []) {
+            if (\App\Support\Modulos::permisoBloqueado($habilidad)) {
+                return false;
+            }
+            // Habilidades de política (viewAny, create…): el recurso sale de la constante RECURSO de la política.
+            $politica = $argumentos !== [] && (is_object($argumentos[0]) || (is_string($argumentos[0]) && class_exists($argumentos[0])))
+                ? Gate::getPolicyFor($argumentos[0]) : null;
+            if ($politica && defined($politica::class . '::RECURSO') && \App\Support\Modulos::permisoBloqueado('ver_' . $politica::RECURSO)) {
+                return false;
+            }
+
+            return $user->es_superadmin ? true : null;
+        });
 
         // Pie del menú lateral: nombre de la plataforma.
         FilamentView::registerRenderHook(

@@ -48,7 +48,16 @@ final class ServiciosConductor
             ->orderBy('fecha_inicio')
             ->orderBy('id')
             ->limit(30)
-            ->get();
+            ->get()
+            // Solo empresas con el módulo de pasajeros (FUEC).
+            ->filter(fn (Fuec $f) => \App\Support\Modulos::activo($f->empresa_id, \App\Enums\ModuloEmpresa::Pasajeros))
+            ->values();
+    }
+
+    /** ¿Alguna de las empresas del conductor tiene el módulo? (menú y pantallas del portal) */
+    public static function conModulo(User $usuario, \App\Enums\ModuloEmpresa $modulo): bool
+    {
+        return self::conductores($usuario)->contains(fn (Conductor $c) => \App\Support\Modulos::activo($c->empresa_id, $modulo));
     }
 
     /**
@@ -60,9 +69,13 @@ final class ServiciosConductor
     {
         $estado = $fuec->estado();
         $vigente = $estado === EstadoVigencia::Vigente;
-        $preop = $vigente ? $fuec->vehiculo?->preoperacionalDelDia() : null;
+        // Sin el módulo de seguridad vial no hay preoperacional: el extracto se ve el día del servicio.
+        $conPreoperacional = \App\Support\Modulos::activo($fuec->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial);
+        $preop = $vigente && $conPreoperacional ? $fuec->vehiculo?->preoperacionalDelDia() : null;
 
         $motivo = match (true) {
+            ! $vigente && ! $conPreoperacional => 'El extracto se habilita el día del servicio.',
+            $vigente && ! $conPreoperacional => null,
             ! $vigente => 'El extracto se habilita el día del servicio, después del preoperacional.',
             ! $preop => 'Haga el preoperacional de hoy para ver el extracto.',
             ! $preop->apta() && filled($preop->datos['plan_pendiente'] ?? null) && $preop->fallas() === []
@@ -75,7 +88,7 @@ final class ServiciosConductor
             'fuec' => $fuec,
             'estado' => $estado,
             'preoperacional' => $preop,
-            'puede_preoperacional' => $vigente && ! $preop?->apta(),
+            'puede_preoperacional' => $vigente && $conPreoperacional && ! $preop?->apta(),
             'puede_extracto' => $motivo === null,
             'motivo_extracto' => $motivo,
             // Plan de viaje del planeador (todo FUEC tiene su servicio).
@@ -112,6 +125,7 @@ final class ServiciosConductor
             ->pluck('vehiculo')
             ->filter()
             ->unique('id')
+            ->filter(fn (Vehiculo $v) => \App\Support\Modulos::activo($v->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial))
             ->values()
             ->map(fn (Vehiculo $v) => ['vehiculo' => $v, 'preoperacional' => $v->preoperacionalDelDia()]);
     }

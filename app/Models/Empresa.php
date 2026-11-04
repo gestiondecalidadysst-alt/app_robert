@@ -35,7 +35,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
         'km_diarios_defecto', 'mantenimiento_dias_aviso', 'recibo_prefijo', 'recibo_numero_inicial',
         'jornada_max_horas_dia', 'jornada_max_horas_continuas', 'jornada_descanso_horas', 'planeacion_antelacion_horas',
-        'transito_habilitado', 'transito_precios', 'transito_tipos', 'transito_auto', 'transito_auto_tipos', 'transito_frecuencia_dias',
+        'modulos', 'transito_habilitado', 'transito_precios', 'transito_tipos', 'transito_auto', 'transito_auto_tipos', 'transito_frecuencia_dias',
         'transito_tope_mensual', 'transito_bloquear_licencia', 'transito_bloquear_comparendos', 'transito_bloquear_desde', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
     ];
 
@@ -48,6 +48,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     {
         return [
             'activa' => 'boolean',
+            'modulos' => 'array',
             'transito_habilitado' => 'boolean',
             'transito_precios' => 'array',
             'transito_tipos' => 'array',
@@ -111,6 +112,10 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
 
     protected static function booted(): void
     {
+        static::creating(function (Empresa $empresa): void {
+            $empresa->modulos ??= \App\Enums\ModuloEmpresa::porDefecto();
+        });
+        static::saved(fn (Empresa $empresa) => \App\Support\Modulos::olvidar($empresa->id));
         static::saving(function (Empresa $empresa): void {
             $empresa->nit = Nit::limpiar($empresa->nit);
             $empresa->dv = Nit::digitoVerificacion($empresa->nit);
@@ -223,6 +228,11 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     // Consultas de tránsito
 
     /** Precio que se le cobra a la empresa por una consulta de ese tipo (especial o el de la plataforma). */
+    public function tieneModulo(\App\Enums\ModuloEmpresa $modulo): bool
+    {
+        return in_array($modulo->value, $this->modulos ?? \App\Enums\ModuloEmpresa::porDefecto(), true);
+    }
+
     public function precioTransito(\App\Enums\TipoConsultaTransito $tipo): ?float
     {
         $especial = $this->transito_precios[$tipo->value] ?? null;
