@@ -32,7 +32,7 @@ class ConsultasRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($q) => $q->with('usuario'))
+            ->modifyQueryUsing(fn ($query) => $query->with('usuario'))
             ->defaultSort('created_at', 'desc')
             ->emptyStateHeading('Sin consultas')
             ->columns([

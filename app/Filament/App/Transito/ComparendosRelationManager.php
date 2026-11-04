@@ -94,7 +94,7 @@ class ComparendosRelationManager extends RelationManager
             ->filters([
                 TernaryFilter::make('vigentes')->label('Mostrar')->placeholder('Todos')->trueLabel('Solo los de la última consulta')->falseLabel('Solo los que ya no aparecen')
                     ->default(true)
-                    ->queries(true: fn ($q) => $q->whereNull('ya_no_aparece_at'), false: fn ($q) => $q->whereNotNull('ya_no_aparece_at')),
+                    ->queries(true: fn ($query) => $query->whereNull('ya_no_aparece_at'), false: fn ($query) => $query->whereNotNull('ya_no_aparece_at')),
             ])
             ->headerActions([
                 ...array_map(fn (TipoConsultaTransito $t) => $this->accionConsultar($t)->visible($puede), self::tipos($registro)),

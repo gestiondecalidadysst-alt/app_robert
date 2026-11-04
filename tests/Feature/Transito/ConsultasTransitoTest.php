@@ -270,6 +270,18 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
             ->assertDontSee('Aún no se ha consultado');
         $this->assertSame(1, ConsultaTransito::count());
 
+        // Las dos pestañas cargan con datos (comparendos e historial), en conductor y en vehículo.
+        Livewire::test(ComparendosRelationManager::class, ['ownerRecord' => $c->refresh(), 'pageClass' => VerConductor::class])
+            ->assertOk()->assertSee('2300100000012345');
+        Livewire::test(\App\Filament\App\Transito\ConsultasRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
+            ->assertOk()->assertSee('Con datos')->assertSee('$ 2.500');
+        $v = $this->vehiculo();
+        foreach ([ComparendosRelationManager::class, \App\Filament\App\Transito\ConsultasRelationManager::class] as $rm) {
+            Livewire::test($rm, ['ownerRecord' => $v, 'pageClass' => \App\Filament\App\Resources\Vehiculos\Pages\VerVehiculo::class])->assertOk();
+        }
+        $this->actingAs($this->usuario('auxiliar@demo.test'));
+        $this->get('/app/cootrasec-demo/conductores/' . $c->id)->assertOk();
+
         $this->entrarComo('admin@demo.test');
         Livewire::test(Integraciones::class)
             ->assertSee('Consultas de tránsito')
