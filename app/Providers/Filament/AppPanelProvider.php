@@ -57,14 +57,14 @@ class AppPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->navigationGroups([
-                NavigationGroup::make('Flota'),
-                NavigationGroup::make('Conductores'),
+                // Lo de todos los días arriba; lo ocasional al final y cerrado (Filament recuerda lo que el usuario abre).
                 NavigationGroup::make('Operación'),
+                NavigationGroup::make('Flota y conductores'),
                 NavigationGroup::make('Seguridad vial'),
-                NavigationGroup::make('Mantenimiento'),
-                NavigationGroup::make('Finanzas'),
-                NavigationGroup::make('Gerencia'),
-                NavigationGroup::make('Configuración'),
+                NavigationGroup::make('Mantenimiento')->collapsed(),
+                NavigationGroup::make('Finanzas')->collapsed(),
+                NavigationGroup::make('Gerencia')->collapsed(),
+                NavigationGroup::make('Configuración')->collapsed(),
             ])
             ->middleware([
                 EncryptCookies::class,

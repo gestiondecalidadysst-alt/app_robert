@@ -30,9 +30,9 @@ class VencimientoResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Flota';
+    protected static string|UnitEnum|null $navigationGroup = 'Flota y conductores';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 40;
 
     protected static ?string $navigationLabel = 'Vencimientos';
 
@@ -44,11 +44,20 @@ class VencimientoResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
+    /** Un solo «Vencimientos» en el menú: suma vehículos y conductores (lo que el usuario puede ver). */
     public static function getNavigationBadge(): ?string
     {
-        $total = self::consultaBase()->vencidos()->count();
+        $total = self::consultaBase()->vencidos()->count()
+            + (\App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::canViewAny()
+                ? \App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::consultaBase()->vencidos()->count() : 0);
 
         return $total > 0 ? (string) $total : null;
+    }
+
+    /** Queda marcado también en la pestaña de conductores. */
+    public static function getNavigationItemActiveRoutePattern(): string|array
+    {
+        return [parent::getNavigationItemActiveRoutePattern(), \App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::getNavigationItemActiveRoutePattern()];
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -58,7 +67,25 @@ class VencimientoResource extends Resource
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        return 'Documentos vencidos';
+        return 'Documentos vencidos de vehículos y conductores';
+    }
+
+    /** @return list<\Filament\Actions\Action> */
+    public static function pestanas(string $actual): array
+    {
+        $c = \App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::class;
+        $cuenta = fn (bool $puede, $consulta) => $puede && ($n = $consulta->vencidos()->count()) ? $n : null;
+
+        return [
+            \Filament\Actions\Action::make('pestana_vehiculos')->label('Vehículos')->icon('heroicon-o-truck')
+                ->color($actual === 'vehiculos' ? 'primary' : 'gray')->outlined($actual !== 'vehiculos')
+                ->badge($cuenta(static::canViewAny(), static::consultaBase()))->badgeColor('danger')
+                ->visible(static::canViewAny())->url(static::getUrl()),
+            \Filament\Actions\Action::make('pestana_conductores')->label('Conductores')->icon('heroicon-o-users')
+                ->color($actual === 'conductores' ? 'primary' : 'gray')->outlined($actual !== 'conductores')
+                ->badge($cuenta($c::canViewAny(), $c::consultaBase()))->badgeColor('danger')
+                ->visible($c::canViewAny())->url($c::getUrl()),
+        ];
     }
 
     /** Documentos vigentes de vehículos en flota (sin desvinculados). */

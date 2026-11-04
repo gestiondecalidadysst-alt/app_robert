@@ -29,9 +29,9 @@ class VencimientoConductorResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Conductores';
+    protected static string|UnitEnum|null $navigationGroup = 'Flota y conductores';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 41;
 
     protected static ?string $navigationLabel = 'Vencimientos';
 
@@ -44,6 +44,12 @@ class VencimientoConductorResource extends Resource
     protected static ?string $tenantRelationshipName = 'documentosConductor';
 
     protected static bool $isGloballySearchable = false;
+
+    /** En el menú va dentro de «Vencimientos» (pestaña Conductores); solo aparece sola si no se ven los de vehículos. */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny() && ! \App\Filament\App\Resources\Vencimientos\VencimientoResource::canViewAny();
+    }
 
     public static function getNavigationBadge(): ?string
     {

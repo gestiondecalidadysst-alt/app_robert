@@ -37,7 +37,7 @@ class ClienteResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operación';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 40;
 
     protected static ?string $modelLabel = 'cliente';
 

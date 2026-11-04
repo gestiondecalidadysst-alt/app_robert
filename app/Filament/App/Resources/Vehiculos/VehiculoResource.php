@@ -44,7 +44,7 @@ class VehiculoResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Flota';
+    protected static string|UnitEnum|null $navigationGroup = 'Flota y conductores';
 
     protected static ?int $navigationSort = 10;
 

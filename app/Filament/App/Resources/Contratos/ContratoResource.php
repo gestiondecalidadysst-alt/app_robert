@@ -41,7 +41,7 @@ class ContratoResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operación';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 30;
 
     protected static ?string $modelLabel = 'contrato';
 

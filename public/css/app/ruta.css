@@ -65,6 +65,18 @@
     font-size: .75rem;
 }
 
+/* Menú lateral compacto: más opciones a la vista sin bajar (propuesta B, 2026-11-03). */
+.fi-sidebar-nav { padding-block: .75rem !important; padding-inline: .75rem !important; row-gap: .75rem !important; }
+.fi-sidebar-nav-groups { row-gap: .875rem !important; }
+.fi-sidebar-group, .fi-sidebar-group-items { row-gap: 1px !important; }
+.fi-sidebar-group-btn { padding-block: .25rem !important; padding-inline: .5rem !important; height: auto !important; }
+.fi-sidebar-group-label { font-size: .65rem !important; }
+.fi-sidebar-item-btn { padding-block: .375rem !important; padding-inline: .625rem !important; height: auto !important; column-gap: .625rem !important; }
+.fi-sidebar-item-label { font-size: .8125rem !important; line-height: 1.25rem !important; }
+.fi-sidebar-item-icon { width: 1.125rem !important; height: 1.125rem !important; }
+.fi-sidebar-item-btn .fi-badge { font-size: .6875rem; padding-block: 0 !important; min-height: 0; }
+.fi-sidebar.fi-sidebar-open .fi-sidebar-nav-groups > .fi-sidebar-group.fi-collapsed { margin-top: -.25rem; }
+
 /* Marca */
 .ruta-logo { font-weight: 800; font-size: 1.6rem; letter-spacing: -.04em; line-height: 1; color: #ffffff; }
 .ruta-logo span { color: var(--ruta-acento); }

@@ -44,9 +44,9 @@ class ConductorResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Conductores';
+    protected static string|UnitEnum|null $navigationGroup = 'Flota y conductores';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     protected static ?string $modelLabel = 'conductor';
 

@@ -39,9 +39,9 @@ class ServicioResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operación';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 50;
 
-    protected static ?string $navigationLabel = 'Servicios planificados';
+    protected static ?string $navigationLabel = 'Servicios';
 
     protected static ?string $modelLabel = 'servicio';
 

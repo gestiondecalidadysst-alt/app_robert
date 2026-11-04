@@ -44,7 +44,7 @@ class RutaResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Operación';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 60;
 
     protected static ?string $navigationLabel = 'Rutogramas';
 

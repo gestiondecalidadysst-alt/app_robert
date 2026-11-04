@@ -9,7 +9,14 @@ class ListarVencimientosConductores extends ListRecords
 {
     protected static string $resource = VencimientoConductorResource::class;
 
-    protected static ?string $title = 'Vencimientos de conductores';
+    protected static ?string $title = 'Vencimientos · Conductores';
 
     protected ?string $subheading = 'Documento vigente de cada conductor activo o suspendido. Licencia y seguridad social bloquean el FUEC; los demás son de control.';
+
+    /** Pestañas Vehículos | Conductores (un solo «Vencimientos» en el menú). */
+    protected function getHeaderActions(): array
+    {
+        return \App\Filament\App\Resources\Vencimientos\VencimientoResource::pestanas('conductores');
+    }
+
 }

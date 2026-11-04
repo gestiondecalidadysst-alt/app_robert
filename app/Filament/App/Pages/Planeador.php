@@ -31,7 +31,7 @@ class Planeador extends Page
 
     protected static string|UnitEnum|null $navigationGroup = 'Operación';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationLabel = 'Planeador';
 
