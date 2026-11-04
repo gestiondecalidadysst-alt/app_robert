@@ -106,6 +106,30 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         $this->assertSame(0, $c->refresh()->transito_resumen['comparendos']['pendientes']);
     }
 
+    public function test_formato_del_estado_de_cuenta_de_placapi(): void
+    {
+        $this->entrarComo('admin@demo.test');
+        $this->responder(Http::response(['source' => 'simit', 'status' => 'danger', 'mode' => 'live', 'cost' => 2, 'data' => [
+            'docNumber' => '1', 'totalDeuda' => 1860416, 'pazSalvo' => false,
+            'totalComparendos' => 1, 'deudaComparendos' => 522700,
+            'comparendos' => [['comparendoId' => '11001000000012345678', 'fecha' => '2026-05-02', 'organismo' => 'Bogotá', 'infraccion' => 'C14', 'codigo' => 'C14', 'estado' => 'Pendiente', 'valor' => 522700, 'departamento' => '', 'tipo' => 'comparendo']],
+            'totalResoluciones' => 1, 'deudaResoluciones' => 837716,
+            'resoluciones' => [['comparendoId' => '324', 'fecha' => '2025-11-01', 'organismo' => 'Montería', 'infraccion' => 'D02', 'codigo' => 'D02', 'estado' => 'Cobro coactivo', 'valor' => 837716, 'departamento' => '', 'tipo' => 'resolucion']],
+            'totalAcuerdos' => 1, 'pendienteAcuerdos' => 500000,
+            'acuerdos' => [['resolucion' => '9876', 'fechaResolucion' => '2025-01-10', 'estado' => 'Vigente', 'valorAcuerdo' => 900000, 'pendiente' => 500000, 'secretaria' => 'Cereté', 'departamento' => '']],
+        ]]));
+        $c = $this->conductor();
+
+        $this->assertTrue($this->consultar($c, T::ConductorComparendos)->cobrada);
+        $r = $c->refresh()->transito_resumen['comparendos'];
+        $this->assertSame([3, 2, 1], [$r['total'], $r['pendientes'], $r['acuerdos']]);
+        $this->assertEquals(1860416, $r['deuda']);
+
+        // Respuesta desde la caché del proveedor: no se cobra.
+        $this->responder(Http::response(['mode' => 'cache', 'data' => ['comparendos' => []]]));
+        $this->assertFalse($this->consultar($c, T::ConductorComparendos)->cobrada);
+    }
+
     public function test_sin_datos_cache_y_errores_no_se_cobran(): void
     {
         $this->entrarComo('admin@demo.test');
@@ -241,7 +265,9 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         Livewire::test(ComparendosRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
             ->assertOk()->assertSee('Aún no se ha consultado')
             ->callTableAction('consultar_conductor_comparendos')
-            ->assertNotified('Consulta realizada');
+            ->assertNotified('Consulta realizada')
+            ->assertSee('1 pendiente(s) por $ 650.000')
+            ->assertDontSee('Aún no se ha consultado');
         $this->assertSame(1, ConsultaTransito::count());
 
         $this->entrarComo('admin@demo.test');

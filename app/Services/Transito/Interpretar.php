@@ -25,6 +25,17 @@ final class Interpretar
                 $items = [...$items, ...$data[$clave]];
             }
         }
+        // Acuerdos de pago (estado de cuenta): número = resolución; valor = lo pendiente.
+        foreach (['acuerdos', 'acuerdosPago'] as $clave) {
+            if (is_array($data[$clave] ?? null) && array_is_list($data[$clave])) {
+                foreach ($data[$clave] as $a) {
+                    if (is_array($a) && filled($a['resolucion'] ?? null)) {
+                        $items[] = ['numero' => 'AC-' . $a['resolucion'], 'fecha' => $a['fechaResolucion'] ?? null, 'valor' => $a['pendiente'] ?? $a['valorAcuerdo'] ?? 0,
+                            'estado' => 'acuerdo de pago', 'tipo' => 'acuerdo', 'organismo' => $a['secretaria'] ?? null, 'infraccion' => 'Acuerdo de pago ' . ($a['estado'] ?? '')];
+                    }
+                }
+            }
+        }
 
         $comparendos = [];
         foreach ($items as $i) {

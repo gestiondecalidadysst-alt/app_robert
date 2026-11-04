@@ -60,7 +60,7 @@ class ComparendosRelationManager extends RelationManager
                 . ($c['acuerdos'] ? " · {$c['acuerdos']} en acuerdo de pago" : '') . ' (consultado ' . $f($c['consultado_at']) . ')';
         }
         if ($l = $r['licencia'] ?? null) {
-            $partes[] = 'Licencia: ' . ($l['suspendida'] ? 'SUSPENDIDA' : ($l['estado'] ?? '—')) . (($l['categorias'] ?? []) ? ' · ' . implode(', ', (array) $l['categorias']) : '') . ' (consultado ' . $f($l['consultado_at']) . ')';
+            $partes[] = 'Licencia: ' . ($l['suspendida'] ? 'SUSPENDIDA' : ($l['estado'] ?? '—')) . (($l['categorias'] ?? []) ? ' · ' . collect($l['categorias'])->map(fn ($c) => is_array($c) ? trim(($c['categoria'] ?? '') . ' ' . ($c['estado'] ?? '')) : $c)->implode(', ') : '') . ' (consultado ' . $f($l['consultado_at']) . ')';
         }
         if ($u = $r['runt'] ?? null) {
             $partes[] = 'RUNT: SOAT vence ' . ($u['soat_vence'] ?? '—') . ' · Técnico-mecánica vence ' . ($u['rtm_vence'] ?? '—')
@@ -77,7 +77,7 @@ class ComparendosRelationManager extends RelationManager
 
         return $table
             ->heading(self::getTitle($registro, static::class))
-            ->description($this->resumen())
+            ->description(fn () => $this->resumen())
             ->modifyQueryUsing(fn ($query) => $query->orderByRaw('ya_no_aparece_at is not null')->orderByDesc('fecha'))
             ->emptyStateHeading('Sin comparendos registrados')
             ->emptyStateDescription('Aparecen aquí después de consultar.')
@@ -115,6 +115,24 @@ class ComparendosRelationManager extends RelationManager
             ]);
     }
 
+    /** Lo que encontró la consulta, en una línea, para la notificación. */
+    private function resultado(TipoConsultaTransito $tipo): string
+    {
+        $r = $this->getOwnerRecord()->transito_resumen ?? [];
+
+        return match ($tipo) {
+            TipoConsultaTransito::ConductorComparendos, TipoConsultaTransito::VehiculoMultas => ($c = $r['comparendos'] ?? null) && $c['total']
+                ? "{$c['total']} registro(s): {$c['pendientes']} pendiente(s), {$c['acuerdos']} en acuerdo de pago. Deuda: $ " . number_format((float) $c['deuda'], 0, ',', '.') . '.'
+                : 'Sin comparendos ni multas: está a paz y salvo.',
+            TipoConsultaTransito::ConductorLicencia => ($l = $r['licencia'] ?? null)
+                ? 'Licencia: ' . ($l['suspendida'] ? 'SUSPENDIDA' : ($l['estado'] ?? '—')) . (($l['categorias'] ?? []) ? ' · ' . collect($l['categorias'])->map(fn ($c) => trim(($c['categoria'] ?? '') . ' ' . ($c['estado'] ?? '') . (($c['vence'] ?? null) ? ' vence ' . $c['vence'] : '')))->implode(', ') : '') . '.'
+                : 'Sin datos de licencia.',
+            TipoConsultaTransito::VehiculoRunt => ($u = $r['runt'] ?? null)
+                ? 'SOAT vence ' . ($u['soat_vence'] ?? '—') . ' · Técnico-mecánica vence ' . ($u['rtm_vence'] ?? '—') . (($u['diferencias'] ?? []) ? ' · ' . implode(' ', $u['diferencias']) : '')
+                : 'Sin datos del RUNT.',
+        };
+    }
+
     private function accionConsultar(TipoConsultaTransito $tipo): Action
     {
         return Action::make('consultar_' . $tipo->value)
@@ -139,9 +157,10 @@ class ComparendosRelationManager extends RelationManager
                     return;
                 }
                 $this->getOwnerRecord()->refresh();
+                $cobro = $consulta->cobrada ? 'Se cobró $ ' . number_format((float) $consulta->precio, 0, ',', '.') . '.' : 'Sin costo (resultado reciente del proveedor).';
 
                 match ($consulta->estado) {
-                    'ok' => Notification::make()->success()->title('Consulta realizada')->body($consulta->cobrada ? 'Se cobró $ ' . number_format((float) $consulta->precio, 0, ',', '.') . '.' : 'Sin costo (resultado reciente del proveedor).')->send(),
+                    'ok' => Notification::make()->success()->title('Consulta realizada')->body($this->resultado($tipo) . "\n" . $cobro)->persistent()->send(),
                     'sin_datos' => Notification::make()->info()->title('Sin información en el sistema de tránsito')->body('No se cobró.')->send(),
                     default => Notification::make()->danger()->title('La consulta falló')->body(($consulta->error ?: 'Intente más tarde.') . ' No se cobró.')->persistent()->send(),
                 };

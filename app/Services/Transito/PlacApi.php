@@ -52,7 +52,8 @@ final class PlacApi
             return new ResultadoConsulta('error', datos: is_array($json) ? $json : [], error: self::mensaje($respuesta->status(), $json), duracionMs: $ms);
         }
 
-        $cache = (bool) ($json['fromCache'] ?? false);
+        // PlacApi marca la respuesta de su caché (no cobrada) con mode = cache; se aceptan variantes.
+        $cache = (bool) ($json['fromCache'] ?? $json['cached'] ?? false) || in_array(strtolower((string) ($json['mode'] ?? '')), ['cache', 'cached'], true);
 
         return new ResultadoConsulta('ok', datos: is_array($json) ? $json : [], cobrada: ! $cache, desdeCache: $cache, duracionMs: $ms);
     }
