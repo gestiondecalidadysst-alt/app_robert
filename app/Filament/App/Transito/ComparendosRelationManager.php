@@ -98,6 +98,12 @@ class ComparendosRelationManager extends RelationManager
             ])
             ->headerActions([
                 ...array_map(fn (TipoConsultaTransito $t) => $this->accionConsultar($t)->visible($puede), self::tipos($registro)),
+                Action::make('ultima_constancia')
+                    ->label('Constancia de la última consulta')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->visible(fn () => $this->ultimaConstancia() !== null)
+                    ->url(fn () => $this->ultimaConstancia()?->urlPdf(), shouldOpenInNewTab: true),
                 Action::make('automatica')
                     ->label(fn () => $this->getOwnerRecord()->transito_auto ? 'En consultas automáticas' : 'Incluir en consultas automáticas')
                     ->icon(fn () => $this->getOwnerRecord()->transito_auto ? 'heroicon-o-check-circle' : 'heroicon-o-arrow-path')
@@ -113,6 +119,11 @@ class ComparendosRelationManager extends RelationManager
                         Notification::make()->success()->title($r->transito_auto ? 'Incluido en las consultas automáticas' : 'Retirado de las consultas automáticas')->send();
                     }),
             ]);
+    }
+
+    private function botonConstancia(\App\Models\ConsultaTransito $consulta): Action
+    {
+        return Action::make('constancia')->label('Descargar constancia')->button()->url($consulta->urlPdf(), shouldOpenInNewTab: true);
     }
 
     /** Lo que encontró la consulta, en una línea, para la notificación. */
@@ -131,6 +142,11 @@ class ComparendosRelationManager extends RelationManager
                 ? 'SOAT vence ' . ($u['soat_vence'] ?? '—') . ' · Técnico-mecánica vence ' . ($u['rtm_vence'] ?? '—') . (($u['diferencias'] ?? []) ? ' · ' . implode(' ', $u['diferencias']) : '')
                 : 'Sin datos del RUNT.',
         };
+    }
+
+    private function ultimaConstancia(): ?\App\Models\ConsultaTransito
+    {
+        return $this->getOwnerRecord()->consultasTransito()->whereIn('estado', ['ok', 'sin_datos'])->latest('id')->first();
     }
 
     private function accionConsultar(TipoConsultaTransito $tipo): Action
@@ -160,8 +176,10 @@ class ComparendosRelationManager extends RelationManager
                 $cobro = $consulta->cobrada ? 'Se cobró $ ' . number_format((float) $consulta->precio, 0, ',', '.') . '.' : 'Sin costo (resultado reciente del proveedor).';
 
                 match ($consulta->estado) {
-                    'ok' => Notification::make()->success()->title('Consulta realizada')->body($this->resultado($tipo) . "\n" . $cobro)->persistent()->send(),
-                    'sin_datos' => Notification::make()->info()->title('Sin información en el sistema de tránsito')->body('No se cobró.')->send(),
+                    'ok' => Notification::make()->success()->title('Consulta realizada')->body($this->resultado($tipo) . "\n" . $cobro)->persistent()
+                        ->actions([$this->botonConstancia($consulta)])->send(),
+                    'sin_datos' => Notification::make()->info()->title('Sin información en el sistema de tránsito')->body($this->resultado($tipo) . "\nNo se cobró.")->persistent()
+                        ->actions([$this->botonConstancia($consulta)])->send(),
                     default => Notification::make()->danger()->title('La consulta falló')->body(($consulta->error ?: 'Intente más tarde.') . ' No se cobró.')->persistent()->send(),
                 };
             });

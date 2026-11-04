@@ -130,6 +130,51 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         $this->assertFalse($this->consultar($c, T::ConductorComparendos)->cobrada);
     }
 
+    public function test_constancia_con_comparendos_y_paz_y_salvo(): void
+    {
+        $usuario = $this->entrarComo('auxiliar@demo.test');
+        $this->fakeComparendos();
+        $c = $this->conductor();
+
+        Livewire::test(ComparendosRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
+            ->callTableAction('consultar_conductor_comparendos');
+        $consulta = ConsultaTransito::query()->latest('id')->firstOrFail();
+        $this->assertSame($usuario->id, $consulta->user_id, 'Queda quién consultó.');
+        $this->assertMatchesRegularExpression('/^[a-z0-9]{24}$/', $consulta->codigo_verificacion);
+
+        // Historial: usuario, ver resultado y constancia.
+        Livewire::test(\App\Filament\App\Transito\ConsultasRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
+            ->assertSee($usuario->name)
+            ->assertTableActionVisible('constancia', $consulta)
+            ->mountTableAction('ver', $consulta)->assertHasNoErrors();
+        $detalle = view('filament.app.transito.detalle-consulta', ['c' => $consulta])->render();
+        $this->assertStringContainsString('Registra 1 comparendo(s)', $detalle);
+        $this->assertStringContainsString('Estacionar en sitio prohibido', $detalle);
+
+        $html = view('pdf.constancia-transito', ['c' => $consulta, 'd' => $consulta->detalle(), 'empresa' => $this->demo, 'logo' => null, 'qr' => '',
+            'sujeto' => \App\Support\Pdf\PdfConsultaTransito::sujeto($c, $consulta)])->render();
+        $this->assertStringContainsString('REGISTRA 1 COMPARENDO O MULTA PENDIENTE', $html);
+        $this->assertStringContainsString('2300100000012345', $html);
+        $this->assertStringContainsString('PENDIENTE DE PAGO', $html);
+        $this->assertStringContainsString('No reemplaza el certificado oficial', $html);
+
+        $this->get($consulta->urlPdf())->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $this->get($consulta->urlPdf())->getContent());
+        $this->get($consulta->urlVerificacion())->assertOk()->assertSee('1 comparendo(s)')->assertDontSee((string) $c->documento);
+
+        // Sin comparendos: paz y salvo.
+        $this->responder(Http::response(['data' => ['totalDeuda' => 0, 'pazSalvo' => true, 'comparendos' => [], 'resoluciones' => [], 'acuerdos' => []]]));
+        $paz = $this->consultar($c, T::ConductorComparendos);
+        $this->assertTrue($paz->detalle()['paz_y_salvo']);
+        $this->assertStringStartsWith('paz-y-salvo-', \App\Support\Pdf\PdfConsultaTransito::nombre($paz));
+        $this->get($paz->urlVerificacion())->assertOk()->assertSee('No registra comparendos ni multas pendientes');
+
+        // Las consultas con error no tienen constancia.
+        $this->responder(Http::response(['message' => 'x'], 500));
+        $error = $this->consultar($c, T::ConductorComparendos);
+        $this->get($error->urlPdf())->assertNotFound();
+    }
+
     public function test_sin_datos_cache_y_errores_no_se_cobran(): void
     {
         $this->entrarComo('admin@demo.test');

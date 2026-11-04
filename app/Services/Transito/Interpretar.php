@@ -57,6 +57,8 @@ final class Interpretar
                 'infraccion' => $infraccion ?? self::primero($i, ['descripcion', 'descripcionInfraccion']),
                 'valor' => self::numero(self::primero($i, ['valor', 'valorPagar', 'total', 'saldo'])),
                 'estado' => self::estado((string) (self::primero($i, ['estado', 'estadoComparendo']) ?? '')),
+                'estado_texto' => self::primero($i, ['estado', 'estadoComparendo']),
+                'departamento' => self::primero($i, ['departamento']) ?: null,
                 'tipo' => self::primero($i, ['tipo']),
                 'organismo' => self::primero($i, ['organismo', 'secretaria', 'organismoTransito']),
                 'placa' => Str::upper((string) (self::primero($i, ['placa']) ?? '')) ?: null,

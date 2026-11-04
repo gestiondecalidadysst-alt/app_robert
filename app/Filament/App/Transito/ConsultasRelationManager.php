@@ -4,6 +4,7 @@ namespace App\Filament\App\Transito;
 
 use App\Enums\TipoConsultaTransito;
 use App\Models\ConsultaTransito;
+use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -45,7 +46,21 @@ class ConsultasRelationManager extends RelationManager
                     ->description(fn (ConsultaTransito $r) => $r->error ? \Illuminate\Support\Str::limit($r->error, 80) : null),
                 IconColumn::make('cobrada')->boolean(),
                 TextColumn::make('precio')->label('Valor')->formatStateUsing(fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.'))->alignEnd(),
-                TextColumn::make('usuario.name')->label('Usuario')->placeholder('Automática')->visibleFrom('md'),
+                TextColumn::make('usuario.name')->label('Usuario')->visibleFrom('md')
+                    ->placeholder(fn (ConsultaTransito $record) => $record->origen === 'automatica' ? 'Automática' : '—'),
+            ])
+            ->recordActions([
+                Action::make('ver')->label('Ver resultado')->icon('heroicon-o-eye')->color('gray')
+                    ->visible(fn (ConsultaTransito $record) => $record->tieneConstancia())
+                    ->modalHeading(fn (ConsultaTransito $record) => $record->tipo->getLabel() . ' · ' . $record->created_at->timezone(config('app.timezone'))->format('d/m/Y h:i a'))
+                    ->modalContent(fn (ConsultaTransito $record) => view('filament.app.transito.detalle-consulta', ['c' => $record]))
+                    ->modalSubmitAction(false)->modalCancelActionLabel('Cerrar')
+                    ->extraModalFooterActions(fn (ConsultaTransito $record) => [
+                        Action::make('pdf_modal')->label('Descargar constancia')->icon('heroicon-o-arrow-down-tray')->url($record->urlPdf(), shouldOpenInNewTab: true),
+                    ]),
+                Action::make('constancia')->label('Constancia')->icon('heroicon-o-document-arrow-down')
+                    ->visible(fn (ConsultaTransito $record) => $record->tieneConstancia())
+                    ->url(fn (ConsultaTransito $record) => $record->urlPdf(), shouldOpenInNewTab: true),
             ]);
     }
 }

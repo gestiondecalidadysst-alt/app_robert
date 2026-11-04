@@ -38,6 +38,12 @@ Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(f
     Route::get('/verificar/recibo/{codigo}/pdf', [\App\Http\Controllers\VerificarReciboController::class, 'pdf'])->name('recibo.pdf');
 });
 
+// Verificación pública y descarga de la constancia de una consulta de tránsito (QR de la constancia).
+Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(function () {
+    Route::get('/verificar/consulta-transito/{codigo}', [\App\Http\Controllers\VerificarConsultaTransitoController::class, 'mostrar'])->name('consulta-transito.verificar');
+    Route::get('/verificar/consulta-transito/{codigo}/pdf', [\App\Http\Controllers\VerificarConsultaTransitoController::class, 'pdf'])->name('consulta-transito.pdf');
+});
+
 // Portal del conductor: ingreso con documento y clave; servicios, preoperacional y extracto.
 Route::prefix('conductor')->name('conductor.')->group(function () {
     Route::get('/ingresar', [\App\Http\Controllers\Conductor\AccesoController::class, 'formulario'])->name('ingresar');

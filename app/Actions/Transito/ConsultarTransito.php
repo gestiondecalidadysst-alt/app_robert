@@ -210,7 +210,7 @@ class ConsultarTransito
             if (! $registro->exists && $c['estado'] !== 'pagada') {
                 $nuevos[] = $c;
             }
-            $registro->forceFill([...$c, 'empresa_id' => $empresa->id, 'ultima_vez_at' => now(), 'ya_no_aparece_at' => null]);
+            $registro->forceFill([...\Illuminate\Support\Arr::only($c, ['numero', 'fecha', 'codigo', 'valor', 'estado', 'placa']), 'empresa_id' => $empresa->id, 'ultima_vez_at' => now(), 'ya_no_aparece_at' => null]);
             $registro->infraccion = $c['infraccion'] !== null ? Str::limit((string) $c['infraccion'], 500) : null;
             $registro->organismo = $c['organismo'] !== null ? Str::limit((string) $c['organismo'], 250) : null;
             $registro->tipo = $c['tipo'] !== null ? Str::limit((string) $c['tipo'], 20, '') : null;

@@ -215,7 +215,8 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 - **`consultas_transito`** guarda una fila por consulta:
   - empresa, tipo, sujeto (morph), referencia (cédula o placa), origen (`manual` o `automatica`) y usuario;
   - `estado` (`ok`, `sin_datos` o `error`), `creditos`, `cobrada`, `precio` (al cliente), `costo` (del proveedor) y `desde_cache`;
-  - respuesta (json) y error.
+  - respuesta (json) y error;
+  - `codigo_verificacion` (24 caracteres, único): QR y descarga de la constancia (`2026_11_04_100002`).
 - **`comparendos_transito`** guarda cada comparendo de un sujeto:
   - número, fecha, código, infracción, valor, estado (`pendiente`, `acuerdo`, `pagada` u `otro`), tipo, organismo y placa;
   - `primera_vez_at`, `ultima_vez_at` y `ya_no_aparece_at`;

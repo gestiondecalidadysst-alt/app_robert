@@ -34,6 +34,17 @@
    - Gerencia: solo ver.
 8. Los campos anteriores del conductor (`comparendos_estado`, `comparendos_cantidad`, `comparendos_consultado_el`) se actualizan con cada consulta de comparendos.
 
+## Resultado y constancia
+- En **Historial de consultas** cada consulta que respondió tiene dos acciones: **Ver resultado** y **Constancia** (PDF).
+- La notificación que sale al consultar trae el botón **Descargar constancia**. En la pestaña de comparendos también está **Constancia de la última consulta**.
+- **La constancia** (`Support\Pdf\PdfConsultaTransito`, vista `pdf/constancia-transito`) se arma con la respuesta guardada, de modo que refleja el momento de la consulta. Lleva:
+  - quién fue consultado;
+  - el resultado: «No registra comparendos ni multas pendientes de pago», o la lista completa con número, fecha, tipo, infracción, organismo, placa, estado y valor, más la deuda total. Para la licencia lleva las categorías; para el RUNT, el SOAT y la revisión técnico-mecánica;
+  - un QR de verificación (`/verificar/consulta-transito/{codigo}`, que no muestra el documento completo);
+  - una nota que aclara que **no reemplaza el certificado oficial del SIMIT o del RUNT**.
+- **Archivo:** se llama `paz-y-salvo-…pdf` cuando no hay nada pendiente, y `comparendos-…pdf` cuando lo hay.
+- Las consultas con error no tienen constancia.
+
 ## Código
 - `App\Enums\TipoConsultaTransito`.
 - Modelos: `ProveedorTransito` (una fila), `ConsultaTransito` y `ComparendoTransito`.

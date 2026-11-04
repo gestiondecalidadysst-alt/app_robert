@@ -18,8 +18,17 @@ class ConsultaTransito extends Model
 
     protected $fillable = [
         'empresa_id', 'tipo', 'consultable_type', 'consultable_id', 'referencia', 'origen', 'user_id', 'estado',
-        'creditos', 'cobrada', 'precio', 'costo', 'desde_cache', 'duracion_ms', 'respuesta', 'error',
+        'creditos', 'cobrada', 'precio', 'costo', 'desde_cache', 'duracion_ms', 'respuesta', 'error', 'codigo_verificacion',
     ];
+
+    protected $hidden = ['respuesta'];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $c): void {
+            $c->codigo_verificacion ??= \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(24));
+        });
+    }
 
     protected function casts(): array
     {
@@ -41,7 +50,7 @@ class ConsultaTransito extends Model
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withoutGlobalScopes();
     }
 
     public function empresa(): BelongsTo
@@ -67,6 +76,54 @@ class ConsultaTransito extends Model
             'ok' => 'Con datos',
             'sin_datos' => 'Sin registros',
             default => 'Error',
+        };
+    }
+
+    /** Tiene constancia: la consulta respondió (con datos o sin registros). */
+    public function tieneConstancia(): bool
+    {
+        return in_array($this->estado, ['ok', 'sin_datos'], true);
+    }
+
+    public function urlVerificacion(): string
+    {
+        return route('consulta-transito.verificar', ['codigo' => $this->codigo_verificacion]);
+    }
+
+    public function urlPdf(): string
+    {
+        return route('consulta-transito.pdf', ['codigo' => $this->codigo_verificacion]);
+    }
+
+    /**
+     * Resultado de la consulta tal como se guardó, listo para mostrar:
+     * comparendos (lista, pendientes, deuda), licencia (categorías) o RUNT (SOAT y RTM).
+     */
+    public function detalle(): array
+    {
+        $json = $this->respuesta ?? [];
+        $sinDatos = $this->estado === 'sin_datos';
+
+        return match ($this->tipo) {
+            TipoConsultaTransito::ConductorComparendos, TipoConsultaTransito::VehiculoMultas => (function () use ($json, $sinDatos) {
+                $d = $sinDatos ? ['comparendos' => [], 'deuda' => 0.0] : \App\Services\Transito\Interpretar::comparendos($json);
+                $lista = collect($d['comparendos']);
+                $pendientes = $lista->whereIn('estado', ['pendiente', 'acuerdo']);
+
+                return [
+                    'clase' => 'comparendos',
+                    'comparendos' => $lista->sortByDesc('fecha')->values()->all(),
+                    'pendientes' => $pendientes->count(),
+                    'deuda' => (float) $d['deuda'],
+                    'paz_y_salvo' => $pendientes->isEmpty() && (float) $d['deuda'] <= 0,
+                ];
+            })(),
+            TipoConsultaTransito::ConductorLicencia => ['clase' => 'licencia'] + ($sinDatos
+                ? ['estado' => null, 'suspendida' => false, 'categorias' => [], 'tiene_multas' => null, 'sin_licencia' => true]
+                : \App\Services\Transito\Interpretar::licencia($json) + ['sin_licencia' => false]),
+            TipoConsultaTransito::VehiculoRunt => ['clase' => 'runt'] + ($sinDatos
+                ? ['soat_vence' => null, 'soat_estado' => null, 'rtm_vence' => null, 'rtm_vigente' => null, 'estado_vehiculo' => null, 'sin_registro' => true]
+                : \App\Services\Transito\Interpretar::runt($json) + ['sin_registro' => false]),
         };
     }
 }
