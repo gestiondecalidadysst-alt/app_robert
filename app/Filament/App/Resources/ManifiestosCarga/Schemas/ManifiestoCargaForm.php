@@ -69,6 +69,22 @@ final class ManifiestoCargaForm
                 \Filament\Forms\Components\Textarea::make('via_utilizar')->label('Vía a utilizar (opcional)')->rows(2)->maxLength(300)
                     ->placeholder('Describa la ruta, por ejemplo: «Se cambia paso por Calarcá, Pereira, Cartago».')
                     ->columnSpanFull(),
+                \Filament\Forms\Components\Repeater::make('trayectos_vacio')
+                    ->label('Trayectos en vacío (opcional)')
+                    ->helperText('Tramos que el vehículo recorre sin carga. El formato del Ministerio admite hasta dos.')
+                    ->maxItems(2)
+                    ->defaultItems(0)
+                    ->addActionLabel('Agregar trayecto en vacío')
+                    ->columnSpanFull()
+                    ->columns(['default' => 1, 'md' => 2])
+                    ->schema([
+                        Select::make('origen_id')->label('Origen del trayecto')->searchable()
+                            ->getSearchResultsUsing(fn (string $search) => self::municipios($search))
+                            ->getOptionLabelUsing(fn ($value) => Municipio::find($value)?->nombre_completo),
+                        Select::make('destino_id')->label('Destino del trayecto')->searchable()
+                            ->getSearchResultsUsing(fn (string $search) => self::municipios($search))
+                            ->getOptionLabelUsing(fn ($value) => Municipio::find($value)?->nombre_completo),
+                    ]),
                 Textarea::make('observaciones')->label('Observaciones (opcional)')->rows(2)->maxLength(200)->columnSpanFull()
                     ->placeholder('Teléfonos de emergencia o condiciones especiales del viaje.'),
             ]);

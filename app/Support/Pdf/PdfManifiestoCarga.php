@@ -31,7 +31,9 @@ final class PdfManifiestoCarga
             'm' => $manifiesto,
             'empresa' => $empresa,
             'titular' => $manifiesto->titular(),
-            'logo' => Imagenes::deDisco($empresa->logo_path, 'public'),
+            'logoMinisterio' => self::oficial('ministerio-transporte.png'),
+            'logoSuper' => self::oficial('supertransporte.png'),
+            'logoEmpresa' => Imagenes::deDisco($empresa->logo_path, 'public'),
             'qr' => Imagenes::qr($manifiesto->urlVerificacion(), 4),
             'soat' => $soat,
             'retefuente' => $manifiesto->retefuente(),
@@ -43,6 +45,14 @@ final class PdfManifiestoCarga
 
         return Pdf::loadHTML($html)->setPaper('letter', 'landscape')
             ->setOption(['isFontSubsettingEnabled' => true, 'isRemoteEnabled' => false])->output();
+    }
+
+    /** Logo oficial puesto por el superadministrador en resources/images (null si aún no está). */
+    private static function oficial(string $archivo): ?string
+    {
+        $ruta = resource_path('images/' . $archivo);
+
+        return is_file($ruta) ? Imagenes::deArchivo($ruta) : null;
     }
 
     public static function nombre(ManifiestoCarga $m): string

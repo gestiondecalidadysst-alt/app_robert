@@ -67,10 +67,16 @@
 <table class="b">
     <tr>
         <td class="p4" style="width: 14%; text-align: center; border-right: 0.6px solid #000;">
-            @if ($logo)<img src="{{ $logo }}" style="max-height: 38px; max-width: 110px">@endif
-            <div style="font-weight: bold; font-size: 8px; margin-top: 2px">MINISTERIO DE</div>
-            <div style="font-weight: bold; font-size: 8px">TRANSPORTE</div>
-            <div class="et" style="margin-top: 2px">SuperTransporte</div>
+            @if ($logoMinisterio)
+                <img src="{{ $logoMinisterio }}" style="max-height: 42px; max-width: 120px">
+            @else
+                <div style="font-weight: bold; font-size: 8.5px; line-height: 1.15">MINISTERIO DE<br>TRANSPORTE</div>
+            @endif
+            @if ($logoSuper)
+                <img src="{{ $logoSuper }}" style="max-height: 24px; max-width: 110px; margin-top: 3px">
+            @else
+                <div class="et" style="margin-top: 3px">SuperTransporte</div>
+            @endif
         </td>
         <td class="p4" style="width: 44%; border-right: 0.6px solid #000;">
             <div class="tit">MANIFIESTO ELECTRÓNICO DE CARGA</div>
@@ -239,7 +245,9 @@
             <td class="p3 bt cent">{{ \App\Models\RemesaCarga::DUENOS_POLIZA[$r->dueno_poliza] ?? '' }}</td>
         </tr>
     @empty
-        <tr><td colspan="9" class="p3 bt cent et">Sin remesas asociadas.</td></tr>
+        <tr><td colspan="9" class="p3 bt cent" style="background: #fef2f2; color: #7f1d1d; font-weight: bold; padding: 8px">
+            ESTE MANIFIESTO NO TIENE REMESAS ASOCIADAS. Edítelo y asócielas en el paso «Remesas» antes de expedirlo.
+        </td></tr>
     @endforelse
 </table>
 
@@ -311,10 +319,18 @@
     </tr>
 </table>
 
-<div class="legal" style="margin-top: 4px">
-    Si se informa de algún fraude o conoce de alguna irregularidad en el Registro Nacional de Despachos de Carga (RNDC),
+<table style="margin-top: 4px">
+    <tr>
+        <td style="width: 62%" class="legal">
+            Si se informa de algún fraude o conoce de alguna irregularidad en el Registro Nacional de Despachos de Carga (RNDC),
     denúncielo a la Superintendencia de Puertos y Transporte, en la línea gratuita nacional 018000 915615 o a través
-    del correo electrónico: atencionciudadano@supertransporte.gov.co.
-</div>
+            del correo electrónico: atencionciudadano@supertransporte.gov.co.
+        </td>
+        <td style="width: 38%; text-align: right; vertical-align: bottom">
+            @if ($logoEmpresa)<img src="{{ $logoEmpresa }}" style="max-height: 22px; max-width: 80px; vertical-align: middle">@endif
+            <span class="et" style="margin-left: 4px">Expedido por {{ $empresa->razon_social }} · NIT {{ $empresa->nit }}{{ $empresa->dv !== null ? '-' . $empresa->dv : '' }}</span>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
