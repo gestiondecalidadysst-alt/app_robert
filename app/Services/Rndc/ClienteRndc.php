@@ -66,12 +66,15 @@ final class ClienteRndc
                 ->withBody(mb_convert_encoding($sobre, 'ISO-8859-1', 'UTF-8'), 'text/xml; charset=ISO-8859-1')
                 ->post($url);
         } catch (ConnectionException $e) {
-            return new RespuestaRndc(null, [['codigo' => null, 'mensaje' => 'No hubo conexión con el RNDC: '.$e->getMessage()]], '', self::ms($inicio));
+            return new RespuestaRndc(null, [['codigo' => null, 'mensaje' => 'No hubo conexión con el RNDC: '.$e->getMessage()]], '', self::ms($inicio), indisponible: true);
         }
 
         $cuerpo = mb_convert_encoding((string) $respuesta->body(), 'UTF-8', 'ISO-8859-1, UTF-8');
         if (! $respuesta->successful()) {
-            return new RespuestaRndc(null, [['codigo' => null, 'mensaje' => "El RNDC respondió {$respuesta->status()}."]], $cuerpo, self::ms($inicio));
+            // 5xx y 408 son caída del servicio; un 4xx distinto suele ser la petición.
+            $caido = $respuesta->serverError() || $respuesta->status() === 408 || $respuesta->status() === 429;
+
+            return new RespuestaRndc(null, [['codigo' => null, 'mensaje' => "El RNDC respondió {$respuesta->status()}."]], $cuerpo, self::ms($inicio), indisponible: $caido);
         }
 
         // La respuesta SOAP trae el XML del RNDC dentro de <return> (escapado).

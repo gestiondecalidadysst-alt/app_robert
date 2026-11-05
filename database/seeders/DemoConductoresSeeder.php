@@ -54,7 +54,7 @@ class DemoConductoresSeeder extends Seeder
                 'nombres' => $nombres,
                 'apellidos' => $apellidos,
                 'fecha_nacimiento' => now()->subYears(30 + $i * 4)->toDateString(),
-                'telefono' => '310000000' . $i,
+                'telefono' => '310000000'.$i,
                 'municipio_id' => $monteria,
                 'grupo_sanguineo' => 'O+',
                 'eps_id' => $eps,

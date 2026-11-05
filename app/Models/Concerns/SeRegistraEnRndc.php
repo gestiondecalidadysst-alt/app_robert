@@ -19,13 +19,17 @@ trait SeRegistraEnRndc
         return $this->morphOne(RegistroRndc::class, 'registrable')->latestOfMany();
     }
 
-    /** registrado | error | pendiente (nunca enviado o cambió después del último registro) */
+    /** registrado | contingencia | error | desactualizado | pendiente */
     public function estadoRndc(): string
     {
         $ultimo = $this->relationLoaded('ultimoRegistroRndc') ? $this->ultimoRegistroRndc : $this->ultimoRegistroRndc()->first();
         if (! $ultimo) {
             return 'pendiente';
         }
+        if ($ultimo->estado === 'contingencia') {
+            return 'contingencia';
+        }
+
         if ($ultimo->estado === 'error') {
             return 'error';
         }
@@ -35,11 +39,13 @@ trait SeRegistraEnRndc
 
     public static function etiquetaEstadoRndc(string $estado): string
     {
-        return ['pendiente' => 'Sin registrar', 'registrado' => 'Registrado', 'error' => 'Con errores', 'desactualizado' => 'Cambió: volver a registrar'][$estado] ?? $estado;
+        return ['pendiente' => 'Sin registrar', 'registrado' => 'Registrado', 'error' => 'Con errores',
+            'contingencia' => 'En espera: el RNDC no respondió', 'desactualizado' => 'Cambió: volver a registrar'][$estado] ?? $estado;
     }
 
     public static function colorEstadoRndc(string $estado): string
     {
-        return ['pendiente' => 'gray', 'registrado' => 'success', 'error' => 'danger', 'desactualizado' => 'warning'][$estado] ?? 'gray';
+        return ['pendiente' => 'gray', 'registrado' => 'success', 'error' => 'danger',
+            'contingencia' => 'info', 'desactualizado' => 'warning'][$estado] ?? 'gray';
     }
 }

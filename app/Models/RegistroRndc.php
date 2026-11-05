@@ -16,12 +16,12 @@ class RegistroRndc extends Model
 
     protected $fillable = [
         'empresa_id', 'registrable_type', 'registrable_id', 'proceso', 'estado', 'ingresoid', 'ambiente',
-        'variables', 'respuesta', 'errores', 'user_id', 'duracion_ms',
+        'variables', 'respuesta', 'errores', 'user_id', 'duracion_ms', 'intentos', 'reintentar_a',
     ];
 
     protected function casts(): array
     {
-        return ['variables' => 'array', 'errores' => 'array', 'proceso' => 'integer'];
+        return ['variables' => 'array', 'errores' => 'array', 'proceso' => 'integer', 'intentos' => 'integer', 'reintentar_a' => 'datetime'];
     }
 
     public function registrable(): MorphTo
@@ -34,8 +34,19 @@ class RegistroRndc extends Model
         return $this->belongsTo(User::class, 'user_id')->withoutGlobalScopes();
     }
 
+    /** Envíos en espera porque el RNDC estaba caído. */
+    public function scopeEnContingencia($query)
+    {
+        return $query->where('estado', 'contingencia');
+    }
+
     public function etiquetaEstado(): string
     {
-        return ['registrado' => 'Registrado', 'manual' => 'Registrado en la web', 'error' => 'Con errores'][$this->estado] ?? $this->estado;
+        return [
+            'registrado' => 'Registrado',
+            'manual' => 'Registrado en la web',
+            'error' => 'Con errores',
+            'contingencia' => 'En contingencia (el RNDC no respondió)',
+        ][$this->estado] ?? $this->estado;
     }
 }

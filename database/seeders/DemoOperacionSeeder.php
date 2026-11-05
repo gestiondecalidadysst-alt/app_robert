@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Contratos\EmitirDocumentoContrato;
+use App\Actions\Contratos\GuardarPlantillaContrato;
 use App\Actions\Operacion\CrearContrato;
 use App\Actions\Operacion\ExpedirFuec;
+use App\Actions\Operacion\PlanificarServicio;
 use App\Actions\Operacion\RegistrarPago;
 use App\Enums\FormaPago;
 use App\Enums\MetodoPago;
@@ -13,9 +16,12 @@ use App\Models\Conductor;
 use App\Models\Contrato;
 use App\Models\Empresa;
 use App\Models\Municipio;
+use App\Models\PlantillaContrato;
+use App\Models\Ruta;
 use App\Models\TipoIdentificacion;
 use App\Models\Vehiculo;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Clientes, contratos, pagos y un FUEC de demostración para la empresa demo.
@@ -91,7 +97,7 @@ class DemoOperacionSeeder extends Seeder
         app(RegistrarPago::class)($empresarial, ['fecha' => today()->toDateString(), 'valor' => 4500000, 'metodo' => MetodoPago::Efectivo]);
 
         // Rutograma de demostración (datos ficticios): el planeador lo asigna a los servicios Montería ↔ Cereté.
-        $ruta = new \App\Models\Ruta([
+        $ruta = new Ruta([
             'nombre' => 'Montería – Cereté (vía principal)',
             'origen_municipio_id' => $monteria,
             'destino_municipio_id' => $cerete,
@@ -136,7 +142,7 @@ class DemoOperacionSeeder extends Seeder
             }
 
             // Servicio planificado sin extracto todavía (para generar el extracto desde el planeador).
-            app(\App\Actions\Operacion\PlanificarServicio::class)->guardar($empresa, [
+            app(PlanificarServicio::class)->guardar($empresa, [
                 'contrato_id' => $escolar->id,
                 'fecha_inicio' => today()->addDays(2)->toDateString(),
                 'hora_salida' => '16:00',
@@ -149,9 +155,9 @@ class DemoOperacionSeeder extends Seeder
         }
 
         // Plantilla con el código del formato y el contrato empresarial emitido (listo para enviar a firma).
-        $base = \App\Models\PlantillaContrato::query()->deEmpresa($empresa)->orderByDesc('version')->first();
+        $base = PlantillaContrato::query()->deEmpresa($empresa)->orderByDesc('version')->first();
         if ($base && ! $base->codigo_formato) {
-            app(\App\Actions\Contratos\GuardarPlantillaContrato::class)($empresa, [
+            app(GuardarPlantillaContrato::class)($empresa, [
                 'version' => 2,
                 'codigo_formato' => 'GPS-PR01-FT03',
                 'titulo' => $base->titulo,
@@ -160,7 +166,7 @@ class DemoOperacionSeeder extends Seeder
             ]);
         }
 
-        app(\App\Actions\Contratos\EmitirDocumentoContrato::class)($empresarial->refresh());
+        app(EmitirDocumentoContrato::class)($empresarial->refresh());
     }
 
     /** Firma ficticia del representante (garabato) para la empresa demo. */
@@ -171,7 +177,8 @@ class DemoOperacionSeeder extends Seeder
         imagefill($img, 0, 0, imagecolorallocatealpha($img, 255, 255, 255, 127));
         $tinta = imagecolorallocate($img, 20, 30, 70);
         imagesetthickness($img, 3);
-        $x = 20; $y = 90;
+        $x = 20;
+        $y = 90;
         foreach ([[60, 40], [90, 100], [130, 30], [170, 95], [210, 50], [250, 85], [300, 45], [360, 70], [400, 60]] as [$nx, $ny]) {
             imageline($img, $x, $y, $nx, $ny, $tinta);
             [$x, $y] = [$nx, $ny];
@@ -183,7 +190,7 @@ class DemoOperacionSeeder extends Seeder
         imagedestroy($img);
 
         $ruta = "firmas-representante/{$empresaId}/firma-demo.png";
-        \Illuminate\Support\Facades\Storage::disk('local')->put($ruta, $png);
+        Storage::disk('local')->put($ruta, $png);
 
         return $ruta;
     }

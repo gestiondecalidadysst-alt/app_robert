@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Empresa;
+use App\Support\Mantenimiento\RutinasBase;
 use App\Support\Pesv\ItemsBase;
 use Illuminate\Database\Seeder;
 
@@ -16,7 +17,7 @@ class ItemsChequeoSeeder extends Seeder
     {
         Empresa::query()->each(function (Empresa $empresa): void {
             ItemsBase::crear($empresa);
-            \App\Support\Mantenimiento\RutinasBase::crear($empresa);
+            RutinasBase::crear($empresa);
         });
     }
 }

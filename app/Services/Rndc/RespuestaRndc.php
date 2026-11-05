@@ -11,7 +11,15 @@ final class RespuestaRndc
         public readonly array $errores,
         public readonly string $crudo,
         public readonly int $duracionMs = 0,
+        /** El RNDC no respondió (caído, sin red o error del servidor): toca reintentar, no corregir. */
+        public readonly bool $indisponible = false,
     ) {}
+
+    /** Error del servicio, no de los datos: se reintenta solo. */
+    public function reintentable(): bool
+    {
+        return $this->indisponible;
+    }
 
     public function ok(): bool
     {

@@ -2,11 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Mantenimiento\GestionarPlanAccion;
+use App\Actions\Mantenimiento\RegistrarMantenimiento;
 use App\Actions\Pesv\RegistrarInspeccion;
 use App\Enums\TipoInspeccion;
 use App\Models\Conductor;
 use App\Models\Empresa;
 use App\Models\ItemChequeo;
+use App\Models\PlanAccion;
 use App\Models\User;
 use App\Models\Vehiculo;
 use App\Support\Pesv\ItemsBase;
@@ -75,8 +78,8 @@ class DemoPesvSeeder extends Seeder
 
             // La falla crítica abrió un plan de acción: el propietario la corrige y la empresa lo cierra.
             if (! $inspeccion->apta()) {
-                $plan = \App\Models\PlanAccion::query()->deEmpresa($empresa)->where('vehiculo_id', $vehiculo->id)->pendientes()->first();
-                app(\App\Actions\Mantenimiento\RegistrarMantenimiento::class)($empresa, $vehiculo, [
+                $plan = PlanAccion::query()->deEmpresa($empresa)->where('vehiculo_id', $vehiculo->id)->pendientes()->first();
+                app(RegistrarMantenimiento::class)($empresa, $vehiculo, [
                     'fecha' => today()->subDays($diasAtras)->toDateString(),
                     'kilometraje' => 125000 + $i * 180 + 20,
                     'tipo' => 'correctivo',
@@ -87,7 +90,7 @@ class DemoPesvSeeder extends Seeder
                     'plan_accion_id' => $plan?->id,
                 ], usuario: User::firstWhere('email', 'admin@demo.test'));
                 if ($plan) {
-                    \App\Actions\Mantenimiento\GestionarPlanAccion::cerrar($plan->refresh(), 'Verificado en patio.', User::firstWhere('email', 'admin@demo.test'));
+                    GestionarPlanAccion::cerrar($plan->refresh(), 'Verificado en patio.', User::firstWhere('email', 'admin@demo.test'));
                 }
             }
         }
@@ -106,7 +109,8 @@ class DemoPesvSeeder extends Seeder
         imagefill($img, 0, 0, imagecolorallocatealpha($img, 255, 255, 255, 127));
         $tinta = imagecolorallocate($img, 15, 23, 42);
         imagesetthickness($img, 3);
-        $x = 25; $y = 70;
+        $x = 25;
+        $y = 70;
         foreach ([[55, 110], [85, 30], [115, 100], [150, 40], [185, 95], [230, 55], [270, 90], [320, 40], [390, 75]] as [$nx, $ny]) {
             imageline($img, $x, $y, $nx, $ny, $tinta);
             [$x, $y] = [$nx, $ny];

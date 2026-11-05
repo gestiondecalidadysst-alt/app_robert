@@ -24,3 +24,6 @@ Artisan::command('inspire', function () {
 // Consultas automáticas de tránsito (solo empresas que las activaron), a las 5:20 a. m.
 \Illuminate\Support\Facades\Schedule::command('ruta:consultas-transito')->dailyAt('05:20')->withoutOverlapping()->onOneServer();
 
+
+// Contingencia del RNDC: reencola lo que quedó esperando si la cola se perdió.
+\Illuminate\Support\Facades\Schedule::command('ruta:rndc-contingencia')->everyTenMinutes()->withoutOverlapping()->onOneServer();

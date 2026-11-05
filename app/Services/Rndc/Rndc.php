@@ -2,6 +2,7 @@
 
 namespace App\Services\Rndc;
 
+use App\Jobs\ReintentarEnvioRndc;
 use App\Models\Conductor;
 use App\Models\Empresa;
 use App\Models\Propietario;
@@ -62,12 +63,25 @@ final class Rndc
         $variables = $registro->variablesRndc($empresa);
         $respuesta = ($cliente ?? new ClienteRndc($empresa))->enviar(1, $registro->procesoRndc(), $variables);
 
-        return RegistroRndc::query()->create([
+        return self::guardar($empresa, $registro, $registro->procesoRndc(), $variables, $respuesta, $usuario);
+    }
+
+    /**
+     * Guarda el envío y, si el RNDC estaba caído, lo deja en contingencia y programa el reintento.
+     * Una caída no es lo mismo que un rechazo de datos: la primera se reintenta sola.
+     */
+    private static function guardar(Empresa $empresa, Model $documento, int $proceso, array $variables, RespuestaRndc $respuesta, ?User $usuario): RegistroRndc
+    {
+        $contingencia = $respuesta->reintentable();
+
+        $registroRndc = RegistroRndc::query()->create([
             'empresa_id' => $empresa->id,
-            'registrable_type' => $registro->getMorphClass(),
-            'registrable_id' => $registro->getKey(),
-            'proceso' => $registro->procesoRndc(),
-            'estado' => $respuesta->ok() ? 'registrado' : 'error',
+            'registrable_type' => $documento->getMorphClass(),
+            'registrable_id' => $documento->getKey(),
+            'proceso' => $proceso,
+            'estado' => match (true) {
+                $respuesta->ok() => 'registrado', $contingencia => 'contingencia', default => 'error'
+            },
             'ingresoid' => $respuesta->ingresoid,
             'ambiente' => $empresa->rndc_ambiente,
             'variables' => $variables,
@@ -75,7 +89,12 @@ final class Rndc
             'errores' => $respuesta->errores ?: null,
             'user_id' => $usuario?->id ?? auth()->id(),
             'duracion_ms' => $respuesta->duracionMs,
+            'reintentar_a' => $contingencia ? now()->addMinutes(ReintentarEnvioRndc::ESPERAS[0]) : null,
         ]);
+
+        // No se encola aquí: la tarea `ruta:rndc-contingencia` recoge cada diez minutos
+        // lo que ya cumplió su hora. Un solo mecanismo, y sobrevive al reinicio del worker.
+        return $registroRndc;
     }
 
     /** Registro hecho en la web del RNDC: se anota el número de radicado. */
@@ -121,20 +140,7 @@ final class Rndc
         $variables = $documento->variablesAnulacionRndc($empresa, $datos);
         $respuesta = ($cliente ?? new ClienteRndc($empresa))->enviar(1, $proceso, $variables);
 
-        return RegistroRndc::query()->create([
-            'empresa_id' => $empresa->id,
-            'registrable_type' => $documento->getMorphClass(),
-            'registrable_id' => $documento->getKey(),
-            'proceso' => $proceso,
-            'estado' => $respuesta->ok() ? 'registrado' : 'error',
-            'ingresoid' => $respuesta->ingresoid,
-            'ambiente' => $empresa->rndc_ambiente,
-            'variables' => $variables,
-            'respuesta' => mb_substr($respuesta->crudo, 0, 5000),
-            'errores' => $respuesta->errores ?: null,
-            'user_id' => $usuario?->id ?? auth()->id(),
-            'duracion_ms' => $respuesta->duracionMs,
-        ]);
+        return self::guardar($empresa, $documento, $proceso, $variables, $respuesta, $usuario);
     }
 
     /** XML que se enviaría (sin la clave), para revisar o cargar en la herramienta de pruebas del RNDC. */

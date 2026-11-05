@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Aseguradora;
 use App\Models\Arl;
+use App\Models\Aseguradora;
 use App\Models\Carroceria;
 use App\Models\CategoriaLicencia;
 use App\Models\ClaseVehiculo;
