@@ -58,6 +58,8 @@ final class Permisos
         'terceros_carga' => ['Terceros de carga (remitentes y destinatarios)', 'Carga', ['ver', 'crear', 'editar', 'eliminar']],
         'remolques' => ['Remolques y semirremolques', 'Carga', ['ver', 'crear', 'editar', 'eliminar']],
         'rndc' => ['Registro en el RNDC', 'Carga', ['ver', 'crear']],
+        'remesas_carga' => ['Remesas terrestres de carga', 'Carga', ['ver', 'crear', 'editar', 'anular']],
+        'manifiestos_carga' => ['Manifiestos electrónicos de carga', 'Carga', ['ver', 'crear', 'editar', 'anular']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
@@ -127,6 +129,8 @@ final class Permisos
                 'ver_programas_mantenimiento',
                 'ver_terceros_carga', 'crear_terceros_carga', 'editar_terceros_carga',
                 'ver_remolques', 'crear_remolques', 'editar_remolques', 'ver_rndc', 'crear_rndc',
+                'ver_remesas_carga', 'crear_remesas_carga', 'editar_remesas_carga', 'anular_remesas_carga',
+                'ver_manifiestos_carga', 'crear_manifiestos_carga', 'editar_manifiestos_carga', 'anular_manifiestos_carga',
             ],
             Rol::MANTENIMIENTO => [
                 'ver_vehiculos', 'ver_documentos_vehiculo', 'ver_novedades_vehiculo',

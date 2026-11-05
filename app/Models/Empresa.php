@@ -247,6 +247,16 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         return $this->hasMany(RegistroRndc::class);
     }
 
+    public function remesasCarga(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RemesaCarga::class);
+    }
+
+    public function manifiestosCarga(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ManifiestoCarga::class);
+    }
+
     public function tieneModulo(\App\Enums\ModuloEmpresa $modulo): bool
     {
         return in_array($modulo->value, $this->modulos ?? \App\Enums\ModuloEmpresa::porDefecto(), true);

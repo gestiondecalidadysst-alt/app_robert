@@ -41,6 +41,8 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
         'terceros_carga' => 'carga',
         'remolques' => 'carga',
         'rndc' => 'carga',
+        'remesas_carga' => 'carga',
+        'manifiestos_carga' => 'carga',
     ];
 
     public function getLabel(): string

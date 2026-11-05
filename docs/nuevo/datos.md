@@ -228,3 +228,7 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 - **`vehiculos` (nuevas columnas):** `rndc_configuracion`, `numero_ejes`, `rndc_marca`, `rndc_linea`, `rndc_color`, `rndc_carroceria`, `rndc_combustible`, `peso_vacio`, `unidad_capacidad`, `ano_repotenciacion`, `soat_nit_aseguradora`, `tenedor_id`.
 - **`registros_rndc`:** registrable (morph), proceso, estado (`registrado`, `manual` o `error`), `ingresoid`, ambiente, variables, respuesta, errores, usuario y duración.
 - **`empresas` (nuevas columnas):** `rndc_usuario` y `rndc_clave` (cifrados), `rndc_ambiente`, `rndc_conectado`, `carga_rol`, `carga_cobro_modo`, `carga_cobro_valor`.
+
+## Módulo de carga, fase 2 (`2026_11_05_200001_create_remesas_manifiestos.php`)
+- **`remesas_carga`:** consecutivo (único por empresa), fecha, operación, naturaleza, producto (código y descripción), cantidad y unidad, peso contenedor vacío; remitente y destinatario (terceros); póliza (tomador, número, vencimiento, aseguradora); horas y minutos pactados y reales de cargue; manifiesto asociado; código de verificación; anulación con motivo.
+- **`manifiestos_carga`:** consecutivo (único por empresa), tipo, fecha de expedición, origen y destino (municipios); vehículo, remolque y conductor; titular (propietario o tercero); valor del flete, SICE-TAC mínimo, retención fuente %, reteica x1000, anticipo; responsable de cargue y descargue; municipio y fecha de pago del saldo; observaciones; código de verificación; anulación con motivo del RNDC (D o S).

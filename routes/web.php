@@ -38,6 +38,12 @@ Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(f
     Route::get('/verificar/recibo/{codigo}/pdf', [\App\Http\Controllers\VerificarReciboController::class, 'pdf'])->name('recibo.pdf');
 });
 
+// Verificación pública y descarga del PDF de un manifiesto electrónico de carga (QR).
+Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(function () {
+    Route::get('/verificar/manifiesto/{codigo}', [\App\Http\Controllers\VerificarManifiestoController::class, 'mostrar'])->name('manifiesto.verificar');
+    Route::get('/verificar/manifiesto/{codigo}/pdf', [\App\Http\Controllers\VerificarManifiestoController::class, 'pdf'])->name('manifiesto.pdf');
+});
+
 // Verificación pública y descarga de la constancia de una consulta de tránsito (QR de la constancia).
 Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(function () {
     Route::get('/verificar/consulta-transito/{codigo}', [\App\Http\Controllers\VerificarConsultaTransitoController::class, 'mostrar'])->name('consulta-transito.verificar');

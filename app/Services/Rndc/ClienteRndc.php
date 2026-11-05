@@ -21,7 +21,21 @@ final class ClienteRndc
             . '<username>' . self::e($usuario) . "</username>\n<password>" . self::e($clave) . "</password>\n</acceso>\n"
             . "<solicitud>\n<tipo>{$tipo}</tipo>\n<procesoid>{$proceso}</procesoid>\n</solicitud>\n<variables>\n";
         foreach ($variables as $k => $v) {
-            $x .= "<{$k}>" . self::e((string) $v) . "</{$k}>\n";
+            // Grupo anidado (REMESASMAN, PREREMESAS): ['@procesoid' => 43, 'items' => [['tag' => 'REMESA', 'vars' => [...]], ...]]
+            if (is_array($v) && isset($v['items'])) {
+                $attr = isset($v['@procesoid']) ? ' procesoid="' . (int) $v['@procesoid'] . '"' : '';
+                $x .= "<{$k}{$attr}>\n";
+                foreach ($v['items'] as $item) {
+                    $x .= "<{$item['tag']}>\n";
+                    foreach ($item['vars'] as $ik => $iv) {
+                        $x .= "<{$ik}>" . self::e((string) $iv) . "</{$ik}>\n";
+                    }
+                    $x .= "</{$item['tag']}>\n";
+                }
+                $x .= "</{$k}>\n";
+            } else {
+                $x .= "<{$k}>" . self::e((string) $v) . "</{$k}>\n";
+            }
         }
         $x .= "</variables>\n";
         if ($documento) {

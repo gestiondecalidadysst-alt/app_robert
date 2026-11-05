@@ -57,8 +57,33 @@ En `/admin`, Empresas → Módulos contratados, al marcar **Carga (RNDC)** se el
 - **Municipio:** código DANE de 5 dígitos + `000`.
 - **Tipos de identificación:** CC→C, NIT→N, PA→P, CE→E, TI→T, NUIP→U. PEP y PPT no los admite el RNDC.
 
+## Fase 2 – Remesa y manifiesto
+**Estado:** construida el 2026-11-05.
+
+**Pantallas:**
+- **Carga → Remesas:** una remesa por envío, con producto, cantidad, póliza, remitente y destinatario, y tiempos pactados y reales de cargue.
+- **Carga → Manifiestos:** encabezado, vehículo y conductor, titular, valores y remesas asociadas. Al guardar enlaza las remesas al manifiesto y suelta las que se quiten.
+
+**Numeración:** consecutivo único por empresa, automático (`RT-000001`, `MC-000001`).
+
+**Validaciones del Manual RNDC v2.3:**
+- Remesa: remitente y destinatario deben estar registrados en el RNDC; municipios distintos (salvo desechos peligrosos [5] o contenedor vacío [V]); si hay póliza, debe traer número, vencimiento y NIT de la aseguradora.
+- Manifiesto: vehículo (de carga), conductor, titular y todas las remesas deben estar registrados antes; anticipo ≤ flete; SICE-TAC (si se consultó): flete ≥ valor mínimo.
+
+**Valores:** se calcula saldo = flete − anticipo − retención fuente − reteica.
+
+**Anulación:** remesa con motivo libre (solo si no está en un manifiesto); manifiesto con motivo del RNDC (D = error en digitación, S = cancelación del servicio). Ninguna anulación se reporta todavía al RNDC (fase 4).
+
+**PDF del manifiesto:** `Support\Pdf\PdfManifiestoCarga`, vista `pdf/manifiesto-carga`, carta. Lleva encabezado de la empresa, QR, estado del RNDC con radicado, datos del viaje, tabla de remesas, valores y observaciones. Sello ANULADO cuando aplica.
+
+**Verificación pública:** `/verificar/manifiesto/{codigo}` (vista + PDF descargable), con límite de 30 por minuto.
+
+**Envío al RNDC:** procesos 3 (remesa) y 4 (manifiesto). El cliente soporta grupos anidados (`REMESASMAN procesoid="43"`) para asociar las remesas al manifiesto.
+
+**Pruebas:** `tests/Feature/Carga/RemesasManifiestosTest.php` (8).
+
 ## Siguientes fases
-2. Remesa y manifiesto (información de carga y de viaje, procesos 1 a 4), con PDF del manifiesto y control frente al SICE-TAC.
+ (información de carga y de viaje, procesos 1 a 4), con PDF del manifiesto y control frente al SICE-TAC.
 3. Cumplidos (procesos 5 y 6) y tiempos logísticos.
 4. Anulaciones (7, 8, 9 y 32), contingencia y tablero.
 
