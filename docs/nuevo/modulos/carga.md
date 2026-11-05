@@ -118,3 +118,20 @@ En `/admin`, Empresas → Módulos contratados, al marcar **Carga (RNDC)** se el
 - PDF: `Support\Pdf\PdfFichaRndc`, vista `pdf/ficha-rndc`.
 - Permisos (módulo `carga`): `terceros_carga`, `remolques` y `rndc` (ver y crear = registrar). Administrador y Auxiliar los tienen.
 - Pruebas: `tests/Feature/Carga/CargaRndcTest.php` (5).
+
+## Asociación de remesas al manifiesto
+La remesa se elige en el paso «Remesas» del asistente. El campo `remesas_ids` no es
+una columna: se aparta en `mutateFormDataBeforeCreate/Save` con el trait
+`Pages\Concerns\AsociaRemesas` (compartido por Crear y Editar) y se aplica en
+`afterSave()` sobre `remesas_carga.manifiesto_id`.
+
+Reglas:
+- Sin remesa el guardado se detiene (`Halt`) con un aviso: un manifiesto sin remesa
+  no es válido ante el RNDC.
+- Al editar, las remesas que se quitan quedan libres (`manifiesto_id = null`) para
+  otro manifiesto.
+- El contador «Remesas» del listado se muestra en rojo cuando es 0.
+
+No usar `dehydrated(false)` + `afterStateHydrated()` para este campo: así viajaba
+antes por el estado crudo de Livewire y el manifiesto podía expedirse sin remesa
+en silencio. Pruebas: `tests/Feature/Carga/ManifiestoRemesasTest.php` (4).
