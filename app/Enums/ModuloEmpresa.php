@@ -44,6 +44,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
         'remesas_carga' => 'carga',
         'manifiestos_carga' => 'carga',
         'cumplidos_carga' => 'carga',
+        'tarifas_sicetac' => 'carga',
     ];
 
     public function getLabel(): string
@@ -64,7 +65,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
             self::SeguridadVial => 'Preoperacionales e inspecciones, ítems de chequeo; preoperacional en el portal del conductor.',
             self::Mantenimiento => 'Planes de acción, mantenimientos, plan preventivo, programa anual y calendario.',
             self::Gerencia => 'Tablero de gerencia, informes en Excel y resumen mensual.',
-            self::Carga => 'Terceros, vehículos de carga y remolques registrados en el RNDC. Próximas fases: remesas, manifiestos y cumplidos.',
+            self::Carga => 'Remesas, manifiestos y cumplidos reportados al RNDC, con anulaciones, contingencia, tiempos logísticos y control del SICE-TAC.',
         };
     }
 

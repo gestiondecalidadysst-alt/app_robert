@@ -260,6 +260,11 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         return $this->hasMany(ManifiestoCarga::class);
     }
 
+    public function tarifasSicetac(): HasMany
+    {
+        return $this->hasMany(TarifaSicetac::class);
+    }
+
     public function cumplidosRemesa(): HasMany
     {
         return $this->hasMany(CumplidoRemesa::class);

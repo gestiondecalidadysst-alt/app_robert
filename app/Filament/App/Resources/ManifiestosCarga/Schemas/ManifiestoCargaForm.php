@@ -10,6 +10,7 @@ use App\Models\RemesaCarga;
 use App\Models\Remolque;
 use App\Models\TerceroCarga;
 use App\Models\Vehiculo;
+use App\Support\Carga\Sicetac;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
@@ -175,8 +176,22 @@ final class ManifiestoCargaForm
             ->schema([
                 TextInput::make('valor_flete')->label('Valor del flete pactado')->required()->numeric()->minValue(1)->prefix('$')->inputMode('numeric'),
                 TextInput::make('anticipo')->label('Anticipo al conductor')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric'),
-                TextInput::make('valor_minimo_sicetac')->label('Valor mínimo SICE-TAC (opcional)')->numeric()->minValue(0)->prefix('$')->inputMode('numeric')
-                    ->helperText('Consúltelo en SICE-TAC. Si se deja vacío, no se valida; si se llena y el flete está por debajo, no deja expedir.'),
+                TextInput::make('valor_minimo_sicetac')->label('Valor mínimo SICE-TAC')->numeric()->minValue(0)->prefix('$')->inputMode('numeric')
+                    // Se busca solo en las tarifas cargadas (Carga → SICE-TAC) por ruta y configuración.
+                    ->afterStateHydrated(function ($component, $state, $get) {
+                        if (filled($state)) {
+                            return;
+                        }
+
+                        $component->state(self::minimoSicetac($get));
+                    })
+                    ->helperText(function ($get) {
+                        $minimo = self::minimoSicetac($get);
+
+                        return $minimo
+                            ? 'Tomado de la tarifa cargada para esta ruta. El flete no puede quedar por debajo.'
+                            : 'No hay tarifa cargada para esta ruta (Carga → SICE-TAC). Si lo deja vacío, lo validará el RNDC al radicar.';
+                    }),
                 Select::make('municipio_pago_id')->label('Municipio donde se paga el saldo')->searchable()->preload(false)
                     ->relationship('municipioPago', 'nombre', fn ($query) => $query->orderBy('nombre'))
                     ->getOptionLabelFromRecordUsing(fn (Municipio $m) => $m->nombre_completo)
@@ -193,6 +208,20 @@ final class ManifiestoCargaForm
                 Select::make('responsable_cargue')->label('Responsable del pago del cargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required()->native(false),
                 Select::make('responsable_descargue')->label('Responsable del pago del descargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required()->native(false),
             ]);
+    }
+
+    /** Costo mínimo del SICE-TAC para la ruta y el vehículo que lleva el formulario. */
+    private static function minimoSicetac($get): ?int
+    {
+        $empresa = Filament::getTenant();
+
+        if (! $empresa) {
+            return null;
+        }
+
+        $vehiculo = $get('vehiculo_id') ? Vehiculo::find($get('vehiculo_id')) : null;
+
+        return Sicetac::minimo((int) $empresa->getKey(), $get('origen_id'), $get('destino_id'), $vehiculo?->rndc_configuracion);
     }
 
     /** @return array<int, string> */

@@ -8,6 +8,7 @@ use App\Services\Rndc\AnulableRndc;
 use App\Services\Rndc\RegistrableRndc;
 use App\Support\Carga\AsociadorDeRemesas;
 use App\Support\Carga\CatalogoRndc as C;
+use App\Support\Carga\Sicetac;
 use Filament\Notifications\Notification;
 use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
@@ -108,6 +109,14 @@ class ManifiestoCarga extends Model implements AnulableRndc, RegistrableRndc
 
     /** Motivos que admite el RNDC para anular un manifiesto. */
     public const MOTIVOS_ANULACION = ['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'];
+
+    /** Mínimo del SICE-TAC que aplica: el guardado o, si no hay, el de la tarifa de la ruta. */
+    public function minimoSicetac(): ?int
+    {
+        return $this->valor_minimo_sicetac
+            ? (int) $this->valor_minimo_sicetac
+            : Sicetac::paraManifiesto($this);
+    }
 
     public function procesoAnulacionRndc(): int
     {
@@ -338,8 +347,10 @@ class ManifiestoCarga extends Model implements AnulableRndc, RegistrableRndc
         if ($this->valor_flete <= 0) {
             $e[] = 'El valor del flete pactado debe ser mayor que cero.';
         }
-        if ($this->valor_minimo_sicetac && $this->valor_flete < (int) $this->valor_minimo_sicetac) {
-            $e[] = 'El flete está por debajo del mínimo del SICE-TAC (Decreto 1017/2025).';
+        // El mínimo sale de la tarifa cargada aunque el campo esté vacío: dejarlo en
+        // blanco no puede servir para saltarse el tope, que el RNDC rechaza igual.
+        if (($minimo = $this->minimoSicetac()) && $this->valor_flete < $minimo) {
+            $e[] = 'El flete está por debajo del mínimo del SICE-TAC ($ '.number_format($minimo, 0, ',', '.').', Decreto 1017/2025).';
         }
         if ($this->anticipo > $this->valor_flete) {
             $e[] = 'El anticipo no puede ser mayor que el valor del flete.';

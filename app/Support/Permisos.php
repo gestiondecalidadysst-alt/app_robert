@@ -61,6 +61,7 @@ final class Permisos
         'remesas_carga' => ['Remesas terrestres de carga', 'Carga', ['ver', 'crear', 'editar', 'anular']],
         'manifiestos_carga' => ['Manifiestos electrónicos de carga', 'Carga', ['ver', 'crear', 'editar', 'anular']],
         'cumplidos_carga' => ['Cumplidos de remesa y manifiesto', 'Carga', ['ver', 'crear', 'editar']],
+        'tarifas_sicetac' => ['Costos mínimos SICE-TAC', 'Carga', ['ver', 'crear', 'editar', 'eliminar']],
     ];
 
     /** Lista plana de todos los nombres de permiso. */
