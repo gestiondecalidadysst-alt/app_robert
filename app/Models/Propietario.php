@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
+use App\Models\Concerns\SeRegistraEnRndc;
 use App\Services\Rndc\RegistrableRndc;
 use App\Services\Rndc\ValidarTercero;
 use App\Support\Carga\CatalogoRndc;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Propietario extends Model implements RegistrableRndc
 {
-    use \App\Models\Concerns\SeRegistraEnRndc, Auditable, PerteneceAEmpresa, SoftDeletes;
+    use Auditable, PerteneceAEmpresa, SeRegistraEnRndc, SoftDeletes;
 
     public const GENEROS = ['F' => 'Femenino', 'M' => 'Masculino', 'O' => 'Otro'];
 

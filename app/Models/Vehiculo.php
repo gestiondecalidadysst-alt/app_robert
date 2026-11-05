@@ -7,6 +7,7 @@ use App\Enums\PrioridadPlan;
 use App\Enums\TipoDocumentoVehiculo;
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
+use App\Models\Concerns\SeRegistraEnRndc;
 use App\Models\Concerns\TieneDocumentosConVencimiento;
 use App\Services\Rndc\RegistrableRndc;
 use App\Services\Rndc\ValidarVehiculo;
@@ -27,7 +28,7 @@ use Illuminate\Support\Str;
  */
 class Vehiculo extends Model implements RegistrableRndc
 {
-    use \App\Models\Concerns\SeRegistraEnRndc, Auditable, PerteneceAEmpresa, SoftDeletes, TieneDocumentosConVencimiento;
+    use Auditable, PerteneceAEmpresa, SeRegistraEnRndc, SoftDeletes, TieneDocumentosConVencimiento;
 
     /** Campos de la ficha técnica (columna JSON ficha_tecnica). */
     public const FICHA_TECNICA = [

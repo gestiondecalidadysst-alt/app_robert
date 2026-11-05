@@ -8,6 +8,7 @@ use App\Enums\EstadoConductor;
 use App\Enums\TipoDocumentoConductor;
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
+use App\Models\Concerns\SeRegistraEnRndc;
 use App\Models\Concerns\TieneDocumentosConVencimiento;
 use App\Services\Rndc\RegistrableRndc;
 use App\Services\Rndc\ValidarTercero;
@@ -29,7 +30,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class Conductor extends Model implements RegistrableRndc
 {
-    use \App\Models\Concerns\SeRegistraEnRndc, Auditable, PerteneceAEmpresa, SoftDeletes, TieneDocumentosConVencimiento;
+    use Auditable, PerteneceAEmpresa, SeRegistraEnRndc, SoftDeletes, TieneDocumentosConVencimiento;
 
     public const GENEROS = ['F' => 'Femenino', 'M' => 'Masculino', 'O' => 'Otro'];
 

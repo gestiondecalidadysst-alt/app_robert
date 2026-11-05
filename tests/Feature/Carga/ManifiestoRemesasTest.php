@@ -260,4 +260,61 @@ class ManifiestoRemesasTest extends ConfiguracionTestCase
             'manifiesto_id' => null,
         ]);
     }
+
+    /**
+     * «Nuevo manifiesto» y «Editar» del listado son acciones MODALES, no las páginas
+     * Crear/Editar: la asociación tiene que funcionar también por ahí.
+     */
+    public function test_el_modal_de_crear_del_listado_asocia_la_remesa(): void
+    {
+        $this->prepararEmpresa();
+        $remesa = $this->remesa('Verduras y hortalizas');
+        [$vehiculo, $conductor, $propietario] = $this->vehiculoListo();
+
+        Livewire::test(ListarManifiestos::class)
+            ->callAction('create', [
+                'tipo' => 'G',
+                'fecha_expedicion' => today()->toDateString(),
+                'origen_id' => Municipio::where('codigo_dane', '76001')->value('id'),
+                'destino_id' => Municipio::where('codigo_dane', '11001')->value('id'),
+                'vehiculo_id' => $vehiculo->id,
+                'conductor_id' => $conductor->id,
+                'titular_propietario_id' => $propietario->id,
+                'remesas_ids' => [$remesa->id],
+                'valor_flete' => 120000,
+                'anticipo' => 0,
+                'retencion_fuente_pct' => 1,
+                'reteica_por_mil' => 0,
+                'retencion_fopat_pct' => 1,
+                'responsable_cargue' => 'E',
+                'responsable_descargue' => 'E',
+            ])
+            ->assertHasNoActionErrors();
+
+        $manifiesto = ManifiestoCarga::query()->latest('id')->first();
+
+        $this->assertNotNull($manifiesto);
+        $this->assertSame([$remesa->id], $manifiesto->remesas()->pluck('id')->all());
+    }
+
+    public function test_el_modal_de_editar_del_listado_asocia_la_remesa(): void
+    {
+        $this->prepararEmpresa();
+        $remesa = $this->remesa('Plátano hartón');
+
+        $this->llenarAsistente(['remesas_ids' => [$remesa->id]])->assertHasNoFormErrors();
+        $manifiesto = ManifiestoCarga::query()->latest('id')->first();
+
+        // Se suelta para reproducir el manifiesto en 0 que veía el usuario.
+        $remesa->update(['manifiesto_id' => null]);
+
+        Livewire::test(ListarManifiestos::class)
+            ->callAction(
+                TestAction::make('edit')->table($manifiesto),
+                ['remesas_ids' => [$remesa->id]],
+            )
+            ->assertHasNoActionErrors();
+
+        $this->assertSame([$remesa->id], $manifiesto->fresh()->remesas()->pluck('id')->all());
+    }
 }

@@ -5,7 +5,10 @@ namespace App\Models;
 use App\Models\Concerns\PerteneceAEmpresa;
 use App\Models\Concerns\SeRegistraEnRndc;
 use App\Services\Rndc\RegistrableRndc;
+use App\Support\Carga\AsociadorDeRemesas;
 use App\Support\Carga\CatalogoRndc as C;
+use Filament\Notifications\Notification;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,7 +35,16 @@ class ManifiestoCarga extends Model implements RegistrableRndc
         'valor_flete', 'valor_minimo_sicetac', 'retencion_fuente_pct', 'reteica_por_mil', 'retencion_fopat_pct',
         'anticipo', 'municipio_pago_id', 'fecha_pago_saldo', 'responsable_cargue', 'responsable_descargue',
         'observaciones', 'codigo_verificacion', 'user_id', 'anulado_at', 'motivo_anulacion',
+        // No es una columna: lo recoge el mutador de abajo y se aplica al guardar.
+        'remesas_ids',
     ];
+
+    /**
+     * Remesas elegidas en el formulario, pendientes de engancharse al guardar.
+     *
+     * @var array<int>|null
+     */
+    protected ?array $remesasElegidas = null;
 
     protected function casts(): array
     {
@@ -52,6 +64,43 @@ class ManifiestoCarga extends Model implements RegistrableRndc
                 $m->numero = ((int) self::query()->where('empresa_id', $m->empresa_id)->max('numero')) + 1;
             }
         });
+
+        // Las remesas se enganchan aquí, en el modelo, y no en una pantalla concreta:
+        // el manifiesto se crea tanto desde la página del asistente como desde el modal
+        // del listado, y antes solo una de las dos rutas hacía la asociación.
+        static::saved(function (self $m): void {
+            if ($m->remesasElegidas === null) {
+                return;
+            }
+
+            $ids = $m->remesasElegidas;
+            $m->remesasElegidas = null;
+
+            $asociadas = AsociadorDeRemesas::aplicar($m, $ids);
+
+            // Red de seguridad: vale más no expedir el manifiesto que expedirlo vacío
+            // ante el RNDC. Se deshace todo y la pantalla explica por qué.
+            if ($ids !== [] && $asociadas === 0) {
+                Notification::make()->danger()
+                    ->title('No se pudo asociar la remesa')
+                    ->body('El manifiesto no se guardó. La remesa puede estar anulada o ir ya en otro manifiesto.')
+                    ->persistent()->send();
+
+                throw (new Halt)->rollBackDatabaseTransaction();
+            }
+        });
+    }
+
+    /** `remesas_ids` no es una columna: se guarda aparte y se aplica en el evento `saved`. */
+    public function setRemesasIdsAttribute(mixed $valor): void
+    {
+        $this->remesasElegidas = array_values(array_filter(array_map('intval', (array) $valor)));
+    }
+
+    /** @return array<int> */
+    public function getRemesasIdsAttribute(): array
+    {
+        return $this->remesasElegidas ?? ($this->exists ? $this->remesas()->pluck('id')->all() : []);
     }
 
     public function origen(): BelongsTo
