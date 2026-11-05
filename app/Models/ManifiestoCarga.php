@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -109,6 +110,53 @@ class ManifiestoCarga extends Model implements AnulableRndc, RegistrableRndc
 
     /** Motivos que admite el RNDC para anular un manifiesto. */
     public const MOTIVOS_ANULACION = ['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'];
+
+    /**
+     * Fecha límite para pagar el saldo: cinco días hábiles desde el cumplido.
+     *
+     * Solo cuenta sábados y domingos; los festivos colombianos no se descuentan,
+     * así que la fecha es la más exigente de las dos. Null mientras no haya cumplido.
+     */
+    public function fechaLimitePagoSaldo(): ?Carbon
+    {
+        $cumplido = $this->relationLoaded('cumplido') ? $this->cumplido : $this->cumplido()->first();
+        $desde = $cumplido?->fecha_entrega_documentos ?? $cumplido?->created_at;
+
+        if (! $desde) {
+            return null;
+        }
+
+        $fecha = Carbon::parse($desde)->startOfDay();
+
+        for ($i = 0; $i < 5; $i++) {
+            $fecha->addDay();
+            while ($fecha->isWeekend()) {
+                $fecha->addDay();
+            }
+        }
+
+        return $fecha;
+    }
+
+    /** pagado | a_tiempo | por_vencer | vencido | sin_cumplido */
+    public function estadoPagoSaldo(): string
+    {
+        if ($this->saldo() <= 0) {
+            return 'pagado';
+        }
+
+        $limite = $this->fechaLimitePagoSaldo();
+
+        if (! $limite) {
+            return 'sin_cumplido';
+        }
+
+        return match (true) {
+            $limite->isPast() => 'vencido',
+            $limite->diffInDays(now()) >= -2 => 'por_vencer',
+            default => 'a_tiempo',
+        };
+    }
 
     /** Mínimo del SICE-TAC que aplica: el guardado o, si no hay, el de la tarifa de la ruta. */
     public function minimoSicetac(): ?int

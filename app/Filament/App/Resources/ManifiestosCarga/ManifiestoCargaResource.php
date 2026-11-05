@@ -68,7 +68,7 @@ class ManifiestoCargaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->with(['origen', 'destino', 'vehiculo', 'conductor', 'remesas', 'ultimoRegistroRndc']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['origen', 'destino', 'vehiculo', 'conductor', 'remesas', 'cumplido', 'ultimoRegistroRndc']))
             ->defaultSort('id', 'desc')
             ->emptyStateHeading('Expida su primer manifiesto')
             ->columns([
@@ -80,11 +80,31 @@ class ManifiestoCargaResource extends Resource
                     ->color(fn ($state) => (int) $state === 0 ? 'danger' : 'success')
                     ->tooltip(fn ($state) => (int) $state === 0 ? 'Este manifiesto no tiene remesa: edítelo y marque una.' : null),
                 TextColumn::make('valor_flete')->label('Flete')->numeric(thousandsSeparator: '.')->prefix('$ ')->alignEnd(),
+                TextColumn::make('pago_saldo')->label('Saldo')->badge()
+                    ->state(fn (ManifiestoCarga $m) => match ($estado = $m->estadoPagoSaldo()) {
+                        'pagado' => 'Pagado',
+                        'sin_cumplido' => 'Sin cumplir',
+                        'vencido' => 'Vencido',
+                        'por_vencer' => 'Por vencer',
+                        default => 'A tiempo',
+                    })
+                    ->color(fn (ManifiestoCarga $m) => match ($m->estadoPagoSaldo()) {
+                        'pagado' => 'success', 'vencido' => 'danger', 'por_vencer' => 'warning', default => 'gray',
+                    })
+                    ->tooltip(fn (ManifiestoCarga $m) => ($limite = $m->fechaLimitePagoSaldo())
+                        ? 'Plazo para pagar el saldo: '.$limite->format('d/m/Y').' (5 días hábiles desde el cumplido).'
+                        : 'El plazo empieza a correr con el cumplido del manifiesto.')
+                    ->toggleable(),
                 AccionesRndc::columnaEstado(),
                 TextColumn::make('anulado_at')->label('Anulado')->dateTime('d/m/Y')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('tipo')->options(ManifiestoCarga::TIPOS),
+                SelectFilter::make('saldo_vencido')->label('Pago del saldo')->placeholder('Todos')
+                    ->options(['vencido' => 'Con plazo vencido'])
+                    ->query(fn ($query, array $data) => ($data['value'] ?? null) === 'vencido'
+                        ? $query->whereHas('cumplido')->whereRaw('(valor_flete - anticipo) > 0')
+                        : $query),
                 SelectFilter::make('anulados')->label('Mostrar')->placeholder('Vigentes')
                     ->options(['todos' => 'Todos', 'anulados' => 'Solo anulados'])
                     ->query(fn ($query, array $data) => match ($data['value'] ?? null) {

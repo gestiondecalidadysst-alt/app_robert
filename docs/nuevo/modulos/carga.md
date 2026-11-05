@@ -1,6 +1,6 @@
 # Módulo de carga (RNDC)
 
-**Estado:** fase 0 (módulos por empresa) y fase 1 (datos maestros) construidas el 2026-11-04.
+**Estado:** fases 0 a 5 construidas (2026-11-04 y 05). Queda el tablero del módulo.
 
 **Referencia:**
 - Manual RNDC Web-Service v2.3 (2014), entregado por el usuario.
@@ -135,3 +135,71 @@ Reglas:
 No usar `dehydrated(false)` + `afterStateHydrated()` para este campo: así viajaba
 antes por el estado crudo de Livewire y el manifiesto podía expedirse sin remesa
 en silencio. Pruebas: `tests/Feature/Carga/ManifiestoRemesasTest.php` (4).
+
+
+## Fase 4 – Anulaciones y contingencia (2026-11-05)
+
+### Anulaciones ante el RNDC
+`AnulableRndc` + `Rndc::anular()`. Pantalla: `Filament\App\Carga\AnularConRndc`.
+
+| Documento | Proceso | Variables |
+|---|---|---|
+| Remesa | 9 | `CONSECUTIVOREMESA`, `MOTIVOREVERSAREMESA` (A anular / L liberar), `MOTIVOANULACIONREMESA` (D/S) y, al liberar, `CODMUNICIPIOTRANSBORDO` y `MOTIVOTRANSBORDOREMESA` (A accidente, V varada, S siniestro) |
+| Manifiesto | 32 | `NUMMANIFIESTOCARGA`, `MOTIVOANULACIONMANIFIESTO` (D/S) |
+
+Reglas del manual (9.11 y 9.12), comprobadas antes de enviar:
+- Un manifiesto no se anula si está cumplido o si alguna de sus remesas lo está.
+- Una remesa dentro de un manifiesto no se anula: se **libera** (transbordo).
+- Una vez anulado, el RNDC no deja reutilizar el consecutivo.
+
+Si el RNDC rechaza la anulación **no se anula nada aquí**: un documento anulado en
+el sistema y vigente ante el Ministerio es peor que no anularlo.
+
+### Contingencia
+`RespuestaRndc::reintentable()` distingue el servicio caído (sin conexión, 5xx, 408,
+429) del rechazo de datos. Solo lo primero se reintenta.
+
+- Estado `contingencia` en la bitácora, con `intentos` y `reintentar_a`.
+- Esperas: 5 min, 15, 30, 1 h, 2 h, 4 h. Agotadas, pide radicar en la web del RNDC.
+- Reencola `ruta:rndc-contingencia` (cada diez minutos), **no** el propio job: así no
+  se gastan los intentos de golpe con cola síncrona y sobrevive al reinicio del worker.
+
+## Fase 5 – Tiempos logísticos (2026-11-05)
+Tabla `tiempos_logisticos`: seis momentos por remesa (llegada, entrada y salida en
+cargue y en descargue), con hora del servidor y ubicación opcional del celular.
+
+- `Support\Carga\TiemposLogisticos` obliga el orden y el punto: llegada → entrada →
+  salida, primero cargue y después descargue.
+- Portal del conductor: `/conductor/carga`, un botón por remesa para lo siguiente que
+  toca. Si el navegador niega la ubicación, el reporte se envía igual.
+- Panel: acción «Tiempos logísticos» para completar desde la oficina, columna n/6 y
+  cálculo del excedente sobre lo pactado (ese tiempo de espera es cobrable).
+- Los tiempos rellenan `entrada_cargue` y `salida_cargue`, que ya viajan en el cumplido.
+
+## SICE-TAC
+El Ministerio no publica servicio de consulta: el valor lo extrae el propio RNDC al
+radicar (Manual de Generadores de la Supertransporte). Por eso la empresa carga las
+tablas publicadas en **Carga → SICE-TAC** (`tarifas_sicetac`, permiso del mismo
+nombre), por ruta, configuración y vigencia; la configuración exacta manda sobre la
+genérica. La carga masiva se hace pegando CSV con municipios por código DANE.
+
+`ManifiestoCarga::minimoSicetac()` usa el valor digitado o, si no hay, la tarifa:
+dejar el campo vacío ya no sirve para saltarse el tope.
+
+## Plazos y cobertura
+- **Rutas municipales:** admitidas (origen = destino). La Resolución 20263040016075 de
+  2026 las incorporó; había que comprobar que nada las rechazara.
+- **Pago del saldo:** `fechaLimitePagoSaldo()` son cinco días hábiles desde el cumplido
+  (solo se saltan sábados y domingos, no festivos: la fecha más exigente). El listado
+  marca «Vencido», «Por vencer» o «Pagado», con filtro propio.
+
+## Pruebas
+`tests/Feature/Carga/`: `CargaRndcTest`, `RemesasManifiestosTest`, `CumplidosTest`,
+`ManifiestoRemesasTest`, `AnulacionesRndcTest`, `ContingenciaRndcTest`,
+`TiemposLogisticosTest`, `SicetacTest`, `PlazosYRutasTest`.
+
+## Lo que falta
+- Tablero del módulo (indicadores de carga).
+- Reporte en tiempo real de los tiempos logísticos al RNDC: el proceso del web service
+  no está en el manual de 2014; hoy viajan en el cumplido. Confirmar en la primera
+  conexión real.
