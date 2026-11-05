@@ -79,7 +79,8 @@ Route::prefix('conductor')->name('conductor.')->group(function () {
         Route::post('/firma', [PortalController::class, 'guardarFirma'])->name('firma.guardar');
         Route::get('/fuec/{fuec}/extracto', [PortalController::class, 'extracto'])->name('extracto');
         Route::get('/preoperacional/{vehiculo}', [PreoperacionalController::class, 'formulario'])->name('preoperacional');
-        Route::post('/preoperacional/{vehiculo}', [PreoperacionalController::class, 'guardar'])->name('preoperacional.guardar');
+        Route::post('/preoperacional/{vehiculo}', [PreoperacionalController::class, 'guardar'])
+            ->middleware('throttle:20,1')->name('preoperacional.guardar');
         Route::get('/historial', [PreoperacionalController::class, 'historial'])->name('historial');
         Route::get('/servicio/{servicio}', [ViajeController::class, 'mostrar'])->whereNumber('servicio')->name('servicio');
         Route::get('/servicio/{servicio}/pdf', [ViajeController::class, 'pdf'])->whereNumber('servicio')->name('servicio.pdf');
@@ -92,7 +93,9 @@ Route::prefix('conductor')->name('conductor.')->group(function () {
             ->whereNumber('remesa')->middleware('throttle:60,1')->name('carga.marcar');
         Route::get('/mantenimiento', [MantenimientoController::class, 'inicio'])->name('mantenimiento');
         Route::get('/mantenimiento/{vehiculo}', [MantenimientoController::class, 'formulario'])->name('mantenimiento.registrar');
-        Route::post('/mantenimiento/{vehiculo}', [MantenimientoController::class, 'guardar'])->name('mantenimiento.guardar');
+        // Admite varios archivos: sin tope, un conductor podría llenar el disco.
+        Route::post('/mantenimiento/{vehiculo}', [MantenimientoController::class, 'guardar'])
+            ->middleware('throttle:20,1')->name('mantenimiento.guardar');
     });
 });
 

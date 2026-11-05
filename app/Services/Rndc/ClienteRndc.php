@@ -14,7 +14,13 @@ final class ClienteRndc
 {
     public function __construct(private readonly Empresa $empresa) {}
 
-    /** XML del Request. Con $ocultarClave se usa para guardar en la bitácora y mostrar. */
+    /**
+     * XML del Request.
+     *
+     * Ojo con la firma: el usuario y la clave entran como cadenas, así que una excepción
+     * lanzada aquí los imprimiría en la traza. Por eso `zend.exception_ignore_args`
+     * está en On en docker/php.ini; si se cambia, hay que envolverlos en un objeto.
+     */
     public static function request(string $usuario, string $clave, int $tipo, int $proceso, array $variables, array $documento = []): string
     {
         $x = "<?xml version='1.0' encoding='ISO-8859-1' ?>\n<root>\n<acceso>\n"

@@ -40,9 +40,31 @@ class GestionUsuariosRolesTest extends ConfiguracionTestCase
         $this->assertSame($oficina->id, $usuario->empresas()->first()->pivot->oficina_id);
     }
 
-    public function test_un_correo_existente_se_vincula_sin_duplicar_ni_cambiar_su_clave(): void
+    public function test_un_administrador_de_empresa_no_puede_vincular_a_un_usuario_de_otra(): void
     {
+        // Vincular por correo daba acceso a la cuenta ajena: una vez dentro del listado,
+        // «Editar» permitía cambiarle la contraseña, que es global. Ver AislamientoUsuariosTest.
         $this->entrarComo('admin@demo.test');
+
+        Livewire::test(CrearUsuario::class)
+            ->fillForm([
+                'name' => 'Otro nombre',
+                'email' => 'admin@ejemplo.test',
+                'rol_id' => Rol::where('name', Rol::GERENCIA)->first()->id,
+                'acceso_activo' => true,
+                'password' => 'OtraClave123',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['email']);
+
+        $this->assertFalse($this->usuario('admin@ejemplo.test')->empresas()->whereKey($this->demo->id)->exists());
+    }
+
+    public function test_el_superadministrador_si_vincula_un_correo_existente_sin_duplicar_ni_cambiar_su_clave(): void
+    {
+        // La persona que trabaja en dos empresas del grupo la vincula quien administra
+        // la plataforma, no el administrador de una de las empresas.
+        $this->entrarComo('superadmin@ruta.test');
         $ajeno = $this->usuario('admin@ejemplo.test');
         $claveAnterior = $ajeno->password;
 

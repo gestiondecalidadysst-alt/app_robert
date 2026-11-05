@@ -46,9 +46,22 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Páginas públicas de firma: límites por IP, cada uno con su propia clave.
-        foreach (['firma' => 60, 'firma-codigo' => 8, 'firma-firmar' => 20, 'verificar-archivo' => 10, 'conductor-ingreso' => 10] as $nombre => $porMinuto) {
+        foreach (['firma' => 60, 'firma-codigo' => 8, 'firma-firmar' => 20, 'verificar-archivo' => 10] as $nombre => $porMinuto) {
             RateLimiter::for($nombre, fn (Request $request) => Limit::perMinute($porMinuto)->by($nombre.'|'.$request->ip()));
         }
+
+        // Portal del conductor: además del límite por IP, uno por documento. El
+        // identificador es la cédula, que es enumerable y a menudo conocida; con solo
+        // el límite por IP, rotándolas se prueban miles de claves contra una persona.
+        RateLimiter::for('conductor-ingreso', function (Request $request) {
+            $documento = preg_replace('/[^0-9A-Za-z]/', '', (string) $request->input('documento'));
+
+            return [
+                Limit::perMinute(10)->by('conductor-ingreso|'.$request->ip()),
+                Limit::perMinute(5)->by('conductor-doc|'.$documento),
+                Limit::perHour(20)->by('conductor-doc-hora|'.$documento),
+            ];
+        });
 
         // Fechas siempre como dd/mm/aaaa, sin depender del idioma del navegador.
         DatePicker::configureUsing(fn (DatePicker $campo) => $campo->native(false)->displayFormat('d/m/Y')->firstDayOfWeek(1));

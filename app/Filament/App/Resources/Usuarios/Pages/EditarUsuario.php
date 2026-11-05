@@ -8,6 +8,7 @@ use App\Models\Conductor;
 use App\Models\Empresa;
 use App\Models\User;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -46,6 +47,23 @@ class EditarUsuario extends EditRecord
         }
         if (blank($datos['email'] ?? null)) {
             $datos['email'] = null;
+        }
+
+        // La contraseña es global, no de esta empresa: cambiársela a alguien que también
+        // trabaja en otra empresa (o a un superadministrador) sería entregar esa otra
+        // cuenta. Solo el administrador de la plataforma puede hacerlo.
+        if (filled($datos['password'] ?? null) && ! auth()->user()?->es_superadmin) {
+            $compartido = $record->es_superadmin
+                || $record->empresas()->withoutGlobalScopes()->whereKeyNot($empresa->getKey())->exists();
+
+            if ($compartido) {
+                unset($datos['password'], $datos['debe_cambiar_clave']);
+
+                Notification::make()->warning()
+                    ->title('No se cambió la contraseña')
+                    ->body('Esta persona también tiene acceso en otra empresa de la plataforma, así que su contraseña solo la puede cambiar ella misma o el administrador de la plataforma. El resto de los cambios sí se guardó.')
+                    ->persistent()->send();
+            }
         }
 
         // Nadie se quita a sí mismo el acceso.

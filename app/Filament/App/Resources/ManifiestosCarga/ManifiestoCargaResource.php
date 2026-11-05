@@ -117,7 +117,9 @@ class ManifiestoCargaResource extends Resource
                     ->color(fn (ManifiestoCarga $m) => $m->remesas()->count() === 0 ? 'danger' : 'gray')
                     ->modalHeading('Remesas del manifiesto')
                     ->modalSubmitActionLabel('Asociar')
-                    ->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado')
+                    // Cambia el contenido del manifiesto: exige el mismo permiso que editarlo.
+                    ->visible(fn (ManifiestoCarga $m) => (auth()->user()?->can('editar_manifiestos_carga') ?? false)
+                        && ! $m->anulado() && $m->estadoRndc() !== 'registrado')
                     ->fillForm(fn (ManifiestoCarga $m) => ['remesas_ids' => $m->remesas()->pluck('id')->all()])
                     ->schema([
                         Select::make('remesas_ids')->label('Remesas')->multiple()->required()->searchable()->native(false)

@@ -36,8 +36,17 @@ class CrearUsuario extends CreateRecord
         $datos = Arr::except($data, ['rol_id', 'oficina_id', 'acceso_activo', 'conductor_id']);
 
         return DB::transaction(function () use ($empresa, $acceso, $datos): User {
-            // Si el correo ya existe en la plataforma se vincula el mismo usuario.
+            // Si el correo ya existe en la plataforma se vincula el mismo usuario, pero
+            // SOLO lo puede hacer un superadministrador: de lo contrario, un administrador
+            // de la empresa A engancharía a su empresa a cualquier usuario de la empresa B
+            // (sin que este se entere) y después le cambiaría la contraseña desde «Editar».
             $usuario = User::query()->withoutGlobalScopes()->firstWhere('email', $datos['email']);
+
+            if ($usuario && ! auth()->user()?->es_superadmin) {
+                throw ValidationException::withMessages([
+                    'data.email' => 'Ese correo ya pertenece a un usuario de la plataforma. Para darle acceso a esta empresa, pídaselo al administrador de la plataforma.',
+                ]);
+            }
 
             if (! $usuario) {
                 $usuario = User::query()->withoutGlobalScopes()->getModel()->newInstance($datos);

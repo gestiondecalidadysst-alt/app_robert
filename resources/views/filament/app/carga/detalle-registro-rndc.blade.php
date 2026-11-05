@@ -8,7 +8,8 @@
     @endif
     <table style="width: 100%; border-collapse: collapse; font-size: .8rem">
         @foreach ($r->variables ?? [] as $k => $v)
-            <tr style="border-top: 1px solid rgba(148,163,184,.3)"><td style="padding: .25rem .4rem; color: rgb(100 116 139)">{{ $etiquetas[$k] ?? $k }}</td><td style="padding: .25rem .4rem; font-weight: 600">{{ $v }}</td></tr>
+            <tr style="border-top: 1px solid rgba(148,163,184,.3)"><td style="padding: .25rem .4rem; color: rgb(100 116 139)">{{ $etiquetas[$k] ?? $k }}</td>{{-- Los grupos anidados (REMESASMAN) son arrays: e() revienta con ellos. --}}
+<td style="padding: .25rem .4rem; font-weight: 600">{{ is_array($v) ? json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : $v }}</td></tr>
         @endforeach
     </table>
 </div>

@@ -64,6 +64,9 @@ final class Sicetac
      */
     public static function importar(int $empresaId, string $csv): array
     {
+        // Cada fila son dos consultas y esto corre dentro de la petición: sin tope, pegar
+        // un archivo grande tumba la base. Para tablas mayores, cargar por partes.
+        $maximoFilas = 2000;
         $municipios = Municipio::query()->pluck('id', 'codigo_dane');
         $cargadas = 0;
         $errores = [];
@@ -77,6 +80,11 @@ final class Sicetac
 
             $campos = array_map('trim', str_getcsv($linea, ';'));
             $fila = $n + 1;
+
+            if ($cargadas >= $maximoFilas) {
+                $errores[] = "Se cargaron las primeras {$maximoFilas} filas; el resto quedó fuera. Divida la tabla y vuelva a cargarla.";
+                break;
+            }
 
             if (count($campos) < 4) {
                 $errores[] = "Línea {$fila}: se esperan al menos origen;destino;configuracion;valor.";
@@ -102,10 +110,13 @@ final class Sicetac
 
             // La fecha se normaliza antes de buscar: si se compara la cadena cruda contra
             // la columna de fecha no encuentra la fila y se intenta insertar una duplicada.
+            // Las dos fechas se validan igual: antes «hasta» se parseaba más abajo sin
+            // protección y una fecha mal escrita daba error 500 en vez de un aviso.
             try {
                 $vigenteDesde = $desde ? Carbon::parse($desde)->startOfDay() : today();
+                $vigenteHasta = $hasta ? Carbon::parse($hasta)->startOfDay() : null;
             } catch (\Throwable) {
-                $errores[] = "Línea {$fila}: la fecha «{$desde}» no se entiende (use AAAA-MM-DD).";
+                $errores[] = "Línea {$fila}: la fecha no se entiende (use AAAA-MM-DD).";
 
                 continue;
             }
@@ -118,7 +129,7 @@ final class Sicetac
                     'configuracion' => $configuracion === '' ? null : (int) $configuracion,
                     'vigente_desde' => $vigenteDesde,
                 ],
-                ['valor_minimo' => (int) $valor, 'vigente_hasta' => $hasta ? Carbon::parse($hasta)->startOfDay() : null],
+                ['valor_minimo' => (int) $valor, 'vigente_hasta' => $vigenteHasta],
             );
 
             $cargadas++;

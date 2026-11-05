@@ -21,6 +21,9 @@ final class ImportarSicetac
     public static function accion(): Action
     {
         return Action::make('importar')->label('Cargar tabla')->icon('heroicon-o-arrow-up-tray')->color('gray')
+            // Sin esto cualquiera que vea la pantalla podría poner el mínimo en $1 y
+            // dejar pasar fletes por debajo del tope legal, o bloquear la expedición.
+            ->visible(fn () => auth()->user()?->can('crear_tarifas_sicetac') ?? false)
             ->modalHeading('Cargar costos mínimos del SICE-TAC')
             ->modalSubmitActionLabel('Cargar')
             ->schema([
@@ -32,6 +35,7 @@ final class ImportarSicetac
                     .'Ejemplo: <code>23001;11001;50;2850000;2026-01-01;</code>'
                 )),
                 Textarea::make('csv')->hiddenLabel()->required()->rows(10)
+                    ->maxLength(200000)
                     ->placeholder("23001;11001;50;2850000;2026-01-01;\n76001;11001;;3100000;;"),
             ])
             ->action(function (array $data): void {
