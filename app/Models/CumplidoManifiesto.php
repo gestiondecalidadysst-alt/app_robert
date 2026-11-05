@@ -77,8 +77,9 @@ class CumplidoManifiesto extends Model implements RegistrableRndc
             + (int) $this->valor_adicional_flete - (int) $this->valor_descuento_flete;
         $retefuente = (int) round($flete * (float) $m->retencion_fuente_pct / 100);
         $reteica = (int) round($flete * (float) $m->reteica_por_mil / 1000);
+        $retefopat = (int) round($flete * (float) ($m->retencion_fopat_pct ?? 0) / 1000);
 
-        return max(0, $flete - (int) $m->anticipo - (int) $this->valor_sobreanticipo - $retefuente - $reteica);
+        return max(0, $flete - (int) $m->anticipo - (int) $this->valor_sobreanticipo - $retefuente - $reteica - $retefopat);
     }
 
     public function variablesRndc(Empresa $empresa): array

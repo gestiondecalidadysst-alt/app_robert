@@ -26,10 +26,11 @@ class ManifiestoCarga extends Model implements RegistrableRndc
     public const RESPONSABLES_PAGO = ['E' => 'Empresa de transporte', 'D' => 'Destinatario', 'R' => 'Remitente', 'C' => 'Conductor'];
 
     protected $fillable = [
-        'empresa_id', 'numero', 'tipo', 'fecha_expedicion', 'origen_id', 'destino_id', 'vehiculo_id', 'remolque_id',
-        'conductor_id', 'titular_propietario_id', 'titular_tercero_id', 'valor_flete', 'valor_minimo_sicetac',
-        'retencion_fuente_pct', 'reteica_por_mil', 'anticipo', 'municipio_pago_id', 'fecha_pago_saldo',
-        'responsable_cargue', 'responsable_descargue', 'observaciones', 'codigo_verificacion', 'user_id', 'anulado_at', 'motivo_anulacion',
+        'empresa_id', 'numero', 'tipo', 'fecha_expedicion', 'origen_id', 'destino_id', 'municipio_intermedio_id', 'trayectos_vacio', 'via_utilizar',
+        'vehiculo_id', 'remolque_id', 'remolque_2_id', 'conductor_id', 'conductor_2_id', 'titular_propietario_id', 'titular_tercero_id',
+        'valor_flete', 'valor_minimo_sicetac', 'retencion_fuente_pct', 'reteica_por_mil', 'retencion_fopat_pct',
+        'anticipo', 'municipio_pago_id', 'fecha_pago_saldo', 'responsable_cargue', 'responsable_descargue',
+        'observaciones', 'codigo_verificacion', 'user_id', 'anulado_at', 'motivo_anulacion',
     ];
 
     protected function casts(): array
@@ -37,7 +38,8 @@ class ManifiestoCarga extends Model implements RegistrableRndc
         return [
             'fecha_expedicion' => 'date', 'fecha_pago_saldo' => 'date', 'anulado_at' => 'datetime',
             'valor_flete' => 'integer', 'anticipo' => 'integer', 'valor_minimo_sicetac' => 'integer',
-            'retencion_fuente_pct' => 'decimal:2', 'reteica_por_mil' => 'decimal:2',
+            'retencion_fuente_pct' => 'decimal:2', 'reteica_por_mil' => 'decimal:2', 'retencion_fopat_pct' => 'decimal:2',
+            'trayectos_vacio' => 'array',
         ];
     }
 
@@ -54,9 +56,12 @@ class ManifiestoCarga extends Model implements RegistrableRndc
     public function origen(): BelongsTo { return $this->belongsTo(Municipio::class, 'origen_id'); }
     public function destino(): BelongsTo { return $this->belongsTo(Municipio::class, 'destino_id'); }
     public function municipioPago(): BelongsTo { return $this->belongsTo(Municipio::class, 'municipio_pago_id'); }
+    public function municipioIntermedio(): BelongsTo { return $this->belongsTo(Municipio::class, 'municipio_intermedio_id'); }
     public function vehiculo(): BelongsTo { return $this->belongsTo(Vehiculo::class)->withoutGlobalScopes(); }
     public function remolque(): BelongsTo { return $this->belongsTo(Remolque::class); }
+    public function remolque2(): BelongsTo { return $this->belongsTo(Remolque::class, 'remolque_2_id'); }
     public function conductor(): BelongsTo { return $this->belongsTo(Conductor::class)->withoutGlobalScopes(); }
+    public function conductor2(): BelongsTo { return $this->belongsTo(Conductor::class, 'conductor_2_id')->withoutGlobalScopes(); }
     public function titularPropietario(): BelongsTo { return $this->belongsTo(Propietario::class, 'titular_propietario_id')->withoutGlobalScopes(); }
     public function titularTercero(): BelongsTo { return $this->belongsTo(TerceroCarga::class, 'titular_tercero_id'); }
     public function remesas(): HasMany { return $this->hasMany(RemesaCarga::class, 'manifiesto_id'); }
@@ -74,11 +79,13 @@ class ManifiestoCarga extends Model implements RegistrableRndc
 
     public function saldo(): int
     {
-        $retefuente = (int) round((float) $this->valor_flete * (float) $this->retencion_fuente_pct / 100);
-        $reteica = (int) round((float) $this->valor_flete * (float) $this->reteica_por_mil / 1000);
-
-        return max(0, (int) $this->valor_flete - (int) $this->anticipo - $retefuente - $reteica);
+        return max(0, (int) $this->valor_flete - (int) $this->anticipo - $this->retefuente() - $this->reteica() - $this->retefopat());
     }
+
+    public function retefuente(): int { return (int) round((float) $this->valor_flete * (float) $this->retencion_fuente_pct / 100); }
+    public function reteica(): int { return (int) round((float) $this->valor_flete * (float) $this->reteica_por_mil / 1000); }
+    public function retefopat(): int { return (int) round((float) $this->valor_flete * (float) $this->retencion_fopat_pct / 1000); }
+    public function valorNeto(): int { return max(0, (int) $this->valor_flete - $this->retefuente() - $this->reteica() - $this->retefopat()); }
 
     public function procesoRndc(): int { return 4; }
 

@@ -61,8 +61,16 @@ final class ManifiestoCargaForm
                     ->relationship('destino', 'nombre', fn ($query) => $query->orderBy('nombre'))
                     ->getOptionLabelFromRecordUsing(fn (Municipio $m) => $m->nombre_completo)
                     ->placeholder('Escriba el nombre del municipio…'),
+                Select::make('municipio_intermedio_id')->label('Municipio intermedio (opcional)')->searchable()->preload(false)
+                    ->relationship('municipioIntermedio', 'nombre', fn ($query) => $query->orderBy('nombre'))
+                    ->getOptionLabelFromRecordUsing(fn (Municipio $m) => $m->nombre_completo)
+                    ->placeholder('Si pasa por un punto intermedio relevante.')
+                    ->columnSpanFull(),
+                \Filament\Forms\Components\Textarea::make('via_utilizar')->label('Vía a utilizar (opcional)')->rows(2)->maxLength(300)
+                    ->placeholder('Describa la ruta, por ejemplo: «Se cambia paso por Calarcá, Pereira, Cartago».')
+                    ->columnSpanFull(),
                 Textarea::make('observaciones')->label('Observaciones (opcional)')->rows(2)->maxLength(200)->columnSpanFull()
-                    ->placeholder('Por ejemplo, teléfonos de emergencia o condiciones especiales del viaje.'),
+                    ->placeholder('Teléfonos de emergencia o condiciones especiales del viaje.'),
             ]);
     }
 
@@ -76,11 +84,19 @@ final class ManifiestoCargaForm
                 Select::make('vehiculo_id')->label('Vehículo (camión o tractocamión)')->required()->searchable()->native(false)
                     ->options(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->orderBy('placa')
                         ->get()->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa . ($v->marca?->nombre ? ' · ' . $v->marca->nombre : '')]))
-                    ->helperText('Solo vehículos con datos de carga (pestaña Carga en el vehículo).'),
+                    ->placeholder(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->exists() ? 'Seleccione el vehículo…' : 'No hay vehículos de carga: complete la pestaña «Carga (RNDC)» en un vehículo.')
+                    ->hint(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->exists() ? null : new \Illuminate\Support\HtmlString('<a href="/app/' . \Filament\Facades\Filament::getTenant()?->slug . '/vehiculos" target="_blank" style="color:#ea6a2c;font-weight:500">Ir a vehículos ↗</a>'))
+                    ->helperText('Solo aparecen los vehículos a los que ya se les llenó la pestaña «Carga (RNDC)» (configuración, peso vacío, marca, línea, color, carrocería, combustible, tenedor y SOAT).'),
                 Select::make('remolque_id')->label('Remolque o semirremolque (si aplica)')->searchable()->native(false)
                     ->options(fn () => Remolque::query()->where('activo', true)->orderBy('placa')
                         ->get()->mapWithKeys(fn (Remolque $r) => [$r->id => $r->placa])),
-                Select::make('conductor_id')->label('Conductor')->required()->searchable()->native(false)->columnSpanFull()
+                Select::make('remolque_2_id')->label('Segundo remolque (si va con dos)')->searchable()->native(false)
+                    ->options(fn () => Remolque::query()->where('activo', true)->orderBy('placa')
+                        ->get()->mapWithKeys(fn (Remolque $r) => [$r->id => $r->placa])),
+                Select::make('conductor_id')->label('Conductor principal')->required()->searchable()->native(false)
+                    ->options(fn () => Conductor::query()->vinculados()->orderBy('nombres')->get()
+                        ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo . ' · CC ' . $c->documento])),
+                Select::make('conductor_2_id')->label('Segundo conductor (viajes largos, opcional)')->searchable()->native(false)
                     ->options(fn () => Conductor::query()->vinculados()->orderBy('nombres')->get()
                         ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo . ' · CC ' . $c->documento])),
                 Select::make('titular_propietario_id')->label('Titular: propietario o tenedor')->searchable()->native(false)
@@ -148,6 +164,9 @@ final class ManifiestoCargaForm
                     ->numeric()->minValue(0)->maxValue(20)->step(0.01)->default(1)->suffix('%'),
                 TextInput::make('reteica_por_mil')->label('Reteica (por 1.000)')
                     ->numeric()->minValue(0)->maxValue(20)->step(0.01)->default(0)->suffix(' x1000'),
+                TextInput::make('retencion_fopat_pct')->label('Retención FOPAT (por 1.000)')
+                    ->numeric()->minValue(0)->maxValue(20)->step(0.01)->default(1)->suffix(' x1000')
+                    ->helperText('Fondo de Protección de los Actores de Transporte (Ley 2422/2024).'),
                 Select::make('responsable_cargue')->label('Responsable del pago del cargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required()->native(false),
                 Select::make('responsable_descargue')->label('Responsable del pago del descargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required()->native(false),
             ]);

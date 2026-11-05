@@ -14,22 +14,35 @@ final class PdfManifiestoCarga
 {
     public static function pdf(ManifiestoCarga $manifiesto): string
     {
-        $manifiesto->loadMissing(['origen.departamento', 'destino.departamento', 'municipioPago', 'vehiculo.marca', 'remolque',
-            'conductor.tipoIdentificacion', 'titularPropietario.tipoIdentificacion', 'titularTercero.tipoIdentificacion',
-            'remesas.remitente', 'remesas.destinatario', 'ultimoRegistroRndc']);
+        $manifiesto->loadMissing(['origen.departamento', 'destino.departamento', 'municipioIntermedio.departamento', 'municipioPago.departamento',
+            'vehiculo.marca', 'vehiculo.propietario.tipoIdentificacion', 'vehiculo.propietario.municipio',
+            'remolque', 'remolque2', 'conductor.tipoIdentificacion', 'conductor.municipio',
+            'conductor2.tipoIdentificacion', 'conductor2.municipio',
+            'titularPropietario.tipoIdentificacion', 'titularPropietario.municipio',
+            'titularTercero.tipoIdentificacion', 'titularTercero.municipio',
+            'remesas.remitente.municipio', 'remesas.destinatario.municipio', 'ultimoRegistroRndc']);
         $empresa = Empresa::query()->with('municipio')->findOrFail($manifiesto->empresa_id);
+
+        // SOAT del vehículo (número y vencimiento de los documentos; NIT desde el campo propio del vehículo).
+        $soat = $manifiesto->vehiculo?->documentoVigente(\App\Enums\TipoDocumentoVehiculo::Soat);
+        $soat?->loadMissing('aseguradora');
 
         $html = view('pdf.manifiesto-carga', [
             'm' => $manifiesto,
             'empresa' => $empresa,
             'titular' => $manifiesto->titular(),
             'logo' => Imagenes::deDisco($empresa->logo_path, 'public'),
-            'qr' => Imagenes::qr($manifiesto->urlVerificacion(), 3),
-            'retefuente' => (int) round((float) $manifiesto->valor_flete * (float) $manifiesto->retencion_fuente_pct / 100),
-            'reteica' => (int) round((float) $manifiesto->valor_flete * (float) $manifiesto->reteica_por_mil / 1000),
+            'qr' => Imagenes::qr($manifiesto->urlVerificacion(), 4),
+            'soat' => $soat,
+            'retefuente' => $manifiesto->retefuente(),
+            'reteica' => $manifiesto->reteica(),
+            'retefopat' => $manifiesto->retefopat(),
+            'valor_neto' => $manifiesto->valorNeto(),
+            'valor_en_letras' => \App\Support\NumeroEnLetras::pesos((int) $manifiesto->valor_flete),
         ])->render();
 
-        return Pdf::loadHTML($html)->setPaper('letter')->setOption(['isFontSubsettingEnabled' => true, 'isRemoteEnabled' => false])->output();
+        return Pdf::loadHTML($html)->setPaper('letter', 'landscape')
+            ->setOption(['isFontSubsettingEnabled' => true, 'isRemoteEnabled' => false])->output();
     }
 
     public static function nombre(ManifiestoCarga $m): string
