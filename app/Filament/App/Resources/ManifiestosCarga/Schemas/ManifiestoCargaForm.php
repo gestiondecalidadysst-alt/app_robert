@@ -14,76 +14,153 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
+use Illuminate\Validation\ValidationException;
 
+/**
+ * Formulario del manifiesto como asistente por pasos: viaje → vehículo y titular → remesas → pago.
+ * Cada paso valida lo suyo antes de permitir avanzar; los campos son de ancho completo o en dos
+ * columnas máximo, así los selects y placeholders se ven enteros.
+ */
 final class ManifiestoCargaForm
 {
     public static function form(Schema $schema): Schema
     {
-        $municipios = fn () => Municipio::query()->with('departamento')->activos()->orderBy('nombre')->limit(50)->get()
-            ->mapWithKeys(fn (Municipio $m) => [$m->id => $m->nombre_completo]);
-
         return $schema->components([
-            Section::make('Encabezado')
-                ->columns(['default' => 1, 'md' => 3])
-                ->schema([
-                    Select::make('tipo')->label('Tipo de manifiesto')->options(ManifiestoCarga::TIPOS)->default('G')->required(),
-                    DatePicker::make('fecha_expedicion')->required()->default(today()),
-                    Select::make('origen_id')->label('Origen')->required()->searchable()
-                        ->getSearchResultsUsing(fn ($s) => Municipio::query()->with('departamento')->activos()->where('nombre', 'like', "%{$s}%")->limit(30)->get()->mapWithKeys(fn ($m) => [$m->id => $m->nombre_completo])->all())
-                        ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo),
-                    Select::make('destino_id')->label('Destino')->required()->searchable()
-                        ->getSearchResultsUsing(fn ($s) => Municipio::query()->with('departamento')->activos()->where('nombre', 'like', "%{$s}%")->limit(30)->get()->mapWithKeys(fn ($m) => [$m->id => $m->nombre_completo])->all())
-                        ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo),
-                ]),
-            Section::make('Vehículo y conductor')
-                ->columns(['default' => 1, 'md' => 3])
-                ->schema([
-                    Select::make('vehiculo_id')->label('Vehículo')->required()->searchable()
-                        ->options(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->orderBy('placa')->pluck('placa', 'id')),
-                    Select::make('remolque_id')->label('Remolque')->searchable()
-                        ->options(fn () => Remolque::query()->where('activo', true)->orderBy('placa')->pluck('placa', 'id')),
-                    Select::make('conductor_id')->label('Conductor')->required()->searchable()
-                        ->options(fn () => Conductor::query()->vinculados()->orderBy('nombres')->get()->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo . ' · ' . $c->documento])),
-                ]),
-            Section::make('Titular del manifiesto')
-                ->description('Puede ser el propietario del vehículo, el tenedor, el conductor o un tercero (titular en comisión). Llene solo uno.')
-                ->columns(['default' => 1, 'md' => 2])
-                ->schema([
-                    Select::make('titular_propietario_id')->label('Titular (propietario o tenedor)')->searchable()
-                        ->options(fn () => Propietario::query()->where('activo', true)->orderBy('nombres')->get()->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento])),
-                    Select::make('titular_tercero_id')->label('Titular (tercero)')->searchable()
-                        ->options(fn () => TerceroCarga::query()->where('activo', true)->orderBy('nombre')->get()->mapWithKeys(fn ($t) => [$t->id => $t->nombre_completo . ' · ' . $t->documento])),
-                ]),
-            Section::make('Valores')
-                ->columns(['default' => 1, 'md' => 3])
-                ->schema([
-                    TextInput::make('valor_flete')->label('Valor del flete pactado')->numeric()->required()->minValue(1)->prefix('$'),
-                    TextInput::make('valor_minimo_sicetac')->label('Valor mínimo SICE-TAC')->numeric()->prefix('$')->helperText('Consúltelo en SICE-TAC. Si se deja vacío no se valida.'),
-                    TextInput::make('anticipo')->label('Anticipo')->numeric()->minValue(0)->default(0)->prefix('$'),
-                    TextInput::make('retencion_fuente_pct')->label('Retención fuente (%)')->numeric()->minValue(0)->maxValue(20)->step(0.01)->default(1),
-                    TextInput::make('reteica_por_mil')->label('Reteica (x1000)')->numeric()->minValue(0)->maxValue(20)->step(0.01)->default(0),
-                    Select::make('municipio_pago_id')->label('Municipio de pago del saldo')->searchable()
-                        ->getSearchResultsUsing(fn ($s) => Municipio::query()->activos()->with('departamento')->where('nombre', 'like', "%{$s}%")->limit(30)->get()->mapWithKeys(fn ($m) => [$m->id => $m->nombre_completo])->all())
-                        ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo),
-                    DatePicker::make('fecha_pago_saldo')->label('Fecha de pago del saldo'),
-                    Select::make('responsable_cargue')->label('Responsable pago cargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required(),
-                    Select::make('responsable_descargue')->label('Responsable pago descargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required(),
-                ]),
-            Section::make('Remesas asociadas')
-                ->schema([
-                    Select::make('remesas_ids')->label('Remesas')->multiple()->required()
-                        ->options(fn ($record) => RemesaCarga::query()
-                            ->where(fn ($q) => $q->whereNull('manifiesto_id')->orWhere('manifiesto_id', $record?->id))
-                            ->whereNull('anulado_at')->orderBy('id', 'desc')->get()
-                            ->mapWithKeys(fn ($r) => [$r->id => $r->numeroFormateado() . ' · ' . $r->producto_descripcion]))
-                        ->default(fn ($record) => $record?->remesas->pluck('id')->all() ?? [])
-                        ->dehydrated(false)
-                        ->afterStateHydrated(fn ($component, $record) => $component->state($record?->remesas->pluck('id')->all() ?? [])),
-                ]),
-            Section::make('Observaciones')
-                ->schema([Textarea::make('observaciones')->rows(2)->maxLength(200)]),
+            Wizard::make([
+                self::pasoViaje(),
+                self::pasoVehiculo(),
+                self::pasoRemesas(),
+                self::pasoPago(),
+            ])
+                ->columnSpanFull()
+                ->persistStepInQueryString()
+                ->skippable(false)
+                ->submitAction(view('filament.app.carga.boton-expedir')),
         ]);
+    }
+
+    private static function pasoViaje(): Step
+    {
+        return Step::make('Viaje')
+            ->icon('heroicon-o-map')
+            ->description('¿Qué tipo de manifiesto y de dónde a dónde?')
+            ->columns(['default' => 1, 'md' => 2])
+            ->schema([
+                Select::make('tipo')->label('Tipo de manifiesto')->options(ManifiestoCarga::TIPOS)
+                    ->default('G')->required()->native(false)
+                    ->helperText('General para la mayoría; paqueteo si son muchos envíos pequeños.'),
+                DatePicker::make('fecha_expedicion')->label('Fecha de expedición')->required()->default(today())->native(false),
+                Select::make('origen_id')->label('Municipio de origen')->required()->searchable()
+                    ->getSearchResultsUsing(fn ($s) => self::municipios($s))
+                    ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo)
+                    ->placeholder('Escriba el nombre del municipio…'),
+                Select::make('destino_id')->label('Municipio de destino')->required()->searchable()
+                    ->getSearchResultsUsing(fn ($s) => self::municipios($s))
+                    ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo)
+                    ->placeholder('Escriba el nombre del municipio…'),
+                Textarea::make('observaciones')->label('Observaciones (opcional)')->rows(2)->maxLength(200)->columnSpanFull()
+                    ->placeholder('Por ejemplo, teléfonos de emergencia o condiciones especiales del viaje.'),
+            ]);
+    }
+
+    private static function pasoVehiculo(): Step
+    {
+        return Step::make('Vehículo y titular')
+            ->icon('heroicon-o-truck')
+            ->description('¿Qué vehículo, qué conductor y a nombre de quién va el manifiesto?')
+            ->columns(['default' => 1, 'md' => 2])
+            ->schema([
+                Select::make('vehiculo_id')->label('Vehículo (camión o tractocamión)')->required()->searchable()->native(false)
+                    ->options(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->orderBy('placa')
+                        ->get()->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa . ($v->marca?->nombre ? ' · ' . $v->marca->nombre : '')]))
+                    ->helperText('Solo vehículos con datos de carga (pestaña Carga en el vehículo).'),
+                Select::make('remolque_id')->label('Remolque o semirremolque (si aplica)')->searchable()->native(false)
+                    ->options(fn () => Remolque::query()->where('activo', true)->orderBy('placa')
+                        ->get()->mapWithKeys(fn (Remolque $r) => [$r->id => $r->placa])),
+                Select::make('conductor_id')->label('Conductor')->required()->searchable()->native(false)->columnSpanFull()
+                    ->options(fn () => Conductor::query()->vinculados()->orderBy('nombres')->get()
+                        ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo . ' · CC ' . $c->documento])),
+                Text::make('**Titular del manifiesto.** Puede ser el propietario, el tenedor o un tercero; elija solo uno.')
+                    ->columnSpanFull(),
+                Select::make('titular_propietario_id')->label('Titular: propietario o tenedor')->searchable()->native(false)
+                    ->options(fn () => Propietario::query()->where('activo', true)->orderBy('nombres')->get()
+                        ->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento])),
+                Select::make('titular_tercero_id')->label('Titular: tercero (titular en comisión)')->searchable()->native(false)
+                    ->options(fn () => TerceroCarga::query()->where('activo', true)->orderBy('nombre')->get()
+                        ->mapWithKeys(fn ($t) => [$t->id => $t->nombre_completo . ' · ' . $t->documento])),
+            ])
+            ->afterValidation(function (array $state): void {
+                if (blank($state['titular_propietario_id'] ?? null) && blank($state['titular_tercero_id'] ?? null)) {
+                    throw ValidationException::withMessages(['titular_propietario_id' => 'Elija el titular del manifiesto (propietario, tenedor o tercero).']);
+                }
+                if (filled($state['titular_propietario_id'] ?? null) && filled($state['titular_tercero_id'] ?? null)) {
+                    throw ValidationException::withMessages(['titular_tercero_id' => 'Elija solo uno: propietario/tenedor o tercero.']);
+                }
+            });
+    }
+
+    private static function pasoRemesas(): Step
+    {
+        return Step::make('Remesas')
+            ->icon('heroicon-o-document-text')
+            ->description('¿Qué remesas van en este viaje?')
+            ->schema([
+                Select::make('remesas_ids')->label('Remesas asociadas')->multiple()->required()->searchable()
+                    ->options(fn ($record) => RemesaCarga::query()
+                        ->where(fn ($q) => $q->whereNull('manifiesto_id')->orWhere('manifiesto_id', $record?->id))
+                        ->whereNull('anulado_at')->orderBy('id', 'desc')->limit(200)->get()
+                        ->mapWithKeys(fn ($r) => [$r->id => $r->numeroFormateado() . ' · ' . $r->producto_descripcion
+                            . ($r->cantidad ? ' · ' . number_format($r->cantidad, 0, ',', '.') . ' ' . ($r->unidad === 2 ? 'gal' : 'kg') : '')]))
+                    ->default(fn ($record) => $record?->remesas->pluck('id')->all() ?? [])
+                    ->dehydrated(false)
+                    ->afterStateHydrated(fn ($component, $record) => $component->state($record?->remesas->pluck('id')->all() ?? []))
+                    ->helperText('Marque una o más remesas. Solo aparecen las que aún no están en otro manifiesto.')
+                    ->columnSpanFull(),
+            ])
+            ->afterValidation(function (array $state): void {
+                if (empty($state['remesas_ids'] ?? [])) {
+                    throw ValidationException::withMessages(['remesas_ids' => 'El manifiesto debe tener al menos una remesa.']);
+                }
+            });
+    }
+
+    private static function pasoPago(): Step
+    {
+        return Step::make('Pago')
+            ->icon('heroicon-o-banknotes')
+            ->description('Flete, anticipo y saldo.')
+            ->columns(['default' => 1, 'md' => 2])
+            ->schema([
+                TextInput::make('valor_flete')->label('Valor del flete pactado')->required()->numeric()->minValue(1)->prefix('$')->inputMode('numeric'),
+                TextInput::make('anticipo')->label('Anticipo al conductor')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric'),
+                TextInput::make('valor_minimo_sicetac')->label('Valor mínimo SICE-TAC (opcional)')->numeric()->minValue(0)->prefix('$')->inputMode('numeric')
+                    ->helperText('Consúltelo en SICE-TAC. Si se deja vacío, no se valida; si se llena y el flete está por debajo, no deja expedir.'),
+                Select::make('municipio_pago_id')->label('Municipio donde se paga el saldo')->searchable()->native(false)
+                    ->getSearchResultsUsing(fn ($s) => self::municipios($s))
+                    ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo)
+                    ->placeholder('Si lo deja vacío, se asume el destino.'),
+                DatePicker::make('fecha_pago_saldo')->label('Fecha de pago del saldo')->native(false)
+                    ->helperText('Máximo 5 días hábiles después del cumplido (Resolución RNDC).'),
+                TextInput::make('retencion_fuente_pct')->label('Retención en la fuente (%)')
+                    ->numeric()->minValue(0)->maxValue(20)->step(0.01)->default(1)->suffix('%'),
+                TextInput::make('reteica_por_mil')->label('Reteica (por 1.000)')
+                    ->numeric()->minValue(0)->maxValue(20)->step(0.01)->default(0)->suffix(' x1000'),
+                Select::make('responsable_cargue')->label('Responsable del pago del cargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required()->native(false),
+                Select::make('responsable_descargue')->label('Responsable del pago del descargue')->options(ManifiestoCarga::RESPONSABLES_PAGO)->default('E')->required()->native(false),
+            ]);
+    }
+
+    /** @return array<int, string> */
+    private static function municipios(string $busqueda): array
+    {
+        return Municipio::query()->with('departamento')->activos()
+            ->where('nombre', 'like', "%{$busqueda}%")
+            ->orderBy('nombre')->limit(30)->get()
+            ->mapWithKeys(fn (Municipio $m) => [$m->id => $m->nombre_completo])->all();
     }
 }

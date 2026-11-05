@@ -7,6 +7,12 @@ class EditarManifiesto extends EditRecord
 {
     protected static string $resource = ManifiestoCargaResource::class;
 
+    /** En edición el wizard también cierra con el botón «Expedir manifiesto»; ocultamos los de la página. */
+    protected function getFormActions(): array
+    {
+        return [];
+    }
+
     /** Al guardar: asocia las remesas elegidas (y suelta las que se quitaron). */
     protected function afterSave(): void
     {

@@ -7,6 +7,12 @@ class CrearManifiesto extends CreateRecord
 {
     protected static string $resource = ManifiestoCargaResource::class;
 
+    /** El wizard trae su propio botón «Expedir manifiesto» en el último paso. */
+    protected function getFormActions(): array
+    {
+        return [];
+    }
+
     /** Al guardar: asocia las remesas elegidas (y suelta las que se quitaron). */
     protected function afterSave(): void
     {
