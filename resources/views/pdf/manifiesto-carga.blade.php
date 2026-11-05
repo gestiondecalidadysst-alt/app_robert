@@ -68,12 +68,12 @@
     <tr>
         <td class="p4" style="width: 14%; text-align: center; border-right: 0.6px solid #000;">
             @if ($logoMinisterio)
-                <img src="{{ $logoMinisterio }}" style="max-height: 42px; max-width: 120px">
+                <img src="{{ $logoMinisterio }}" style="max-height: 50px; max-width: 128px">
             @else
                 <div style="font-weight: bold; font-size: 8.5px; line-height: 1.15">MINISTERIO DE<br>TRANSPORTE</div>
             @endif
             @if ($logoSuper)
-                <img src="{{ $logoSuper }}" style="max-height: 30px; max-width: 128px; margin-top: 4px">
+                <img src="{{ $logoSuper }}" style="max-height: 34px; max-width: 132px; margin-top: 5px">
             @else
                 <div class="et" style="margin-top: 3px">SuperTransporte</div>
             @endif
