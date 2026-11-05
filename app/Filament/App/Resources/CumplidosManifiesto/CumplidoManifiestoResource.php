@@ -51,36 +51,60 @@ class CumplidoManifiestoResource extends Resource
             ->with(['origen', 'destino'])->orderBy('id', 'desc')->limit(100)->get()
             ->mapWithKeys(fn (ManifiestoCarga $m) => [$m->id => $m->numeroFormateado() . ' · ' . ($m->origen?->nombre ?? '—') . ' → ' . ($m->destino?->nombre ?? '—')]);
 
-        return $schema->components([
-            Section::make('Cumplido')
-                ->columns(['default' => 1, 'md' => 3])
+        return $schema->columns(['default' => 1, 'md' => 3])->components([
+            Section::make('Manifiesto que se cumple')
+                ->columnSpan(['default' => 1, 'md' => 2])
+                ->columns(['default' => 1, 'md' => 2])
                 ->schema([
-                    Select::make('manifiesto_id')->label('Manifiesto')->required()->searchable()->options($manifiestos),
-                    Select::make('tipo')->options(CumplidoManifiesto::TIPOS)->default('C')->required()->live(),
-                    DatePicker::make('fecha_entrega_documentos')->label('Entrega de documentos')->required()->default(today())->maxDate(today()),
+                    Select::make('manifiesto_id')->label('Manifiesto')->required()->searchable()->native(false)->options($manifiestos)->columnSpanFull()
+                        ->helperText('Solo aparecen los manifiestos vigentes que aún no se han cumplido.'),
+                    Select::make('tipo')->label('Tipo de cumplido')->options(CumplidoManifiesto::TIPOS)->default('C')->required()->live()->native(false)
+                        ->helperText('Normal = el viaje se realizó como se registró. Suspensión = se realizó parte del viaje y hubo un cambio.'),
+                    DatePicker::make('fecha_entrega_documentos')->label('Fecha de entrega de documentos')->required()->default(today())->maxDate(today())->native(false)
+                        ->helperText('Día en que el conductor entregó los documentos para el pago.'),
                 ]),
+            Section::make('Resumen del pago')
+                ->columnSpan(1)
+                ->schema([\Filament\Schemas\Components\Text::make(static::resumenPago())->columnSpanFull()]),
             Section::make('Suspensión')
+                ->columnSpanFull()
                 ->columns(['default' => 1, 'md' => 2])
                 ->visible(fn (Get $get) => $get('tipo') === 'S')
                 ->schema([
-                    Select::make('motivo_suspension')->label('Motivo')->options(CumplidoManifiesto::MOTIVOS_SUSPENSION)->required(fn (Get $get) => $get('tipo') === 'S'),
-                    Select::make('consecuencia_suspension')->label('Consecuencia (qué se cambió)')->options(CumplidoManifiesto::CONSECUENCIAS_SUSPENSION)->required(fn (Get $get) => $get('tipo') === 'S'),
+                    Select::make('motivo_suspension')->label('Motivo de la suspensión')->options(CumplidoManifiesto::MOTIVOS_SUSPENSION)->native(false)
+                        ->required(fn (Get $get) => $get('tipo') === 'S'),
+                    Select::make('consecuencia_suspension')->label('Qué se cambió')->options(CumplidoManifiesto::CONSECUENCIAS_SUSPENSION)->native(false)
+                        ->required(fn (Get $get) => $get('tipo') === 'S'),
                 ]),
-            Section::make('Ajustes al pago')
+            Section::make('Ajustes al pago (opcionales)')
                 ->description('Reporte solo lo que difiere del manifiesto. El sistema recalcula el valor neto a pagar al titular.')
-                ->columns(['default' => 1, 'md' => 3])
+                ->columnSpanFull()
+                ->columns(['default' => 1, 'md' => 2])
                 ->schema([
-                    TextInput::make('valor_adicional_cargue')->label('Adicional por cargue')->numeric()->minValue(0)->default(0)->prefix('$'),
-                    TextInput::make('valor_adicional_descargue')->label('Adicional por descargue')->numeric()->minValue(0)->default(0)->prefix('$'),
-                    TextInput::make('valor_adicional_flete')->label('Adicional al flete')->numeric()->minValue(0)->default(0)->prefix('$'),
-                    Select::make('motivo_adicional')->label('Motivo del adicional')->options(CumplidoManifiesto::MOTIVOS_ADICIONAL),
-                    TextInput::make('valor_descuento_flete')->label('Descuento al flete')->numeric()->minValue(0)->default(0)->prefix('$'),
-                    Select::make('motivo_descuento')->label('Motivo del descuento')->options(CumplidoManifiesto::MOTIVOS_DESCUENTO),
-                    TextInput::make('valor_sobreanticipo')->label('Sobreanticipo')->numeric()->minValue(0)->default(0)->prefix('$'),
+                    TextInput::make('valor_adicional_cargue')->label('Adicional por horas de cargue')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric'),
+                    TextInput::make('valor_adicional_descargue')->label('Adicional por horas de descargue')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric'),
+                    TextInput::make('valor_adicional_flete')->label('Otro adicional al flete')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric'),
+                    Select::make('motivo_adicional')->label('Motivo de los adicionales')->options(CumplidoManifiesto::MOTIVOS_ADICIONAL)->native(false)
+                        ->helperText('Obligatorio si hay algún adicional.'),
+                    TextInput::make('valor_descuento_flete')->label('Descuento al flete')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric'),
+                    Select::make('motivo_descuento')->label('Motivo del descuento')->options(CumplidoManifiesto::MOTIVOS_DESCUENTO)->native(false)
+                        ->helperText('Obligatorio si hay descuento.'),
+                    TextInput::make('valor_sobreanticipo')->label('Sobreanticipo entregado al conductor')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric')
+                        ->columnSpanFull()->helperText('No puede ser mayor que el saldo neto por pagar.'),
                 ]),
-            Section::make('Observaciones')
-                ->schema([Textarea::make('observaciones')->rows(2)->maxLength(200)]),
+            Section::make('Observaciones (opcional)')
+                ->collapsed()
+                ->columnSpanFull()
+                ->schema([Textarea::make('observaciones')->rows(2)->maxLength(200)->hiddenLabel()]),
         ]);
+    }
+
+    /** Texto estático de ayuda en la columna derecha; el neto real se calcula al guardar. */
+    private static function resumenPago(): string
+    {
+        return 'Al guardar, se recalcula el valor neto a pagar al titular con esta fórmula: '
+            . 'flete pactado ± adicionales − descuentos − anticipo del manifiesto − sobreanticipo − retefuente − reteica. '
+            . 'Verifique los ajustes antes de enviar al RNDC.';
     }
 
     public static function table(Table $table): Table

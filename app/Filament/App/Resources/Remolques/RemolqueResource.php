@@ -50,27 +50,47 @@ class RemolqueResource extends Resource
         $propietarios = fn () => Propietario::query()->where('activo', true)->orderBy('nombres')->get()
             ->mapWithKeys(fn (Propietario $p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento]);
 
-        return $schema->columns(['default' => 1, 'md' => 3])->components([
-            TextInput::make('placa')->required()->maxLength(6)->placeholder('R12345')->regex('/^[Rr]\d{5}$/')
-                ->validationMessages(['regex' => 'La placa es R seguida de 5 números.'])->scopedUnique(ignoreRecord: true),
-            Select::make('configuracion')->label('Configuración')->required()->live()->options(CatalogoRndc::CONFIGURACIONES_REMOLQUE),
-            TextInput::make('numero_ejes')->label('Número de ejes')->numeric()->minValue(1)->maxValue(20)
-                ->required(fn (Get $get) => in_array((int) $get('configuracion'), CatalogoRndc::CON_EJES, true))
-                ->visible(fn (Get $get) => in_array((int) $get('configuracion'), CatalogoRndc::CON_EJES, true)),
-            TextInput::make('marca_codigo')->label('Código RNDC de la marca')->required()->maxLength(10)
-                ->helperText('Tabla «Marca Semirremolque y Remolque» del anexo del RNDC.'),
-            TextInput::make('marca_nombre')->label('Marca')->maxLength(60),
-            TextInput::make('modelo')->label('Año del modelo')->required()->numeric()->minValue(1901)->maxValue((int) date('Y') + 1),
-            TextInput::make('peso_vacio')->label('Peso vacío (kg)')->required()->numeric()->minValue(201)->maxValue(52999),
-            TextInput::make('capacidad')->label('Capacidad')->numeric()->minValue(100)->maxValue(99999)
-                ->required(fn (Get $get) => in_array((int) $get('configuracion'), CatalogoRndc::CON_CAPACIDAD, true)),
-            Select::make('unidad_capacidad')->label('Unidad de la capacidad')->options(CatalogoRndc::UNIDADES_CAPACIDAD)->default(1)->required(),
-            TextInput::make('carroceria_codigo')->label('Código RNDC del tipo de carrocería')->maxLength(3),
-            Select::make('propietario_id')->label('Propietario')->required()->searchable()->options($propietarios),
-            Select::make('tenedor_id')->label('Tenedor (poseedor)')->searchable()->options($propietarios)
-                ->helperText('Vacío = el mismo propietario. En leasing, el propietario es la compañía de leasing y el tenedor quien lo usa.'),
-            Textarea::make('observaciones')->rows(2)->columnSpanFull(),
-            Toggle::make('activo')->default(true)->inline(false),
+        return $schema->components([
+            \Filament\Schemas\Components\Section::make('Identificación')
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    TextInput::make('placa')->label('Placa')->required()->maxLength(6)->placeholder('R12345')->regex('/^[Rr]\d{5}$/')
+                        ->validationMessages(['regex' => 'La placa es R seguida de 5 números (por ejemplo R12345).'])
+                        ->scopedUnique(ignoreRecord: true)
+                        ->helperText('Semirremolques, remolques y remolques balanceados siempre arrancan por R.'),
+                    TextInput::make('modelo')->label('Año del modelo')->required()->numeric()->minValue(1901)->maxValue((int) date('Y') + 1),
+                    Select::make('configuracion')->label('Configuración RNDC')->required()->live()->native(false)
+                        ->options(CatalogoRndc::CONFIGURACIONES_REMOLQUE)
+                        ->helperText('Según el número de ejes y si es semirremolque, remolque o remolque balanceado.'),
+                    TextInput::make('numero_ejes')->label('Número de ejes')->numeric()->minValue(1)->maxValue(20)
+                        ->required(fn (Get $get) => in_array((int) $get('configuracion'), CatalogoRndc::CON_EJES, true))
+                        ->visible(fn (Get $get) => in_array((int) $get('configuracion'), CatalogoRndc::CON_EJES, true)),
+                    TextInput::make('marca_nombre')->label('Marca (nombre)')->maxLength(60)->placeholder('Dite, Furel, Trailstar…'),
+                    TextInput::make('marca_codigo')->label('Código RNDC de la marca')->required()->maxLength(10)
+                        ->helperText('Tabla «Marca Semirremolque y Remolque» del anexo del RNDC.'),
+                    TextInput::make('carroceria_codigo')->label('Código RNDC de la carrocería')->maxLength(3)
+                        ->helperText('Tabla «Tipos de Carrocería» del anexo.'),
+                    Toggle::make('activo')->default(true)->inline(false),
+                ]),
+            \Filament\Schemas\Components\Section::make('Medidas y capacidad')
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    TextInput::make('peso_vacio')->label('Peso vacío')->required()->numeric()->minValue(201)->maxValue(52999)->suffix('kg'),
+                    TextInput::make('capacidad')->label('Capacidad')->numeric()->minValue(100)->maxValue(99999)
+                        ->required(fn (Get $get) => in_array((int) $get('configuracion'), CatalogoRndc::CON_CAPACIDAD, true))
+                        ->helperText('Obligatoria para semirremolques de más de 3 ejes, remolques de más de 4 ejes y balanceados de más de 4 ejes.'),
+                    Select::make('unidad_capacidad')->label('Unidad de la capacidad')->options(CatalogoRndc::UNIDADES_CAPACIDAD)->default(1)->required()->native(false),
+                ]),
+            \Filament\Schemas\Components\Section::make('Propietario y tenedor')
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    Select::make('propietario_id')->label('Propietario')->required()->searchable()->options($propietarios)->native(false),
+                    Select::make('tenedor_id')->label('Tenedor (poseedor)')->searchable()->options($propietarios)->native(false)
+                        ->helperText('En leasing, el propietario es la compañía de leasing y el tenedor quien lo usa. Si se deja vacío, el tenedor es el mismo propietario.'),
+                ]),
+            \Filament\Schemas\Components\Section::make('Observaciones (opcional)')
+                ->collapsed()
+                ->schema([Textarea::make('observaciones')->rows(2)->hiddenLabel()]),
         ]);
     }
 
