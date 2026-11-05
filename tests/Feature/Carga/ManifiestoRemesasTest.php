@@ -3,6 +3,7 @@
 namespace Tests\Feature\Carga;
 
 use App\Enums\ModuloEmpresa;
+use App\Filament\App\Resources\ManifiestosCarga\ManifiestoCargaResource;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\CrearManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\EditarManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\ListarManifiestos;
@@ -14,8 +15,10 @@ use App\Models\RemesaCarga;
 use App\Models\TerceroCarga;
 use App\Models\TipoIdentificacion;
 use App\Models\Vehiculo;
+use App\Support\Carga\AsociadorDeRemesas;
 use App\Support\Pdf\PdfManifiestoCarga;
 use Filament\Actions\Testing\TestAction;
+use Filament\Facades\Filament;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
@@ -167,5 +170,43 @@ class ManifiestoRemesasTest extends ConfiguracionTestCase
             ->assertHasNoActionErrors();
 
         $this->assertSame([$remesa->id], $manifiesto->fresh()->remesas()->pluck('id')->all());
+    }
+
+    public function test_la_asociacion_no_depende_de_la_empresa_activa_del_panel(): void
+    {
+        $this->prepararEmpresa();
+        $remesa = $this->remesa('Cemento gris');
+
+        $this->llenarAsistente(['remesas_ids' => [$remesa->id]])->assertHasNoFormErrors();
+        $manifiesto = ManifiestoCarga::query()->latest('id')->first();
+
+        $remesa->update(['manifiesto_id' => null]);
+
+        // Sin empresa activa (cola, consola o cualquier contexto fuera del panel)
+        // el global scope no filtra: la asociación debe seguir funcionando igual.
+        Filament::setTenant(null);
+
+        $asociadas = AsociadorDeRemesas::aplicar($manifiesto, [$remesa->id]);
+
+        $this->assertSame(1, $asociadas);
+        $this->assertSame($manifiesto->id, $remesa->fresh()->manifiesto_id);
+    }
+
+    public function test_el_selector_explica_cuando_no_hay_remesas_disponibles(): void
+    {
+        $this->prepararEmpresa();
+        $remesa = $this->remesa('Azúcar');
+        $this->llenarAsistente(['remesas_ids' => [$remesa->id]])->assertHasNoFormErrors();
+
+        $otra = ManifiestoCarga::query()->latest('id')->first();
+        $this->assertSame(1, $otra->remesas()->count());
+
+        // Todas las remesas están ya en un manifiesto: el selector de otro manifiesto debe decirlo.
+        $metodo = new \ReflectionMethod(ManifiestoCargaResource::class, 'porqueNoHayRemesas');
+        $metodo->setAccessible(true);
+        $vacio = new ManifiestoCarga;
+        $vacio->id = 999999;
+
+        $this->assertStringContainsString('otro manifiesto', $metodo->invoke(null, $vacio));
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Filament\App\Resources\ManifiestosCarga\Pages\Concerns;
 
-use App\Models\RemesaCarga;
+use App\Support\Carga\AsociadorDeRemesas;
 use Filament\Notifications\Notification;
 use Filament\Support\Exceptions\Halt;
 
@@ -65,12 +65,8 @@ trait AsociaRemesas
     protected function afterSave(): void
     {
         $record = $this->getRecord();
-        $ids = $this->remesasElegidas ?? [];
 
-        RemesaCarga::query()->where('manifiesto_id', $record->id)->whereNotIn('id', $ids)->update(['manifiesto_id' => null]);
-        RemesaCarga::query()->whereIn('id', $ids)->update(['manifiesto_id' => $record->id]);
-
-        $record->unsetRelation('remesas');
+        AsociadorDeRemesas::aplicar($record, $this->remesasElegidas ?? []);
     }
 
     protected function afterCreate(): void

@@ -34,14 +34,15 @@ class RemesasManifiestosTest extends ConfiguracionTestCase
         ]);
         $t->empresa_id = $this->demo->id;
         $t->save();
-        app(Rndc::class)->marcarManual($t, '100' . $doc);
+        app(Rndc::class)->marcarManual($t, '100'.$doc);
 
         return $t;
     }
 
     private function remesa(array $datos = []): RemesaCarga
     {
-        static $i = 0; $i++;
+        static $i = 0;
+        $i++;
         $remitente = $this->tercero(str_pad((string) (1000000 + $i * 10 + 1), 5, '0', STR_PAD_LEFT), 23001);
         $destinatario = $this->tercero(str_pad((string) (1000000 + $i * 10 + 2), 5, '0', STR_PAD_LEFT), 11001);
         $r = new RemesaCarga([
@@ -54,7 +55,7 @@ class RemesasManifiestosTest extends ConfiguracionTestCase
         ]);
         $r->empresa_id = $this->demo->id;
         $r->save();
-        app(Rndc::class)->marcarManual($r, '200' . $r->id);
+        app(Rndc::class)->marcarManual($r, '200'.$r->id);
 
         return $r;
     }
@@ -65,11 +66,11 @@ class RemesasManifiestosTest extends ConfiguracionTestCase
         $vehiculo = Vehiculo::query()->deEmpresa($this->demo)->where('placa', 'DMO101')->firstOrFail();
         $vehiculo->update(['rndc_configuracion' => 50, 'peso_vacio' => 4000, 'capacidad_kg' => 8000,
             'rndc_marca' => '1', 'rndc_linea' => '373', 'rndc_color' => '9439', 'rndc_carroceria' => '2', 'rndc_combustible' => 1]);
-        app(Rndc::class)->marcarManual($vehiculo->refresh(), '300' . $vehiculo->id);
+        app(Rndc::class)->marcarManual($vehiculo->refresh(), '300'.$vehiculo->id);
         $conductor = Conductor::query()->deEmpresa($this->demo)->where('documento', '20000001')->firstOrFail();
-        app(Rndc::class)->marcarManual($conductor, '400' . $conductor->id);
+        app(Rndc::class)->marcarManual($conductor, '400'.$conductor->id);
         $propietario = Propietario::query()->deEmpresa($this->demo)->firstOrFail();
-        app(Rndc::class)->marcarManual($propietario, '500' . $propietario->id);
+        app(Rndc::class)->marcarManual($propietario, '500'.$propietario->id);
 
         $m = new ManifiestoCarga([
             'tipo' => 'G', 'fecha_expedicion' => today(),
@@ -202,8 +203,8 @@ class RemesasManifiestosTest extends ConfiguracionTestCase
         $m = $this->manifiesto();
 
         Http::fake(['*' => Http::response('<?xml version="1.0"?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body>'
-            . '<NS1:AtenderMensajeRNDCResponse xmlns:NS1="urn:BPMServicesIntf-IBPMServices"><return>'
-            . htmlspecialchars('<root><ingresoid>999888</ingresoid></root>', ENT_XML1) . '</return></NS1:AtenderMensajeRNDCResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>')]);
+            .'<NS1:AtenderMensajeRNDCResponse xmlns:NS1="urn:BPMServicesIntf-IBPMServices"><return>'
+            .htmlspecialchars('<root><ingresoid>999888</ingresoid></root>', ENT_XML1).'</return></NS1:AtenderMensajeRNDCResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>')]);
 
         $registro = app(Rndc::class)->registrar($m);
         $this->assertSame('registrado', $registro->estado);

@@ -73,7 +73,7 @@ final class CatalogoRndc
     /** Código de municipio del RNDC: código DANE de 5 dígitos + 000. */
     public static function municipio(?string $dane): ?string
     {
-        return $dane ? str_pad($dane, 5, '0', STR_PAD_LEFT) . '000' : null;
+        return $dane ? str_pad($dane, 5, '0', STR_PAD_LEFT).'000' : null;
     }
 
     public static function tipoId(?string $codigo): ?string

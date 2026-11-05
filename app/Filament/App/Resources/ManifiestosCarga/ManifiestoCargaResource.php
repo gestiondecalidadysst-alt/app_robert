@@ -9,6 +9,7 @@ use App\Filament\App\Resources\ManifiestosCarga\Pages\ListarManifiestos;
 use App\Filament\App\Resources\ManifiestosCarga\Schemas\ManifiestoCargaForm;
 use App\Models\ManifiestoCarga;
 use App\Models\RemesaCarga;
+use App\Support\Carga\AsociadorDeRemesas;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -45,6 +46,22 @@ class ManifiestoCargaResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return ManifiestoCargaForm::form($schema);
+    }
+
+    /** Cuando el selector sale vacío, explica el motivo en vez de dejar la lista en blanco. */
+    private static function porqueNoHayRemesas(ManifiestoCarga $m): string
+    {
+        $libres = RemesaCarga::query()
+            ->where(fn ($query) => $query->whereNull('manifiesto_id')->orWhere('manifiesto_id', $m->id))
+            ->whereNull('anulado_at')->exists();
+
+        if ($libres) {
+            return 'Seleccione una o más remesas…';
+        }
+
+        return RemesaCarga::query()->exists()
+            ? 'No hay remesas disponibles: todas están en otro manifiesto o anuladas.'
+            : 'Todavía no ha creado ninguna remesa (Carga → Remesas).';
     }
 
     public static function table(Table $table): Table
@@ -87,14 +104,22 @@ class ManifiestoCargaResource extends Resource
                                 ->where(fn ($query) => $query->whereNull('manifiesto_id')->orWhere('manifiesto_id', $m->id))
                                 ->whereNull('anulado_at')->orderBy('id', 'desc')->limit(200)->get()
                                 ->mapWithKeys(fn ($r) => [$r->id => $r->numeroFormateado().' · '.$r->producto_descripcion]))
-                            ->helperText('Solo aparecen las remesas que aún no están en otro manifiesto.'),
+                            ->helperText('Solo aparecen las remesas que aún no están en otro manifiesto.')
+                            ->placeholder(fn (ManifiestoCarga $m) => self::porqueNoHayRemesas($m)),
                     ])
                     ->action(function (ManifiestoCarga $m, array $data): void {
-                        $ids = array_values(array_filter(array_map('intval', $data['remesas_ids'] ?? [])));
-                        RemesaCarga::query()->where('manifiesto_id', $m->id)->whereNotIn('id', $ids)->update(['manifiesto_id' => null]);
-                        RemesaCarga::query()->whereIn('id', $ids)->update(['manifiesto_id' => $m->id]);
+                        $asociadas = AsociadorDeRemesas::aplicar($m, $data['remesas_ids'] ?? []);
 
-                        Notification::make()->success()->title('Remesas asociadas')
+                        if ($asociadas === 0) {
+                            Notification::make()->danger()->title('No se asoció ninguna remesa')
+                                ->body('La remesa puede estar anulada o pertenecer a otra empresa. Avísenos para revisarlo.')
+                                ->persistent()->send();
+
+                            return;
+                        }
+
+                        Notification::make()->success()
+                            ->title($asociadas === 1 ? 'Remesa asociada' : $asociadas.' remesas asociadas')
                             ->body('Vuelva a descargar el PDF: ya saldrá la mercancía.')->send();
                     }),
                 Action::make('pdf')->label('Manifiesto (PDF)')->icon('heroicon-o-document-arrow-down')

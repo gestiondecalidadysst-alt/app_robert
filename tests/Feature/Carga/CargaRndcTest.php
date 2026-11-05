@@ -3,6 +3,7 @@
 namespace Tests\Feature\Carga;
 
 use App\Enums\ModuloEmpresa;
+use App\Filament\App\Pages\Integraciones;
 use App\Filament\App\Resources\TercerosCarga\Pages\GestionarTercerosCarga;
 use App\Models\Conductor;
 use App\Models\Municipio;
@@ -52,8 +53,8 @@ class CargaRndcTest extends ConfiguracionTestCase
     private static function soap(string $interno): string
     {
         return '<?xml version="1.0"?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body>'
-            . '<NS1:AtenderMensajeRNDCResponse xmlns:NS1="urn:BPMServicesIntf-IBPMServices"><return>' . htmlspecialchars($interno, ENT_XML1)
-            . '</return></NS1:AtenderMensajeRNDCResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>';
+            .'<NS1:AtenderMensajeRNDCResponse xmlns:NS1="urn:BPMServicesIntf-IBPMServices"><return>'.htmlspecialchars($interno, ENT_XML1)
+            .'</return></NS1:AtenderMensajeRNDCResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>';
     }
 
     public function test_variables_y_validaciones_de_terceros(): void
@@ -182,11 +183,11 @@ class CargaRndcTest extends ConfiguracionTestCase
         $this->assertSame('4321', $t->ultimoRegistroRndc()->first()->ingresoid);
 
         // Credenciales cifradas; la conexión exige usuario y clave.
-        Livewire::test(\App\Filament\App\Pages\Integraciones::class)
+        Livewire::test(Integraciones::class)
             ->assertSee('RNDC')
             ->set('data.rndc_conectado', true)->call('guardar');
         $this->assertFalse($this->demo->refresh()->rndc_conectado);
-        Livewire::test(\App\Filament\App\Pages\Integraciones::class)
+        Livewire::test(Integraciones::class)
             ->set('data.rndc_usuario', 'USUARIODEMO')->set('data.rndc_clave', 'clave-secreta')->set('data.rndc_conectado', true)->call('guardar');
         $this->demo->refresh();
         $this->assertTrue($this->demo->rndc_conectado);

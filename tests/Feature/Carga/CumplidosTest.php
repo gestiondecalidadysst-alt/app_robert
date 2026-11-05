@@ -30,33 +30,36 @@ class CumplidosTest extends ConfiguracionTestCase
         $i++;
 
         $remi = new TerceroCarga(['tipo_identificacion_id' => TipoIdentificacion::where('codigo', 'CC')->value('id'),
-            'documento' => '100000' . $i, 'nombre' => 'A', 'primer_apellido' => 'B', 'celular' => '3001234567',
+            'documento' => '100000'.$i, 'nombre' => 'A', 'primer_apellido' => 'B', 'celular' => '3001234567',
             'direccion' => 'x', 'municipio_id' => Municipio::where('codigo_dane', '76001')->value('id')]);
-        $remi->empresa_id = $this->demo->id; $remi->save();
-        app(Rndc::class)->marcarManual($remi, '100' . $i);
+        $remi->empresa_id = $this->demo->id;
+        $remi->save();
+        app(Rndc::class)->marcarManual($remi, '100'.$i);
 
         $dest = new TerceroCarga(['tipo_identificacion_id' => TipoIdentificacion::where('codigo', 'CC')->value('id'),
-            'documento' => '200000' . $i, 'nombre' => 'C', 'primer_apellido' => 'D', 'celular' => '3001234567',
+            'documento' => '200000'.$i, 'nombre' => 'C', 'primer_apellido' => 'D', 'celular' => '3001234567',
             'direccion' => 'y', 'municipio_id' => Municipio::where('codigo_dane', '11001')->value('id')]);
-        $dest->empresa_id = $this->demo->id; $dest->save();
-        app(Rndc::class)->marcarManual($dest, '200' . $i);
+        $dest->empresa_id = $this->demo->id;
+        $dest->save();
+        app(Rndc::class)->marcarManual($dest, '200'.$i);
 
         $remesa = new RemesaCarga(['fecha' => today()->subDays(2), 'operacion' => 'G', 'empaque_codigo' => '6', 'naturaleza' => 1,
             'producto_codigo' => '001504', 'producto_descripcion' => 'ACEITE', 'cantidad' => 20000, 'unidad' => 1,
             'remitente_id' => $remi->id, 'destinatario_id' => $dest->id, 'dueno_poliza' => 'N',
             'horas_pacto_descargue' => 12, 'minutos_pacto_descargue' => 0]);
-        $remesa->empresa_id = $this->demo->id; $remesa->save();
-        app(Rndc::class)->marcarManual($remesa, '300' . $i);
+        $remesa->empresa_id = $this->demo->id;
+        $remesa->save();
+        app(Rndc::class)->marcarManual($remesa, '300'.$i);
 
         $v = Vehiculo::query()->deEmpresa($this->demo)->where('placa', 'DMO101')->firstOrFail();
         $v->update(['rndc_configuracion' => 50, 'peso_vacio' => 4000, 'capacidad_kg' => 8000, 'rndc_marca' => '1',
             'rndc_linea' => '373', 'rndc_color' => '9439', 'rndc_carroceria' => '2', 'rndc_combustible' => 1]);
-        app(Rndc::class)->marcarManual($v->refresh(), '400' . $i);
+        app(Rndc::class)->marcarManual($v->refresh(), '400'.$i);
 
         $c = Conductor::query()->deEmpresa($this->demo)->where('documento', '20000001')->firstOrFail();
-        app(Rndc::class)->marcarManual($c, '500' . $i);
+        app(Rndc::class)->marcarManual($c, '500'.$i);
         $prop = Propietario::query()->deEmpresa($this->demo)->firstOrFail();
-        app(Rndc::class)->marcarManual($prop, '600' . $i);
+        app(Rndc::class)->marcarManual($prop, '600'.$i);
 
         $m = new ManifiestoCarga(['tipo' => 'G', 'fecha_expedicion' => today()->subDays(2),
             'origen_id' => Municipio::where('codigo_dane', '76001')->value('id'),
@@ -64,9 +67,10 @@ class CumplidosTest extends ConfiguracionTestCase
             'vehiculo_id' => $v->id, 'conductor_id' => $c->id, 'titular_propietario_id' => $prop->id,
             'valor_flete' => 3200000, 'anticipo' => 1000000, 'retencion_fuente_pct' => 1, 'reteica_por_mil' => 3,
             'responsable_cargue' => 'E', 'responsable_descargue' => 'E']);
-        $m->empresa_id = $this->demo->id; $m->save();
+        $m->empresa_id = $this->demo->id;
+        $m->save();
         $remesa->update(['manifiesto_id' => $m->id]);
-        app(Rndc::class)->marcarManual($m->refresh(), '700' . $i);
+        app(Rndc::class)->marcarManual($m->refresh(), '700'.$i);
 
         return $m->refresh();
     }
