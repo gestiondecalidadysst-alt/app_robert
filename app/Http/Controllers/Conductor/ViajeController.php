@@ -34,7 +34,7 @@ class ViajeController extends Controller
 
         return response(PdfPlanViaje::servicio($servicio), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . PdfPlanViaje::nombre($servicio) . '"',
+            'Content-Disposition' => 'inline; filename="'.PdfPlanViaje::nombre($servicio).'"',
         ]);
     }
 

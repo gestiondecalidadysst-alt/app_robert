@@ -8,13 +8,16 @@ use App\Filament\Admin\Pages\ConsumoConsultas;
 use App\Filament\Admin\Pages\ProveedorConsultas;
 use App\Filament\App\Pages\Integraciones;
 use App\Filament\App\Resources\Conductores\Pages\VerConductor;
+use App\Filament\App\Resources\Vehiculos\Pages\VerVehiculo;
 use App\Filament\App\Transito\ComparendosRelationManager;
+use App\Filament\App\Transito\ConsultasRelationManager;
 use App\Jobs\ConsultarTransitoJob;
 use App\Models\ComparendoTransito;
 use App\Models\Conductor;
 use App\Models\ConsultaTransito;
 use App\Models\ProveedorTransito;
 use App\Models\Vehiculo;
+use App\Support\Pdf\PdfConsultaTransito;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -143,7 +146,7 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         $this->assertMatchesRegularExpression('/^[a-z0-9]{24}$/', $consulta->codigo_verificacion);
 
         // Historial: usuario, ver resultado y constancia.
-        Livewire::test(\App\Filament\App\Transito\ConsultasRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
+        Livewire::test(ConsultasRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
             ->assertSee($usuario->name)
             ->assertTableActionVisible('constancia', $consulta)
             ->mountTableAction('ver', $consulta)->assertHasNoErrors();
@@ -152,7 +155,7 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         $this->assertStringContainsString('Estacionar en sitio prohibido', $detalle);
 
         $html = view('pdf.constancia-transito', ['c' => $consulta, 'd' => $consulta->detalle(), 'empresa' => $this->demo, 'logo' => null, 'qr' => '',
-            'sujeto' => \App\Support\Pdf\PdfConsultaTransito::sujeto($c, $consulta)])->render();
+            'sujeto' => PdfConsultaTransito::sujeto($c, $consulta)])->render();
         $this->assertStringContainsString('REGISTRA 1 COMPARENDO O MULTA PENDIENTE', $html);
         $this->assertStringContainsString('2300100000012345', $html);
         $this->assertStringContainsString('PENDIENTE DE PAGO', $html);
@@ -166,7 +169,7 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         $this->responder(Http::response(['data' => ['totalDeuda' => 0, 'pazSalvo' => true, 'comparendos' => [], 'resoluciones' => [], 'acuerdos' => []]]));
         $paz = $this->consultar($c, T::ConductorComparendos);
         $this->assertTrue($paz->detalle()['paz_y_salvo']);
-        $this->assertStringStartsWith('paz-y-salvo-', \App\Support\Pdf\PdfConsultaTransito::nombre($paz));
+        $this->assertStringStartsWith('paz-y-salvo-', PdfConsultaTransito::nombre($paz));
         $this->get($paz->urlVerificacion())->assertOk()->assertSee('No registra comparendos ni multas pendientes');
 
         // Las consultas con error no tienen constancia.
@@ -242,7 +245,7 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         $c = $this->conductor();
         $this->assertSame([], $c->bloqueosTransito());
 
-        Http::fake([self::URL . '/api/licencia' => Http::response(['data' => ['driverStatus' => 'ACTIVO', 'licenses' => [
+        Http::fake([self::URL.'/api/licencia' => Http::response(['data' => ['driverStatus' => 'ACTIVO', 'licenses' => [
             ['category' => 'C2', 'status' => 'SUSPENDIDA', 'dueDate' => '2028-01-01'],
         ]]])]);
         $this->consultar($c, T::ConductorLicencia);
@@ -268,7 +271,7 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
     {
         $this->entrarComo('admin@demo.test');
         $v = $this->vehiculo();
-        Http::fake([self::URL . '/api/consulta' => Http::response(['data' => [
+        Http::fake([self::URL.'/api/consulta' => Http::response(['data' => [
             'informacionGeneral' => ['estado' => 'ACTIVO'],
             'soat' => [['fechaVencimiento' => '2027-05-01', 'estado' => 'VIGENTE']],
             'tecnoMecanica' => [['fechaVencimiento' => '2027-03-01', 'vigente' => 'SI']],
@@ -318,14 +321,14 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         // Las dos pestañas cargan con datos (comparendos e historial), en conductor y en vehículo.
         Livewire::test(ComparendosRelationManager::class, ['ownerRecord' => $c->refresh(), 'pageClass' => VerConductor::class])
             ->assertOk()->assertSee('2300100000012345');
-        Livewire::test(\App\Filament\App\Transito\ConsultasRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
+        Livewire::test(ConsultasRelationManager::class, ['ownerRecord' => $c, 'pageClass' => VerConductor::class])
             ->assertOk()->assertSee('Con datos')->assertSee('$ 2.500');
         $v = $this->vehiculo();
-        foreach ([ComparendosRelationManager::class, \App\Filament\App\Transito\ConsultasRelationManager::class] as $rm) {
-            Livewire::test($rm, ['ownerRecord' => $v, 'pageClass' => \App\Filament\App\Resources\Vehiculos\Pages\VerVehiculo::class])->assertOk();
+        foreach ([ComparendosRelationManager::class, ConsultasRelationManager::class] as $rm) {
+            Livewire::test($rm, ['ownerRecord' => $v, 'pageClass' => VerVehiculo::class])->assertOk();
         }
         $this->actingAs($this->usuario('auxiliar@demo.test'));
-        $this->get('/app/cootrasec-demo/conductores/' . $c->id)->assertOk();
+        $this->get('/app/cootrasec-demo/conductores/'.$c->id)->assertOk();
 
         $this->entrarComo('admin@demo.test');
         Livewire::test(Integraciones::class)
@@ -363,7 +366,7 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         Livewire::test(ConsumoConsultas::class)->assertSee('$ 1.802')->callAction('excel')->assertFileDownloaded();
         Livewire::test(ProveedorConsultas::class)->assertOk();
 
-        $this->get('/admin/empresas/' . $this->demo->id . '/editar')->assertOk()->assertSee('Consultas de tránsito');
+        $this->get('/admin/empresas/'.$this->demo->id.'/editar')->assertOk()->assertSee('Consultas de tránsito');
 
         $this->actingAs($this->usuario('admin@demo.test'));
         $this->get('/admin/consumo-consultas')->assertForbidden();

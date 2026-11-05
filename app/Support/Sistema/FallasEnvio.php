@@ -54,7 +54,7 @@ final class FallasEnvio
         if ($empresa) {
             Avisos::aQuienPueda($empresa, 'ver_integraciones', Notification::make()->warning()
                 ->title($envio->canal === 'sms' ? 'Los SMS no se están enviando' : 'Los correos no se están enviando')
-                ->body($mensaje . ' Detalle: ' . Str::limit((string) $envio->error, 160)));
+                ->body($mensaje.' Detalle: '.Str::limit((string) $envio->error, 160)));
         }
     }
 }

@@ -5,9 +5,10 @@ namespace App\Actions\Configuracion;
 use App\Models\Empresa;
 use App\Models\Oficina;
 use App\Models\PlantillaContrato;
-use App\Support\Contratos\PlantillaBase;
 use App\Models\Rol;
 use App\Models\User;
+use App\Support\Contratos\PlantillaBase;
+use App\Support\Mantenimiento\RutinasBase;
 use App\Support\Permisos;
 use App\Support\Pesv\ItemsBase;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,7 @@ class CrearEmpresa
 
             self::crearPlantillaContrato($empresa);
             ItemsBase::crear($empresa);
-            \App\Support\Mantenimiento\RutinasBase::crear($empresa);
+            RutinasBase::crear($empresa);
 
             return $empresa;
         });

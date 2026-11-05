@@ -7,6 +7,7 @@ use App\Enums\PrioridadPlan;
 use App\Models\PlanAccion;
 use App\Models\Vehiculo;
 use App\Support\Mantenimiento\PlanPreventivo;
+use App\Support\Webhooks;
 
 /**
  * Abre un plan de acción (prioridad media: solo alerta, no bloquea) por cada rutina preventiva
@@ -43,8 +44,8 @@ final class SeguimientoPreventivo
                 'hallazgos' => [[
                     'descripcion' => $rutina->nombre,
                     'critico' => false,
-                    'observacion' => PlanPreventivo::textoFaltante($fila) . '. Último: ' . $fila['ultimo']->fecha->format('d/m/Y')
-                        . ($fila['ultimo']->kilometraje !== null ? ' a ' . number_format($fila['ultimo']->kilometraje, 0, ',', '.') . ' km' : '') . '.',
+                    'observacion' => PlanPreventivo::textoFaltante($fila).'. Último: '.$fila['ultimo']->fecha->format('d/m/Y')
+                        .($fila['ultimo']->kilometraje !== null ? ' a '.number_format($fila['ultimo']->kilometraje, 0, ',', '.').' km' : '').'.',
                     'fecha' => today()->toDateString(),
                     'veces' => 1,
                 ]],
@@ -55,7 +56,7 @@ final class SeguimientoPreventivo
             $nuevo->empresa_id = $vehiculo->empresa_id;
             $nuevo->save();
             $abiertos++;
-            \App\Support\Webhooks::emitir($vehiculo->empresa_id, 'plan_accion.creado', RegistrarMantenimiento::datosPlan($nuevo, $vehiculo));
+            Webhooks::emitir($vehiculo->empresa_id, 'plan_accion.creado', RegistrarMantenimiento::datosPlan($nuevo, $vehiculo));
         }
 
         return $abiertos;

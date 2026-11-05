@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 /**
  * Marca de vehículo.
  */
@@ -9,7 +11,7 @@ class Marca extends Catalogo
 {
     protected $table = 'marcas';
 
-    public function lineas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function lineas(): HasMany
     {
         return $this->hasMany(Linea::class);
     }

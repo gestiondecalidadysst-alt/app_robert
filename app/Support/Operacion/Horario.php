@@ -72,10 +72,10 @@ final class Horario
     public function texto(): string
     {
         $dias = $this->fechaInicio->isSameDay($this->fechaFin)
-            ? 'el ' . $this->fechaInicio->format('d/m/Y')
-            : 'del ' . $this->fechaInicio->format('d/m/Y') . ' al ' . $this->fechaFin->format('d/m/Y');
+            ? 'el '.$this->fechaInicio->format('d/m/Y')
+            : 'del '.$this->fechaInicio->format('d/m/Y').' al '.$this->fechaFin->format('d/m/Y');
 
-        return $dias . ', ' . $this->franjaTexto();
+        return $dias.', '.$this->franjaTexto();
     }
 
     public function franjaTexto(): string
@@ -84,8 +84,8 @@ final class Horario
             return 'todo el día';
         }
 
-        return 'de ' . self::hhmm($this->horaInicio ?? '00:00') . ' a ' . self::hhmm($this->horaFin ?? '23:59')
-            . ($this->hasta > self::DIA ? ' (del día siguiente)' : '');
+        return 'de '.self::hhmm($this->horaInicio ?? '00:00').' a '.self::hhmm($this->horaFin ?? '23:59')
+            .($this->hasta > self::DIA ? ' (del día siguiente)' : '');
     }
 
     /** @return array{0:int,1:int} minutos absolutos [inicio, fin) del servicio en el día $d */

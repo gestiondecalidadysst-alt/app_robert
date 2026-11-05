@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Models\EnvioMensaje;
 use App\Services\Mensajeria\Mensajero;
+use App\Support\Sistema\Colas;
+use App\Support\Sistema\FallasEnvio;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -24,9 +26,8 @@ class EnviarSms implements ShouldBeEncrypted, ShouldQueue
         public int $envioId,
         public string $celular,
         public string $texto,
-    )
-    {
-        $this->onQueue(\App\Support\Sistema\Colas::ALTA);
+    ) {
+        $this->onQueue(Colas::ALTA);
     }
 
     public function handle(): void
@@ -45,7 +46,7 @@ class EnviarSms implements ShouldBeEncrypted, ShouldQueue
 
         // Sin créditos, IP no autorizada, credenciales o destino inválido: no se arregla reintentando y no
         // es un error del sistema. Queda «fallido» en el historial (Mensajero ya avisó a la empresa).
-        if (\App\Support\Sistema\FallasEnvio::permanente($envio->error)) {
+        if (FallasEnvio::permanente($envio->error)) {
             return;
         }
 

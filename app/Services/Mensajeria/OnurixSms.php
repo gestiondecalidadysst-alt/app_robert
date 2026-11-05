@@ -31,7 +31,7 @@ final class OnurixSms
                     'country_code' => 'CO',
                 ]);
         } catch (ConnectionException $e) {
-            return new ResultadoSms(false, error: 'No hubo conexión con Onurix: ' . $e->getMessage());
+            return new ResultadoSms(false, error: 'No hubo conexión con Onurix: '.$e->getMessage());
         }
 
         $json = $respuesta->json() ?? [];
@@ -64,7 +64,7 @@ final class OnurixSms
 
     public static function url(string $ruta): string
     {
-        return rtrim((string) config('ruta.onurix.url'), '/') . $ruta;
+        return rtrim((string) config('ruta.onurix.url'), '/').$ruta;
     }
 
     /**
@@ -102,7 +102,7 @@ final class OnurixSms
             $ip = self::ipSalida();
 
             return "Onurix: {$mensaje}. Autorice en su cuenta de Onurix la IP de este servidor"
-                . ($ip ? ": {$ip}" : ' (no se pudo averiguar; use «Ver IP del servidor»)') . '.';
+                .($ip ? ": {$ip}" : ' (no se pudo averiguar; use «Ver IP del servidor»)').'.';
         }
 
         return match (true) {

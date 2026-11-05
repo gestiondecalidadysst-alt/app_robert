@@ -38,7 +38,7 @@ class FirmaContratoTest extends ConfiguracionTestCase
             if (str_contains($request->url(), '/send-sms')) {
                 $this->sms[] = $request->data();
 
-                return Http::response(['status' => 'success', 'transactionId' => 'TX' . count($this->sms)]);
+                return Http::response(['status' => 'success', 'transactionId' => 'TX'.count($this->sms)]);
             }
 
             return Http::response(['status' => 'success', 'balance' => 1234]);
@@ -91,7 +91,7 @@ class FirmaContratoTest extends ConfiguracionTestCase
         ob_start();
         imagepng($img);
 
-        return 'data:image/png;base64,' . base64_encode(ob_get_clean());
+        return 'data:image/png;base64,'.base64_encode(ob_get_clean());
     }
 
     private function ultimoCodigoSms(): string
@@ -141,7 +141,7 @@ class FirmaContratoTest extends ConfiguracionTestCase
         $guardar = app(GuardarPlantillaContrato::class);
         $vigente = $this->demo->plantillaContratoVigente();
 
-        $nueva = $guardar($this->demo, ['contenido' => $vigente->contenido . '<p>Cláusula nueva.</p>', 'codigo_formato' => 'GPS-PR01-FT03']);
+        $nueva = $guardar($this->demo, ['contenido' => $vigente->contenido.'<p>Cláusula nueva.</p>', 'codigo_formato' => 'GPS-PR01-FT03']);
         $this->assertSame($vigente->version + 1, $nueva->version);
         $this->assertTrue($nueva->esVigente());
         $this->assertFalse($vigente->fresh()->esVigente());
@@ -213,12 +213,12 @@ class FirmaContratoTest extends ConfiguracionTestCase
         $this->assertMatchesRegularExpression('/^\d{6}$/', $codigo);
 
         // Código equivocado: no firma y descuenta intentos.
-        $this->post(route('contrato.firma.firmar', $token), ['codigo' => '000000' === $codigo ? '111111' : '000000', 'firma' => $this->firmaPng(), 'acepto' => 1])
+        $this->post(route('contrato.firma.firmar', $token), ['codigo' => $codigo === '000000' ? '111111' : '000000', 'firma' => $this->firmaPng(), 'acepto' => 1])
             ->assertSessionHasErrors('codigo');
         $this->assertSame(EstadoFirma::Visto, $documento->fresh()->estado);
 
         // Sin dibujar la firma: no firma.
-        $this->post(route('contrato.firma.firmar', $token), ['codigo' => $codigo, 'firma' => 'data:image/png;base64,' . base64_encode('x'), 'acepto' => 1])
+        $this->post(route('contrato.firma.firmar', $token), ['codigo' => $codigo, 'firma' => 'data:image/png;base64,'.base64_encode('x'), 'acepto' => 1])
             ->assertSessionHasErrors('firma');
 
         // Código correcto + firma + aceptación: firmado.
@@ -249,7 +249,7 @@ class FirmaContratoTest extends ConfiguracionTestCase
             'archivo' => UploadedFile::fake()->createWithContent('contrato.pdf', $pdf),
         ])->assertOk()->assertSee('Coincide');
         $this->post(route('contrato.verificar.archivo', $documento->codigo_verificacion), [
-            'archivo' => UploadedFile::fake()->createWithContent('contrato.pdf', $pdf . '%alterado'),
+            'archivo' => UploadedFile::fake()->createWithContent('contrato.pdf', $pdf.'%alterado'),
         ])->assertOk()->assertSee('No coincide');
 
         // Evidencias.

@@ -24,7 +24,7 @@ class CambiarEstadoConductor
     ): NovedadConductor {
         if (! in_array($tipo, TipoNovedadConductor::disponiblesDesde($conductor->estado), true)) {
             throw ValidationException::withMessages([
-                'tipo' => "No se puede registrar «{$tipo->getLabel()}» a un conductor " . mb_strtolower($conductor->estado->getLabel()) . '.',
+                'tipo' => "No se puede registrar «{$tipo->getLabel()}» a un conductor ".mb_strtolower($conductor->estado->getLabel()).'.',
             ]);
         }
 

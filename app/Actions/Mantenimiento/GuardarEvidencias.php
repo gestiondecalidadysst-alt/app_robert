@@ -41,12 +41,12 @@ final class GuardarEvidencias
     {
         self::validar($archivos);
 
-        $carpeta = Str::plural(Str::snake(class_basename($adjuntable))) . "/{$adjuntable->empresa_id}/{$adjuntable->getKey()}";
+        $carpeta = Str::plural(Str::snake(class_basename($adjuntable)))."/{$adjuntable->empresa_id}/{$adjuntable->getKey()}";
         $guardadas = [];
 
         foreach ($archivos as $archivo) {
             $extension = Str::lower($archivo->getClientOriginalExtension() ?: $archivo->guessExtension() ?: 'bin');
-            $ruta = $carpeta . '/' . now()->format('YmdHis') . '-' . Str::lower(Str::random(8)) . '.' . $extension;
+            $ruta = $carpeta.'/'.now()->format('YmdHis').'-'.Str::lower(Str::random(8)).'.'.$extension;
 
             if (! Storage::disk(Evidencia::DISCO)->put($ruta, file_get_contents($archivo->getRealPath())) || ! Storage::disk(Evidencia::DISCO)->exists($ruta)) {
                 report(new \RuntimeException("No se pudo escribir la evidencia en storage/app/private/{$ruta}"));

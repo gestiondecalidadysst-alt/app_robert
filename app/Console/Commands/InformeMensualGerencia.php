@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ModuloEmpresa;
 use App\Models\Empresa;
 use App\Support\Gerencia\InformeGerencia;
 use Illuminate\Console\Command;
@@ -20,12 +21,12 @@ class InformeMensualGerencia extends Command
     public function handle(): int
     {
         Empresa::query()->where('activa', true)->each(function (Empresa $empresa): void {
-            if (! $empresa->tieneModulo(\App\Enums\ModuloEmpresa::Gerencia)) {
+            if (! $empresa->tieneModulo(ModuloEmpresa::Gerencia)) {
                 return;
             }
             try {
                 $r = InformeGerencia::enviarMensual($empresa);
-                $this->info("{$empresa->razon_social}: {$r['correos']} correo(s)" . ($r['webhook'] ? ' y webhook' : ''));
+                $this->info("{$empresa->razon_social}: {$r['correos']} correo(s)".($r['webhook'] ? ' y webhook' : ''));
             } catch (Throwable $e) {
                 report($e);
                 $this->error("{$empresa->razon_social}: {$e->getMessage()}");

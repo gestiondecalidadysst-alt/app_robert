@@ -6,15 +6,19 @@ use App\Filament\Admin\Pages\EstadoSistema;
 use App\Jobs\EnviarCorreo;
 use App\Jobs\EnviarSms;
 use App\Jobs\EnviarWebhook;
+use App\Mail\CorreoInformeGerencia;
 use App\Models\ErrorSistema;
 use App\Models\User;
+use App\Services\Mensajeria\Mensajero;
 use App\Support\Sistema\Colas;
 use App\Support\Sistema\Latidos;
 use App\Support\Sistema\Referencia;
 use App\Support\Sistema\RegistroErrores;
+use App\Support\Sistema\UrlApp;
 use Filament\Facades\Filament;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -37,7 +41,7 @@ class SistemaTest extends ConfiguracionTestCase
     public function test_cada_trabajo_va_a_su_fila_y_los_webhooks_van_cifrados(): void
     {
         $this->assertSame(Colas::ALTA, (new EnviarSms(1, '3000000000', 'x'))->queue);
-        $this->assertSame(Colas::ALTA, (new EnviarCorreo(1, 'a@b.test', new \App\Mail\CorreoInformeGerencia('E', 'D', 'P', '', 'x.pdf')))->queue);
+        $this->assertSame(Colas::ALTA, (new EnviarCorreo(1, 'a@b.test', new CorreoInformeGerencia('E', 'D', 'P', '', 'x.pdf')))->queue);
         $this->assertSame(Colas::BAJA, (new EnviarWebhook(1))->queue);
         $this->assertInstanceOf(ShouldBeEncrypted::class, new EnviarWebhook(1));
         $this->assertSame(['alta', 'default', 'baja'], Colas::ORDEN);
@@ -146,11 +150,11 @@ class SistemaTest extends ConfiguracionTestCase
         $this->actingAs($this->superadmin());
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         config(['app.url' => 'http://localhost']);
-        $this->assertTrue(\App\Support\Sistema\UrlApp::sinConfigurar());
+        $this->assertTrue(UrlApp::sinConfigurar());
         $this->get('/admin/estado-sistema')->assertOk()->assertSee('APP_URL está en');
 
         config(['app.url' => 'https://prueba.ejemplo.test']);
-        $this->assertFalse(\App\Support\Sistema\UrlApp::sinConfigurar());
+        $this->assertFalse(UrlApp::sinConfigurar());
         $this->get('/admin/estado-sistema')->assertOk()->assertDontSee('APP_URL está en');
     }
 
@@ -158,14 +162,14 @@ class SistemaTest extends ConfiguracionTestCase
     {
         $this->demo->forceFill(['sms_habilitado' => true, 'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba'])->save();
         $intentos = 0;
-        \Illuminate\Support\Facades\Http::fake(function () use (&$intentos) {
+        Http::fake(function () use (&$intentos) {
             $intentos++;
 
-            return \Illuminate\Support\Facades\Http::response(['status' => 'error', 'msg' => 'Necesita mas créditos para hacer el envió'], 400);
+            return Http::response(['status' => 'error', 'msg' => 'Necesita mas créditos para hacer el envió'], 400);
         });
 
         config(['queue.default' => 'database']);
-        $envio = \App\Services\Mensajeria\Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Hola');
+        $envio = Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Hola');
         $this->artisan('queue:work', ['--once' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
 
         $envio->refresh();
@@ -180,7 +184,7 @@ class SistemaTest extends ConfiguracionTestCase
         $this->artisan('queue:work', ['--stop-when-empty' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
         $admin = $this->usuario('admin@demo.test');
         $this->assertSame(1, $admin->notifications()->where('data', 'like', '%Los SMS no se est%')->count());
-        \App\Services\Mensajeria\Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Otra', ahora: true);
+        Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Otra', ahora: true);
         $this->artisan('queue:work', ['--stop-when-empty' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
         $this->assertSame(1, $admin->notifications()->where('data', 'like', '%Los SMS no se est%')->count());
     }
@@ -188,10 +192,10 @@ class SistemaTest extends ConfiguracionTestCase
     public function test_falla_pasajera_se_reintenta_sin_registrar_error(): void
     {
         $this->demo->forceFill(['sms_habilitado' => true, 'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba'])->save();
-        \Illuminate\Support\Facades\Http::fake(fn () => \Illuminate\Support\Facades\Http::response('Bad gateway', 502));
+        Http::fake(fn () => Http::response('Bad gateway', 502));
 
         config(['queue.default' => 'database']);
-        \App\Services\Mensajeria\Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Hola');
+        Mensajero::sms($this->demo, 'recordatorio_firma', '3001234567', 'Hola');
         $this->artisan('queue:work', ['--once' => true, '--queue' => 'alta,default,baja', '--memory' => 2048])->assertSuccessful();
 
         $trabajo = DB::table('jobs')->where('queue', 'alta')->first();

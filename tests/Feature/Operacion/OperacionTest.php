@@ -122,7 +122,7 @@ class OperacionTest extends ConfiguracionTestCase
         $this->assertSame(1, $fuec->consecutivo);
         $this->assertSame(2, $otro->consecutivo);
         $this->assertSame(21, strlen($fuec->numero));
-        $this->assertStringEndsWith(str_pad((string) $contrato->numero, 4, '0', STR_PAD_LEFT) . '0002', $otro->numero);
+        $this->assertStringEndsWith(str_pad((string) $contrato->numero, 4, '0', STR_PAD_LEFT).'0002', $otro->numero);
         $this->assertSame('DMO101', $fuec->datos['vehiculo']['placa']);
         $this->assertSame('Conductor Uno Demo', $fuec->datos['conductores'][0]['nombre']);
         $this->assertSame([1, 2], $otro->conductores->pluck('pivot.orden')->all());
@@ -170,7 +170,7 @@ class OperacionTest extends ConfiguracionTestCase
         ]));
         $this->assertArrayNotHasKey('vehiculo_id', $errores);
         $this->assertStringContainsString('técnico-mecánica', $errores['fecha_fin'][0]);
-        $this->assertStringContainsString('máxima posible es ' . today()->addDays(12)->format('d/m/Y'), $errores['fecha_fin'][0]);
+        $this->assertStringContainsString('máxima posible es '.today()->addDays(12)->format('d/m/Y'), $errores['fecha_fin'][0]);
         $this->assertSame([], $expedir->validar($this->demo, $this->datosFuec([
             'vehiculo_id' => $dmo102->id,
             'fecha_fin' => today()->addDays(12)->toDateString(),

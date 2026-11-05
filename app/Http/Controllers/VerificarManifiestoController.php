@@ -21,7 +21,7 @@ class VerificarManifiestoController extends Controller
 
         return response(PdfManifiestoCarga::pdf($m), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . PdfManifiestoCarga::nombre($m) . '"',
+            'Content-Disposition' => 'inline; filename="'.PdfManifiestoCarga::nombre($m).'"',
         ]);
     }
 

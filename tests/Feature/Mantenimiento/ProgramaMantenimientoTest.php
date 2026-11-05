@@ -11,11 +11,9 @@ use App\Actions\Mantenimiento\RegistrarMantenimiento;
 use App\Enums\EstadoActividad;
 use App\Enums\EstadoPrograma;
 use App\Filament\App\Resources\Vehiculos\Pages\PlanMantenimientoVehiculo;
-use App\Jobs\EnviarWebhook;
-use App\Models\ActividadMantenimiento;
 use App\Models\Mantenimiento;
+use App\Models\PlanAccion;
 use App\Models\PlantillaMantenimiento;
-use App\Models\ProgramaMantenimiento;
 use App\Models\RutinaMantenimiento;
 use App\Models\Vehiculo;
 use App\Models\WebhookEntrega;
@@ -25,7 +23,6 @@ use App\Support\Pdf\PdfProgramaMantenimiento;
 use App\Support\Webhooks;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
@@ -209,7 +206,7 @@ class ProgramaMantenimientoTest extends ConfiguracionTestCase
             '/app/cootrasec-demo/calendario-mantenimiento',
             '/app/cootrasec-demo/plantillas-mantenimiento',
             '/app/cootrasec-demo/plantillas-mantenimiento/crear',
-            '/app/cootrasec-demo/plantillas-mantenimiento/' . $this->general()->id . '/editar',
+            '/app/cootrasec-demo/plantillas-mantenimiento/'.$this->general()->id.'/editar',
             "/app/cootrasec-demo/vehiculos/{$v->id}/plan-mantenimiento",
             '/app/cootrasec-demo/plan-preventivo',
             '/app/cootrasec-demo/integraciones',
@@ -253,7 +250,7 @@ class ProgramaMantenimientoTest extends ConfiguracionTestCase
         $this->assertSame('plan_accion.creado', $entrega->evento);
         $this->assertSame('enviado', $entrega->estado, 'La cola es síncrona en pruebas.');
         Http::assertSent(function ($request) {
-            $firma = 'sha256=' . hash_hmac('sha256', $request->body(), 'secreto-de-prueba');
+            $firma = 'sha256='.hash_hmac('sha256', $request->body(), 'secreto-de-prueba');
 
             return $request->url() === 'https://n8n.test/webhook/ruta'
                 && $request->header('X-Ruta-Evento')[0] === 'plan_accion.creado'
@@ -263,7 +260,7 @@ class ProgramaMantenimientoTest extends ConfiguracionTestCase
 
         // Evento no elegido: no se envía.
         $antes = WebhookEntrega::query()->count();
-        GestionarPlanAccion::cerrar(\App\Models\PlanAccion::query()->latest('id')->first(), 'ok');
+        GestionarPlanAccion::cerrar(PlanAccion::query()->latest('id')->first(), 'ok');
         $this->assertSame($antes, WebhookEntrega::query()->count());
 
         // Avisos diarios del programa: una sola vez por actividad.

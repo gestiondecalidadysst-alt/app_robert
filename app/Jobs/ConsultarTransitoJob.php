@@ -41,7 +41,7 @@ class ConsultarTransitoJob implements ShouldQueue
             $consultar($sujeto, TipoConsultaTransito::from($this->tipo), 'automatica');
         } catch (ValidationException $e) {
             $mensaje = collect($e->errors())->flatten()->first();
-            if (str_contains((string) $mensaje, 'tope') && Cache::add("transito.tope.{$sujeto->empresa_id}." . now()->format('Y-m'), true, now()->endOfMonth())) {
+            if (str_contains((string) $mensaje, 'tope') && Cache::add("transito.tope.{$sujeto->empresa_id}.".now()->format('Y-m'), true, now()->endOfMonth())) {
                 $empresa = Empresa::find($sujeto->empresa_id);
                 $empresa && Avisos::aQuienPueda($empresa, 'ver_consultas_transito',
                     Notification::make()->warning()->title('Consultas de tránsito detenidas')->body($mensaje));

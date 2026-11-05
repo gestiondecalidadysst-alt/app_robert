@@ -212,7 +212,7 @@ class PlanificarServicio
             }
             $ids = array_values(array_filter((array) ($datos['conductores'] ?? []), 'filled'));
             if (count($ids) > ExpedirFuec::MAX_CONDUCTORES) {
-                $errores['conductores'] = 'Máximo ' . ExpedirFuec::MAX_CONDUCTORES . ' conductores.';
+                $errores['conductores'] = 'Máximo '.ExpedirFuec::MAX_CONDUCTORES.' conductores.';
             } elseif (count($ids) !== count(array_unique($ids))) {
                 $errores['conductores'] = 'Hay un conductor repetido.';
             } elseif ($ids && Conductor::query()->deEmpresa($empresa)->whereKey($ids)->count() !== count($ids)) {

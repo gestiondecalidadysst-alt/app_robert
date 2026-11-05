@@ -32,11 +32,11 @@ final class NumeroEnLetras
 
         $texto = match (true) {
             $n === 1 => 'un peso',
-            $n >= 1_000_000 && $n % 1_000_000 === 0 => self::numero($n, true) . ' de pesos',
-            default => self::numero($n, true) . ' pesos',
+            $n >= 1_000_000 && $n % 1_000_000 === 0 => self::numero($n, true).' de pesos',
+            default => self::numero($n, true).' pesos',
         };
 
-        return mb_strtoupper($texto) . ' M/CTE';
+        return mb_strtoupper($texto).' M/CTE';
     }
 
     /**
@@ -56,17 +56,17 @@ final class NumeroEnLetras
         if ($n >= 1_000_000) {
             $millones = intdiv($n, 1_000_000);
             $resto = $n % 1_000_000;
-            $texto = $millones === 1 ? 'un millón' : self::numero($millones, true) . ' millones';
+            $texto = $millones === 1 ? 'un millón' : self::numero($millones, true).' millones';
 
-            return $resto ? $texto . ' ' . self::numero($resto, $apocope) : $texto;
+            return $resto ? $texto.' '.self::numero($resto, $apocope) : $texto;
         }
 
         if ($n >= 1000) {
             $miles = intdiv($n, 1000);
             $resto = $n % 1000;
-            $texto = $miles === 1 ? 'mil' : self::tresDigitos($miles, true) . ' mil';
+            $texto = $miles === 1 ? 'mil' : self::tresDigitos($miles, true).' mil';
 
-            return $resto ? $texto . ' ' . self::tresDigitos($resto, $apocope) : $texto;
+            return $resto ? $texto.' '.self::tresDigitos($resto, $apocope) : $texto;
         }
 
         return self::tresDigitos($n, $apocope);
@@ -114,6 +114,6 @@ final class NumeroEnLetras
             return $decena;
         }
 
-        return $decena . ' y ' . ($apocope && $unidad === 1 ? 'un' : self::HASTA_29[$unidad]);
+        return $decena.' y '.($apocope && $unidad === 1 ? 'un' : self::HASTA_29[$unidad]);
     }
 }

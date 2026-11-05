@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Conductor;
 
 use App\Actions\Pesv\GuardarFirmaConductor;
+use App\Enums\ModuloEmpresa;
 use App\Http\Controllers\Controller;
 use App\Models\Fuec;
+use App\Support\Modulos;
 use App\Support\Pdf\PdfFuec;
 use App\Support\Pesv\ServiciosConductor;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +29,7 @@ class PortalController extends Controller
             'usuario' => $usuario,
             'conductores' => $conductores,
             // La firma se usa en los preoperacionales: solo se pide si la empresa tiene seguridad vial.
-            'sinFirma' => $conductores->reject->tieneFirma()->filter(fn ($c) => \App\Support\Modulos::activo($c->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial)),
+            'sinFirma' => $conductores->reject->tieneFirma()->filter(fn ($c) => Modulos::activo($c->empresa_id, ModuloEmpresa::SeguridadVial)),
             'tarjetas' => ServiciosConductor::fuecs($usuario)->map(fn (Fuec $f) => ServiciosConductor::tarjeta($f)),
             'vehiculos' => ServiciosConductor::vehiculosAsignados($usuario),
         ]);
@@ -76,7 +78,7 @@ class PortalController extends Controller
 
         return response(PdfFuec::generar($fuec), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . PdfFuec::nombreArchivo($fuec) . '"',
+            'Content-Disposition' => 'inline; filename="'.PdfFuec::nombreArchivo($fuec).'"',
         ]);
     }
 }

@@ -30,7 +30,7 @@ class AnularContrato
 
         // El documento del contrato (si lo hay) también queda anulado: su enlace de firma deja de servir.
         foreach ($contrato->documentos()->activos()->get() as $documento) {
-            app(AnularDocumentoContrato::class)($documento, 'Contrato anulado: ' . trim($motivo));
+            app(AnularDocumentoContrato::class)($documento, 'Contrato anulado: '.trim($motivo));
         }
 
         $contrato->forceFill([

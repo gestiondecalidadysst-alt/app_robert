@@ -53,8 +53,8 @@ class RutinaMantenimiento extends Model
     public function getAlcanceAttribute(): string
     {
         return match (true) {
-            $this->vehiculo_id !== null => 'Plan del vehículo ' . $this->vehiculo?->placa,
-            $this->plantilla_mantenimiento_id !== null => 'Plantilla ' . $this->plantilla?->nombre,
+            $this->vehiculo_id !== null => 'Plan del vehículo '.$this->vehiculo?->placa,
+            $this->plantilla_mantenimiento_id !== null => 'Plantilla '.$this->plantilla?->nombre,
             default => 'Sin plan',
         };
     }
@@ -62,8 +62,8 @@ class RutinaMantenimiento extends Model
     public function getFrecuenciaAttribute(): string
     {
         return collect([
-            $this->intervalo_km ? 'cada ' . number_format($this->intervalo_km, 0, ',', '.') . ' km' : null,
-            $this->intervalo_meses ? 'cada ' . $this->intervalo_meses . ($this->intervalo_meses === 1 ? ' mes' : ' meses') : null,
+            $this->intervalo_km ? 'cada '.number_format($this->intervalo_km, 0, ',', '.').' km' : null,
+            $this->intervalo_meses ? 'cada '.$this->intervalo_meses.($this->intervalo_meses === 1 ? ' mes' : ' meses') : null,
         ])->filter()->implode(' o ') ?: 'Sin intervalo';
     }
 

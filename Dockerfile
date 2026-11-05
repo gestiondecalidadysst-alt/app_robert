@@ -32,6 +32,12 @@ COPY docker/php.ini /usr/local/etc/php/conf.d/zz-ruta.ini
 WORKDIR /var/www/html
 COPY --from=vendor /app /var/www/html
 
+# Marca de construcción: permite ver en la app qué despliegue está corriendo.
+# Va fuera de storage/app porque ahí se monta un volumen que taparía el fichero.
+ARG APP_VERSION=desconocida
+RUN date -u '+%d/%m/%Y %H:%M UTC' > /var/www/html/.build \
+ && echo "${APP_VERSION}" > /var/www/html/.version
+
 RUN php artisan filament:assets \
  && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache \

@@ -13,8 +13,12 @@ class Rol extends Role
     use PerteneceAEmpresa;
 
     public const ADMINISTRADOR = 'Administrador';
+
     public const GERENCIA = 'Gerencia';
+
     public const AUXILIAR = 'Auxiliar administrativo';
+
     public const MANTENIMIENTO = 'Mantenimiento';
+
     public const CONDUCTOR = 'Conductor';
 }

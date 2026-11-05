@@ -82,6 +82,6 @@ final class PdfFichaRndc
 
     public static function nombre(Model $registro): string
     {
-        return 'ficha-rndc-' . Str::slug($registro->placa ?? $registro->documento ?? $registro->getKey()) . '.pdf';
+        return 'ficha-rndc-'.Str::slug($registro->placa ?? $registro->documento ?? $registro->getKey()).'.pdf';
     }
 }

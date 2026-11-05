@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
+use Illuminate\Support\Carbon;
 
 /**
  * Semáforo de un documento según su fecha de vencimiento.
@@ -45,8 +46,8 @@ enum EstadoDocumento: string implements HasColor, HasLabel
             return self::Faltante;
         }
 
-        $hoy = \Illuminate\Support\Carbon::instance($hoy ?? now())->startOfDay();
-        $vence = \Illuminate\Support\Carbon::instance($vencimiento)->startOfDay();
+        $hoy = Carbon::instance($hoy ?? now())->startOfDay();
+        $vence = Carbon::instance($vencimiento)->startOfDay();
 
         return match (true) {
             $vence->lt($hoy) => self::Vencido,

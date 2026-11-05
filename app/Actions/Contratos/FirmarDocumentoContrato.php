@@ -68,7 +68,7 @@ class FirmarDocumentoContrato
                 'firma_destino_codigo' => $usado->destino,
             ])->save();
 
-            $doc->registrar('firmado', ['código' => ($usado->canal === 'sms' ? 'SMS ' : 'correo ') . $usado->destino], $ip, $userAgent);
+            $doc->registrar('firmado', ['código' => ($usado->canal === 'sms' ? 'SMS ' : 'correo ').$usado->destino], $ip, $userAgent);
 
             $pdf = PdfContrato::documento($doc->fresh(['eventos']));
             Storage::disk(DocumentoContrato::DISCO)->put("{$carpeta}/contrato-firmado.pdf", $pdf);
@@ -110,7 +110,7 @@ class FirmarDocumentoContrato
         }
 
         throw ValidationException::withMessages([
-            'codigo' => 'Código incorrecto. Le ' . ($restantes === 1 ? 'queda 1 intento.' : "quedan {$restantes} intentos."),
+            'codigo' => 'Código incorrecto. Le '.($restantes === 1 ? 'queda 1 intento.' : "quedan {$restantes} intentos."),
         ]);
     }
 

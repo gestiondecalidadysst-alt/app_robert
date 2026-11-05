@@ -2,22 +2,30 @@
 
 namespace Tests\Feature\Pesv;
 
+use App\Actions\Configuracion\AsignarRol;
+use App\Actions\Mantenimiento\GestionarPlanAccion;
 use App\Actions\Pesv\CrearAccesoConductor;
 use App\Actions\Pesv\GuardarFirmaConductor;
 use App\Actions\Pesv\RegistrarInspeccion;
 use App\Enums\EstadoConductor;
+use App\Enums\PrioridadPlan;
 use App\Enums\TipoInspeccion;
+use App\Filament\App\Resources\Conductores\Pages\EditarConductor;
 use App\Filament\App\Resources\Conductores\Pages\VerConductor;
 use App\Filament\App\Resources\Inspecciones\Pages\PendientesHoy;
 use App\Filament\App\Resources\Inspecciones\Pages\RegistrarInspeccionMensual;
+use App\Filament\App\Resources\Usuarios\Pages\CrearUsuario;
 use App\Models\Conductor;
 use App\Models\Fuec;
 use App\Models\Inspeccion;
 use App\Models\ItemChequeo;
+use App\Models\PlanAccion;
+use App\Models\Rol;
 use App\Models\User;
 use App\Models\Vehiculo;
 use App\Support\Pdf\PdfInspeccion;
 use App\Support\Pesv\ItemsBase;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -70,7 +78,7 @@ class PesvTest extends ConfiguracionTestCase
         ob_start();
         imagepng($img);
 
-        return self::FIRMA . base64_encode(ob_get_clean());
+        return self::FIRMA.base64_encode(ob_get_clean());
     }
 
     private function entrarAlPortal(): User
@@ -196,22 +204,22 @@ class PesvTest extends ConfiguracionTestCase
         $this->assertFalse($this->usuario('admin@ejemplo.test')->notifications()->exists());
 
         // La falla crítica abrió un plan de acción de prioridad alta: mientras esté pendiente, no queda apto.
-        $plan = \App\Models\PlanAccion::query()->deEmpresa($this->demo)->where('vehiculo_id', $this->vehiculo()->id)->pendientes()->firstOrFail();
-        $this->assertSame(\App\Enums\PrioridadPlan::Alta, $plan->prioridad);
+        $plan = PlanAccion::query()->deEmpresa($this->demo)->where('vehiculo_id', $this->vehiculo()->id)->pendientes()->firstOrFail();
+        $this->assertSame(PrioridadPlan::Alta, $plan->prioridad);
         $bloqueada = app(RegistrarInspeccion::class)($this->demo, TipoInspeccion::Preoperacional, $this->vehiculo(), $this->respuestas(),
             conductor: $conductor, kilometraje: 2, usuario: $conductor->usuario);
         $this->assertFalse($bloqueada->apta());
         $this->assertSame($plan->numero, $bloqueada->datos['plan_pendiente']);
 
         // Cerrado el plan, un no crítico que falla no bloquea (queda como novedad en el plan).
-        \App\Actions\Mantenimiento\GestionarPlanAccion::cerrar($plan, 'Corregido y verificado.');
+        GestionarPlanAccion::cerrar($plan, 'Corregido y verificado.');
         $noCritico = ItemChequeo::query()->deEmpresa($this->demo)->deTipo(TipoInspeccion::Preoperacional)->where('critico', false)->firstOrFail();
         $otra = app(RegistrarInspeccion::class)($this->demo, TipoInspeccion::Preoperacional, $this->vehiculo(),
             $this->respuestas(cambios: [$noCritico->id => ['respuesta' => 'no', 'observacion' => 'Sucio']]),
             conductor: $conductor, kilometraje: 3, usuario: $conductor->usuario);
         $this->assertTrue($otra->apta());
-        $media = \App\Models\PlanAccion::query()->deEmpresa($this->demo)->where('vehiculo_id', $this->vehiculo()->id)->pendientes()->firstOrFail();
-        $this->assertSame(\App\Enums\PrioridadPlan::Media, $media->prioridad);
+        $media = PlanAccion::query()->deEmpresa($this->demo)->where('vehiculo_id', $this->vehiculo()->id)->pendientes()->firstOrFail();
+        $this->assertSame(PrioridadPlan::Media, $media->prioridad);
     }
 
     public function test_portal_tarjeta_preoperacional_y_extracto_bloqueado_hasta_hacerlo(): void
@@ -298,7 +306,7 @@ class PesvTest extends ConfiguracionTestCase
         $this->assertNotNull($conductor->user_id);
         $this->assertNull($conductor->usuario->email);
         $this->assertTrue($conductor->usuario->debe_cambiar_clave);
-        $this->assertFalse($conductor->usuario->canAccessPanel(\Filament\Facades\Filament::getPanel('app')));
+        $this->assertFalse($conductor->usuario->canAccessPanel(Filament::getPanel('app')));
         auth()->logout();
 
         // La clave que se mostró se puede usar; obliga a cambiarla y luego pide la firma.
@@ -310,7 +318,7 @@ class PesvTest extends ConfiguracionTestCase
             ->assertRedirect(route('conductor.inicio'));
 
         $this->get('/conductor')->assertOk()->assertSee('Falta su firma');
-        $this->post('/conductor/firma', ['firma' => self::FIRMA . base64_encode('x'), 'acepto' => 1])->assertSessionHasErrors('firma');
+        $this->post('/conductor/firma', ['firma' => self::FIRMA.base64_encode('x'), 'acepto' => 1])->assertSessionHasErrors('firma');
         $this->post('/conductor/firma', ['firma' => self::firmaDibujada(), 'acepto' => 1])->assertRedirect(route('conductor.inicio'));
         $this->assertTrue($conductor->refresh()->tieneFirma());
         // Ya registrada: el conductor no la puede cambiar él mismo.
@@ -340,12 +348,12 @@ class PesvTest extends ConfiguracionTestCase
         $conductor = Conductor::query()->deEmpresa($this->demo)->where('id', '!=', $this->conductor()->id)->firstOrFail();
         $this->entrarComo('admin@demo.test');
 
-        Livewire::test(\App\Filament\App\Resources\Conductores\Pages\EditarConductor::class, ['record' => $conductor->getRouteKey()])
-            ->set('data.firma_dibujada', self::FIRMA . base64_encode('no es imagen'))
+        Livewire::test(EditarConductor::class, ['record' => $conductor->getRouteKey()])
+            ->set('data.firma_dibujada', self::FIRMA.base64_encode('no es imagen'))
             ->call('save')
             ->assertHasErrors(['data.firma_dibujada']);
 
-        Livewire::test(\App\Filament\App\Resources\Conductores\Pages\EditarConductor::class, ['record' => $conductor->getRouteKey()])
+        Livewire::test(EditarConductor::class, ['record' => $conductor->getRouteKey()])
             ->set('data.firma_dibujada', self::firmaDibujada())
             ->call('save')
             ->assertHasNoErrors();
@@ -387,10 +395,10 @@ class PesvTest extends ConfiguracionTestCase
     public function test_crear_usuario_con_rol_conductor_eligiendo_el_conductor(): void
     {
         $conductor = Conductor::query()->deEmpresa($this->demo)->where('id', '!=', $this->conductor()->id)->whereNull('user_id')->firstOrFail();
-        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $rol = Rol::query()->deEmpresa($this->demo)->where('name', Rol::CONDUCTOR)->firstOrFail();
         $this->entrarComo('admin@demo.test');
 
-        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+        Livewire::test(CrearUsuario::class)
             ->fillForm(['rol_id' => $rol->id])
             ->assertFormFieldIsVisible('conductor_id')
             ->fillForm(['conductor_id' => $conductor->id])
@@ -405,7 +413,7 @@ class PesvTest extends ConfiguracionTestCase
         $this->assertNull($usuario->email);
         $this->assertTrue($usuario->debe_cambiar_clave);
         $this->assertTrue($this->demo->usuarios()->whereKey($usuario->id)->exists());
-        $this->assertSame(\App\Models\Rol::CONDUCTOR, \App\Actions\Configuracion\AsignarRol::rolActual($usuario, $this->demo)->name);
+        $this->assertSame(Rol::CONDUCTOR, AsignarRol::rolActual($usuario, $this->demo)->name);
         // Solo portal del conductor: no entra al panel de la empresa.
         $this->assertTrue($usuario->empresasDisponibles()->isEmpty());
         auth()->logout();
@@ -420,10 +428,10 @@ class PesvTest extends ConfiguracionTestCase
 
     public function test_usuario_conductor_sin_elegir_conductor_no_se_crea(): void
     {
-        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $rol = Rol::query()->deEmpresa($this->demo)->where('name', Rol::CONDUCTOR)->firstOrFail();
         $this->entrarComo('admin@demo.test');
 
-        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+        Livewire::test(CrearUsuario::class)
             ->fillForm(['rol_id' => $rol->id, 'name' => 'Sin conductor'])
             ->call('create')
             ->assertHasFormErrors(['conductor_id' => 'required']);
@@ -433,10 +441,10 @@ class PesvTest extends ConfiguracionTestCase
     {
         $conductor = Conductor::query()->deEmpresa($this->demo)->where('id', '!=', $this->conductor()->id)->whereNull('user_id')->firstOrFail();
         $conductor->forceFill(['email' => 'admin@demo.test'])->save();
-        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $rol = Rol::query()->deEmpresa($this->demo)->where('name', Rol::CONDUCTOR)->firstOrFail();
         $this->entrarComo('admin@demo.test');
 
-        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+        Livewire::test(CrearUsuario::class)
             ->fillForm(['rol_id' => $rol->id])
             ->fillForm(['conductor_id' => $conductor->id])
             ->assertFormSet(['email' => 'admin@demo.test'])
@@ -451,12 +459,12 @@ class PesvTest extends ConfiguracionTestCase
         $conductor = Conductor::query()->deEmpresa($this->demo)->where('id', '!=', $this->conductor()->id)->whereNull('user_id')->firstOrFail();
         // admin@ejemplo.test es de otra empresa: dentro del panel de la demo no se ve con User::query().
         $conductor->forceFill(['email' => 'admin@ejemplo.test'])->save();
-        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::CONDUCTOR)->firstOrFail();
+        $rol = Rol::query()->deEmpresa($this->demo)->where('name', Rol::CONDUCTOR)->firstOrFail();
         $this->entrarComo('admin@demo.test');
         // Como en una petición real: filtros por empresa de los recursos del panel (incluido Usuarios).
-        \Filament\Facades\Filament::getPanel('app')->bootTenancy();
+        Filament::getPanel('app')->bootTenancy();
 
-        Livewire::test(\App\Filament\App\Resources\Usuarios\Pages\CrearUsuario::class)
+        Livewire::test(CrearUsuario::class)
             ->fillForm(['rol_id' => $rol->id])
             ->fillForm(['conductor_id' => $conductor->id])
             ->call('create')

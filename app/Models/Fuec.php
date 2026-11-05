@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Enums\EstadoVigencia;
-use App\Support\Operacion\Horario;
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
+use App\Support\Operacion\Horario;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

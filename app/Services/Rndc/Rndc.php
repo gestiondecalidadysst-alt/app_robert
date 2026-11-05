@@ -7,6 +7,7 @@ use App\Models\Empresa;
 use App\Models\Propietario;
 use App\Models\RegistroRndc;
 use App\Models\Remolque;
+use App\Models\TerceroCarga;
 use App\Models\User;
 use App\Models\Vehiculo;
 use Illuminate\Database\Eloquent\Model;
@@ -111,7 +112,7 @@ final class Rndc
     /** Clase corta para rutas y permisos. */
     public static function tipos(): array
     {
-        return ['tercero' => \App\Models\TerceroCarga::class, 'propietario' => Propietario::class, 'conductor' => Conductor::class,
+        return ['tercero' => TerceroCarga::class, 'propietario' => Propietario::class, 'conductor' => Conductor::class,
             'vehiculo' => Vehiculo::class, 'remolque' => Remolque::class];
     }
 }

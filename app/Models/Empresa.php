@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\ModuloEmpresa;
+use App\Enums\TipoConsultaTransito;
 use App\Models\Concerns\Auditable;
+use App\Support\Modulos;
 use App\Support\Nit;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasCurrentTenantLabel;
@@ -117,9 +120,9 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     protected static function booted(): void
     {
         static::creating(function (Empresa $empresa): void {
-            $empresa->modulos ??= \App\Enums\ModuloEmpresa::porDefecto();
+            $empresa->modulos ??= ModuloEmpresa::porDefecto();
         });
-        static::saved(fn (Empresa $empresa) => \App\Support\Modulos::olvidar($empresa->id));
+        static::saved(fn (Empresa $empresa) => Modulos::olvidar($empresa->id));
         static::saving(function (Empresa $empresa): void {
             $empresa->nit = Nit::limpiar($empresa->nit);
             $empresa->dv = Nit::digitoVerificacion($empresa->nit);
@@ -232,47 +235,47 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     // Consultas de tránsito
 
     /** Precio que se le cobra a la empresa por una consulta de ese tipo (especial o el de la plataforma). */
-    public function tercerosCarga(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tercerosCarga(): HasMany
     {
         return $this->hasMany(TerceroCarga::class);
     }
 
-    public function remolques(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function remolques(): HasMany
     {
         return $this->hasMany(Remolque::class);
     }
 
-    public function registrosRndc(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function registrosRndc(): HasMany
     {
         return $this->hasMany(RegistroRndc::class);
     }
 
-    public function remesasCarga(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function remesasCarga(): HasMany
     {
         return $this->hasMany(RemesaCarga::class);
     }
 
-    public function manifiestosCarga(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function manifiestosCarga(): HasMany
     {
         return $this->hasMany(ManifiestoCarga::class);
     }
 
-    public function cumplidosRemesa(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function cumplidosRemesa(): HasMany
     {
         return $this->hasMany(CumplidoRemesa::class);
     }
 
-    public function cumplidosManifiesto(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function cumplidosManifiesto(): HasMany
     {
         return $this->hasMany(CumplidoManifiesto::class);
     }
 
-    public function tieneModulo(\App\Enums\ModuloEmpresa $modulo): bool
+    public function tieneModulo(ModuloEmpresa $modulo): bool
     {
-        return in_array($modulo->value, $this->modulos ?? \App\Enums\ModuloEmpresa::porDefecto(), true);
+        return in_array($modulo->value, $this->modulos ?? ModuloEmpresa::porDefecto(), true);
     }
 
-    public function precioTransito(\App\Enums\TipoConsultaTransito $tipo): ?float
+    public function precioTransito(TipoConsultaTransito $tipo): ?float
     {
         $especial = $this->transito_precios[$tipo->value] ?? null;
 
@@ -280,7 +283,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     }
 
     /** Tipos de consulta que la empresa decidió usar. */
-    public function usaTransito(\App\Enums\TipoConsultaTransito $tipo): bool
+    public function usaTransito(TipoConsultaTransito $tipo): bool
     {
         return $this->transito_habilitado && in_array($tipo->value, $this->transito_tipos ?? [], true);
     }

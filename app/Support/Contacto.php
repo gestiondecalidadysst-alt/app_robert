@@ -24,7 +24,7 @@ final class Contacto
     {
         $digitos = preg_replace('/\D/', '', (string) $numero);
 
-        return $digitos === '' ? '—' : '••• ••• ' . substr($digitos, -4);
+        return $digitos === '' ? '—' : '••• ••• '.substr($digitos, -4);
     }
 
     /** "rectoria@colegio.edu.co" → "re•••@colegio.edu.co". */
@@ -36,7 +36,7 @@ final class Contacto
 
         [$usuario, $dominio] = explode('@', $correo, 2);
 
-        return mb_substr($usuario, 0, 2) . '•••@' . $dominio;
+        return mb_substr($usuario, 0, 2).'•••@'.$dominio;
     }
 
     public static function correoValido(?string $correo): bool

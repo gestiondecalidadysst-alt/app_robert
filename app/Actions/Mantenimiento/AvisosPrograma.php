@@ -47,7 +47,7 @@ final class AvisosPrograma
                 ->body(collect([
                     $proximas->isNotEmpty() ? "{$proximas->count()} actividad(es) en los próximos {$dias} días" : null,
                     $vencidas->isNotEmpty() ? "{$vencidas->count()} vencida(s) sin ejecutar" : null,
-                ])->filter()->implode(' · ') . '.'));
+                ])->filter()->implode(' · ').'.'));
         }
 
         return ['proximas' => $proximas->count(), 'vencidas' => $vencidas->count()];

@@ -140,7 +140,7 @@ final class PlanDeVehiculo
                 continue;
             }
             $km = filled($p['kilometraje'] ?? null) ? (int) $p['kilometraje'] : null;
-            $grupos[$fecha->toDateString() . '|' . $km][] = (int) $rutinaId;
+            $grupos[$fecha->toDateString().'|'.$km][] = (int) $rutinaId;
         }
 
         if ($errores) {
@@ -156,7 +156,7 @@ final class PlanDeVehiculo
                     'kilometraje' => $km !== '' ? (int) $km : null,
                     'tipo' => TipoMantenimiento::Preventivo,
                     'accion' => AccionMantenimiento::Revision,
-                    'actividad' => 'Punto de partida del plan de mantenimiento: ' . collect($ids)->map(fn ($id) => $rutinas[$id]->nombre)->implode(', ') . '.',
+                    'actividad' => 'Punto de partida del plan de mantenimiento: '.collect($ids)->map(fn ($id) => $rutinas[$id]->nombre)->implode(', ').'.',
                     'user_id' => $usuario?->id,
                 ]);
                 $m->empresa_id = $vehiculo->empresa_id;

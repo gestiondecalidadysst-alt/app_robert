@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use App\Support\Modulos;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
@@ -25,6 +26,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 {
     /** @use HasFactory<UserFactory> */
     use Auditable, HasFactory, Notifiable;
+
     use HasRoles {
         checkPermissionTo as protected checkPermissionToBase;
     }
@@ -32,7 +34,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
     /** Módulos contratados: un permiso de un módulo que la empresa activa no tiene se niega (ver Modulos). */
     public function checkPermissionTo($permission, ?string $guardName = null): bool
     {
-        if (is_string($permission) && \App\Support\Modulos::permisoBloqueado($permission)) {
+        if (is_string($permission) && Modulos::permisoBloqueado($permission)) {
             return false;
         }
 
@@ -77,7 +79,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
     /**
      * Empresas donde el usuario tiene el rol Conductor: solo usa el portal del conductor, no el panel.
      *
-     * @return \Illuminate\Support\Collection<int, int>
+     * @return Collection<int, int>
      */
     public function empresasComoConductor(): Collection
     {

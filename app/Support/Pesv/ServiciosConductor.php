@@ -4,12 +4,15 @@ namespace App\Support\Pesv;
 
 use App\Enums\EstadoConductor;
 use App\Enums\EstadoVigencia;
+use App\Enums\ModuloEmpresa;
 use App\Models\AsignacionVehiculo;
 use App\Models\Conductor;
 use App\Models\Fuec;
 use App\Models\Inspeccion;
+use App\Models\Servicio;
 use App\Models\User;
 use App\Models\Vehiculo;
+use App\Support\Modulos;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -50,27 +53,27 @@ final class ServiciosConductor
             ->limit(30)
             ->get()
             // Solo empresas con el módulo de pasajeros (FUEC).
-            ->filter(fn (Fuec $f) => \App\Support\Modulos::activo($f->empresa_id, \App\Enums\ModuloEmpresa::Pasajeros))
+            ->filter(fn (Fuec $f) => Modulos::activo($f->empresa_id, ModuloEmpresa::Pasajeros))
             ->values();
     }
 
     /** ¿Alguna de las empresas del conductor tiene el módulo? (menú y pantallas del portal) */
-    public static function conModulo(User $usuario, \App\Enums\ModuloEmpresa $modulo): bool
+    public static function conModulo(User $usuario, ModuloEmpresa $modulo): bool
     {
-        return self::conductores($usuario)->contains(fn (Conductor $c) => \App\Support\Modulos::activo($c->empresa_id, $modulo));
+        return self::conductores($usuario)->contains(fn (Conductor $c) => Modulos::activo($c->empresa_id, $modulo));
     }
 
     /**
      * Tarjeta de un FUEC con lo que el conductor puede hacer hoy.
      *
-     * @return array{fuec: Fuec, estado: EstadoVigencia, preoperacional: ?Inspeccion, puede_preoperacional: bool, puede_extracto: bool, motivo_extracto: ?string, servicio: ?\App\Models\Servicio}
+     * @return array{fuec: Fuec, estado: EstadoVigencia, preoperacional: ?Inspeccion, puede_preoperacional: bool, puede_extracto: bool, motivo_extracto: ?string, servicio: ?Servicio}
      */
     public static function tarjeta(Fuec $fuec): array
     {
         $estado = $fuec->estado();
         $vigente = $estado === EstadoVigencia::Vigente;
         // Sin el módulo de seguridad vial no hay preoperacional: el extracto se ve el día del servicio.
-        $conPreoperacional = \App\Support\Modulos::activo($fuec->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial);
+        $conPreoperacional = Modulos::activo($fuec->empresa_id, ModuloEmpresa::SeguridadVial);
         $preop = $vigente && $conPreoperacional ? $fuec->vehiculo?->preoperacionalDelDia() : null;
 
         $motivo = match (true) {
@@ -78,8 +81,7 @@ final class ServiciosConductor
             $vigente && ! $conPreoperacional => null,
             ! $vigente => 'El extracto se habilita el día del servicio, después del preoperacional.',
             ! $preop => 'Haga el preoperacional de hoy para ver el extracto.',
-            ! $preop->apta() && filled($preop->datos['plan_pendiente'] ?? null) && $preop->fallas() === []
-                => "El vehículo tiene el plan de acción {$preop->datos['plan_pendiente']} pendiente (falla crítica sin corregir). No queda apto hasta que la empresa lo cierre.",
+            ! $preop->apta() && filled($preop->datos['plan_pendiente'] ?? null) && $preop->fallas() === [] => "El vehículo tiene el plan de acción {$preop->datos['plan_pendiente']} pendiente (falla crítica sin corregir). No queda apto hasta que la empresa lo cierre.",
             ! $preop->apta() => 'El vehículo quedó NO APTO en el preoperacional de hoy. Avise a la empresa.',
             default => null,
         };
@@ -92,7 +94,7 @@ final class ServiciosConductor
             'puede_extracto' => $motivo === null,
             'motivo_extracto' => $motivo,
             // Plan de viaje del planeador (todo FUEC tiene su servicio).
-            'servicio' => \App\Models\Servicio::query()->withoutGlobalScopes()->where('fuec_id', $fuec->id)->first(),
+            'servicio' => Servicio::query()->withoutGlobalScopes()->where('fuec_id', $fuec->id)->first(),
         ];
     }
 
@@ -125,7 +127,7 @@ final class ServiciosConductor
             ->pluck('vehiculo')
             ->filter()
             ->unique('id')
-            ->filter(fn (Vehiculo $v) => \App\Support\Modulos::activo($v->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial))
+            ->filter(fn (Vehiculo $v) => Modulos::activo($v->empresa_id, ModuloEmpresa::SeguridadVial))
             ->values()
             ->map(fn (Vehiculo $v) => ['vehiculo' => $v, 'preoperacional' => $v->preoperacionalDelDia()]);
     }

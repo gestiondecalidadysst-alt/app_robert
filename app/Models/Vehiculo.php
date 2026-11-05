@@ -3,15 +3,21 @@
 namespace App\Models;
 
 use App\Enums\EstadoVehiculo;
+use App\Enums\PrioridadPlan;
 use App\Enums\TipoDocumentoVehiculo;
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
 use App\Models\Concerns\TieneDocumentosConVencimiento;
+use App\Services\Rndc\RegistrableRndc;
+use App\Services\Rndc\ValidarVehiculo;
+use App\Support\Carga\CatalogoRndc;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 /**
  * Vehículo de la flota de una empresa.
@@ -19,9 +25,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * El estado (operando, suspendido, taller, desvinculado) no se edita en el formulario:
  * se cambia con App\Actions\Flota\CambiarEstadoVehiculo, que deja la novedad en el historial.
  */
-class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
+class Vehiculo extends Model implements RegistrableRndc
 {
-    use Auditable, PerteneceAEmpresa, \App\Models\Concerns\SeRegistraEnRndc, SoftDeletes, TieneDocumentosConVencimiento;
+    use \App\Models\Concerns\SeRegistraEnRndc, Auditable, PerteneceAEmpresa, SoftDeletes, TieneDocumentosConVencimiento;
 
     /** Campos de la ficha técnica (columna JSON ficha_tecnica). */
     public const FICHA_TECNICA = [
@@ -193,7 +199,7 @@ class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
     public function planAltaPendiente(): ?PlanAccion
     {
         return PlanAccion::query()->deEmpresa($this->empresa_id)->where('vehiculo_id', $this->id)
-            ->pendientes()->where('prioridad', \App\Enums\PrioridadPlan::Alta->value)->oldest('id')->first();
+            ->pendientes()->where('prioridad', PrioridadPlan::Alta->value)->oldest('id')->first();
     }
 
     /** Último preoperacional del día (el que cuenta para operar y para ver el extracto). */
@@ -230,7 +236,7 @@ class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
         $bloqueos = [];
 
         if ($this->estado !== EstadoVehiculo::Operando) {
-            $bloqueos[] = 'El vehículo está ' . mb_strtolower($this->estado->getLabel()) . '.';
+            $bloqueos[] = 'El vehículo está '.mb_strtolower($this->estado->getLabel()).'.';
         }
 
         return [...$bloqueos, ...$this->bloqueosDocumentales($fecha)];
@@ -262,12 +268,12 @@ class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
 
     // Consultas de tránsito
 
-    public function comparendosTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function comparendosTransito(): MorphMany
     {
         return $this->morphMany(ComparendoTransito::class, 'consultable');
     }
 
-    public function consultasTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function consultasTransito(): MorphMany
     {
         return $this->morphMany(ConsultaTransito::class, 'consultable');
     }
@@ -291,12 +297,12 @@ class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function etiquetaRndc(): string
     {
-        return 'Vehículo ' . $this->placa . ' · ' . (\App\Support\Carga\CatalogoRndc::CONFIGURACIONES_VEHICULO[$this->rndc_configuracion] ?? 'sin configuración de carga');
+        return 'Vehículo '.$this->placa.' · '.(CatalogoRndc::CONFIGURACIONES_VEHICULO[$this->rndc_configuracion] ?? 'sin configuración de carga');
     }
 
     public function variablesRndc(Empresa $empresa): array
     {
-        $c = \App\Support\Carga\CatalogoRndc::class;
+        $c = CatalogoRndc::class;
         $propietario = $this->propietario()->withoutGlobalScopes()->with('tipoIdentificacion')->first();
         $tenedor = $this->tenedor()->with('tipoIdentificacion')->first() ?? $propietario;
         $soat = $this->documentoVigente(TipoDocumentoVehiculo::Soat);
@@ -305,7 +311,7 @@ class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
 
         return array_filter([
             'NUMNITEMPRESATRANSPORTE' => $c::digitos($empresa->nit),
-            'NUMPLACA' => \Illuminate\Support\Str::upper($this->placa),
+            'NUMPLACA' => Str::upper($this->placa),
             'CODCONFIGURACIONUNIDADCARGA' => $config,
             'CODMARCAVEHICULOCARGA' => $this->rndc_marca,
             'CODLINEAVEHICULOCARGA' => $this->rndc_linea,
@@ -331,15 +337,15 @@ class Vehiculo extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function validarRndc(): array
     {
-        $c = \App\Support\Carga\CatalogoRndc::class;
+        $c = CatalogoRndc::class;
         $propietario = $this->propietario()->withoutGlobalScopes()->with('tipoIdentificacion')->first();
         $tenedor = $this->tenedor()->with('tipoIdentificacion')->first() ?? $propietario;
-        $e = \App\Services\Rndc\ValidarVehiculo::comunes($this->placa, $this->rndc_configuracion, $this->rndc_marca, (int) $this->modelo,
+        $e = ValidarVehiculo::comunes($this->placa, $this->rndc_configuracion, $this->rndc_marca, (int) $this->modelo,
             $this->peso_vacio, $this->capacidad_kg, $this->numero_ejes, $propietario, $tenedor);
         if ($this->rndc_configuracion && ! isset($c::CONFIGURACIONES_VEHICULO[$this->rndc_configuracion])) {
             $e[] = 'La configuración no es de camión rígido o tractocamión.';
         }
-        if (! preg_match('/^[A-Z]{3}\d{3}$/', \Illuminate\Support\Str::upper((string) $this->placa))) {
+        if (! preg_match('/^[A-Z]{3}\d{3}$/', Str::upper((string) $this->placa))) {
             $e[] = 'La placa de un camión o tractocamión es de 3 letras y 3 números.';
         }
         if (blank($this->rndc_linea)) {

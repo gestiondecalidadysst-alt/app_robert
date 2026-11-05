@@ -3,6 +3,7 @@
 namespace App\Actions\Operacion;
 
 use App\Models\Fuec;
+use App\Models\Servicio;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -27,9 +28,9 @@ class AnularFuec
         ])->save();
 
         // Su servicio del planeador queda cancelado con el mismo motivo.
-        $servicio = \App\Models\Servicio::query()->deEmpresa($fuec->empresa_id)->where('fuec_id', $fuec->id)->first();
+        $servicio = Servicio::query()->deEmpresa($fuec->empresa_id)->where('fuec_id', $fuec->id)->first();
         if ($servicio) {
-            app(PlanificarServicio::class)->cancelar($servicio, 'FUEC anulado: ' . trim($motivo), porAnulacion: true);
+            app(PlanificarServicio::class)->cancelar($servicio, 'FUEC anulado: '.trim($motivo), porAnulacion: true);
         }
     }
 }

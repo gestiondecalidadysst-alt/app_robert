@@ -13,8 +13,8 @@ use App\Models\PlanAccion;
 use App\Models\User;
 use App\Models\Vehiculo;
 use App\Support\Avisos;
-use App\Support\Webhooks;
 use App\Support\Mantenimiento\PlanPreventivo;
+use App\Support\Webhooks;
 use Filament\Notifications\Notification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -139,7 +139,7 @@ class RegistrarMantenimiento
                     'estado' => EstadoPlan::Cerrado,
                     'cerrado_at' => now(),
                     'cerrado_por' => $usuario?->id,
-                    'observacion_cierre' => "Cumplido con el mantenimiento del {$fecha->format('d/m/Y')} (" . ($km !== null ? number_format($km, 0, ',', '.') . ' km' : 'sin km') . ').',
+                    'observacion_cierre' => "Cumplido con el mantenimiento del {$fecha->format('d/m/Y')} (".($km !== null ? number_format($km, 0, ',', '.').' km' : 'sin km').').',
                 ])->save());
 
             return $mantenimiento;
@@ -172,7 +172,7 @@ class RegistrarMantenimiento
             Avisos::aQuienPueda($empresa, 'editar_planes_accion', Notification::make()
                 ->info()
                 ->title("Plan {$plan->numero} ({$vehiculo->placa}) por verificar")
-                ->body(($conductor ? "{$conductor->nombre_completo} registró" : 'Se registró') . ' el mantenimiento con su evidencia. Revíselo y ciérrelo.'));
+                ->body(($conductor ? "{$conductor->nombre_completo} registró" : 'Se registró').' el mantenimiento con su evidencia. Revíselo y ciérrelo.'));
         }
 
         SeguimientoPreventivo::revisar($vehiculo);

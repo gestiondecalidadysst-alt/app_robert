@@ -14,7 +14,7 @@ final class Referencia
 
     public static function actual(): string
     {
-        return self::$actual ??= 'REF-' . Str::upper(Str::random(6));
+        return self::$actual ??= 'REF-'.Str::upper(Str::random(6));
     }
 
     /** Nueva referencia (cada trabajo de la cola es independiente). */

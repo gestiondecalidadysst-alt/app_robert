@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Enums\TipoConsultaTransito;
 use App\Models\Concerns\PerteneceAEmpresa;
+use App\Services\Transito\Interpretar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /** Una consulta de tránsito: lo que se consultó, el resultado, lo que se cobra y lo que cuesta. */
 class ConsultaTransito extends Model
@@ -26,7 +29,7 @@ class ConsultaTransito extends Model
     protected static function booted(): void
     {
         static::creating(function (self $c): void {
-            $c->codigo_verificacion ??= \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(24));
+            $c->codigo_verificacion ??= Str::lower(Str::random(24));
         });
     }
 
@@ -65,7 +68,7 @@ class ConsultaTransito extends Model
 
     public function scopeDelMes(Builder $query, ?\DateTimeInterface $mes = null): Builder
     {
-        $mes = \Illuminate\Support\Carbon::instance($mes ?? now());
+        $mes = Carbon::instance($mes ?? now());
 
         return $query->whereBetween($query->qualifyColumn('created_at'), [$mes->copy()->startOfMonth(), $mes->copy()->endOfMonth()]);
     }
@@ -106,7 +109,7 @@ class ConsultaTransito extends Model
 
         return match ($this->tipo) {
             TipoConsultaTransito::ConductorComparendos, TipoConsultaTransito::VehiculoMultas => (function () use ($json, $sinDatos) {
-                $d = $sinDatos ? ['comparendos' => [], 'deuda' => 0.0] : \App\Services\Transito\Interpretar::comparendos($json);
+                $d = $sinDatos ? ['comparendos' => [], 'deuda' => 0.0] : Interpretar::comparendos($json);
                 $lista = collect($d['comparendos']);
                 $pendientes = $lista->whereIn('estado', ['pendiente', 'acuerdo']);
 
@@ -120,10 +123,10 @@ class ConsultaTransito extends Model
             })(),
             TipoConsultaTransito::ConductorLicencia => ['clase' => 'licencia'] + ($sinDatos
                 ? ['estado' => null, 'suspendida' => false, 'categorias' => [], 'tiene_multas' => null, 'sin_licencia' => true]
-                : \App\Services\Transito\Interpretar::licencia($json) + ['sin_licencia' => false]),
+                : Interpretar::licencia($json) + ['sin_licencia' => false]),
             TipoConsultaTransito::VehiculoRunt => ['clase' => 'runt'] + ($sinDatos
                 ? ['soat_vence' => null, 'soat_estado' => null, 'rtm_vence' => null, 'rtm_vigente' => null, 'estado_vehiculo' => null, 'sin_registro' => true]
-                : \App\Services\Transito\Interpretar::runt($json) + ['sin_registro' => false]),
+                : Interpretar::runt($json) + ['sin_registro' => false]),
         };
     }
 }

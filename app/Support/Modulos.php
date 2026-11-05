@@ -43,7 +43,9 @@ final class Modulos
 
     public static function olvidar(?int $empresaId = null): void
     {
-        $empresaId === null ? self::$cache = [] : (function () use ($empresaId) { unset(self::$cache[$empresaId]); })();
+        $empresaId === null ? self::$cache = [] : (function () use ($empresaId) {
+            unset(self::$cache[$empresaId]);
+        })();
     }
 
     private static function cargar(int $id): array

@@ -88,7 +88,7 @@ class PlanAccion extends Model
 
     public function getNumeroAttribute(): string
     {
-        return 'PA-' . str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+        return 'PA-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
     }
 
     public function scopePendientes(Builder $query): Builder

@@ -152,7 +152,7 @@ class Servicio extends Model
 
     public function getRutaTextoAttribute(): string
     {
-        return ($this->origen?->nombre ?? '?') . ' → ' . ($this->destino?->nombre ?? '?');
+        return ($this->origen?->nombre ?? '?').' → '.($this->destino?->nombre ?? '?');
     }
 
     public function getPlacaAttribute(): ?string
@@ -167,7 +167,7 @@ class Servicio extends Model
             return 'Todo el día';
         }
 
-        return substr((string) $this->hora_salida, 0, 5) . ' – ' . ($this->hora_llegada ? substr((string) $this->hora_llegada, 0, 5) : '…');
+        return substr((string) $this->hora_salida, 0, 5).' – '.($this->hora_llegada ? substr((string) $this->hora_llegada, 0, 5) : '…');
     }
 
     public function registrar(string $tipo, array $datos = []): EventoServicio

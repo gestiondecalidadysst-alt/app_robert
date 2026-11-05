@@ -80,6 +80,6 @@ final class Webhooks
 
     public static function firmar(string $cuerpo, ?string $secreto): ?string
     {
-        return filled($secreto) ? 'sha256=' . hash_hmac('sha256', $cuerpo, $secreto) : null;
+        return filled($secreto) ? 'sha256='.hash_hmac('sha256', $cuerpo, $secreto) : null;
     }
 }

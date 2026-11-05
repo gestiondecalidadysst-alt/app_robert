@@ -34,11 +34,11 @@ final class Imagenes
 
         $mime = Storage::disk($disco)->mimeType($ruta) ?: 'image/png';
 
-        return 'data:' . $mime . ';base64,' . base64_encode(Storage::disk($disco)->get($ruta));
+        return 'data:'.$mime.';base64,'.base64_encode(Storage::disk($disco)->get($ruta));
     }
 
     public static function deArchivo(string $ruta): string
     {
-        return 'data:image/png;base64,' . base64_encode(file_get_contents($ruta));
+        return 'data:image/png;base64,'.base64_encode(file_get_contents($ruta));
     }
 }

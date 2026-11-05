@@ -2,17 +2,24 @@
 
 namespace App\Models;
 
+use App\Actions\Pesv\GuardarFirmaConductor;
 use App\Enums\EstadoComparendos;
 use App\Enums\EstadoConductor;
 use App\Enums\TipoDocumentoConductor;
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
 use App\Models\Concerns\TieneDocumentosConVencimiento;
+use App\Services\Rndc\RegistrableRndc;
+use App\Services\Rndc\ValidarTercero;
+use App\Support\Carga\CatalogoRndc;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Conductor (operador) de la empresa.
@@ -20,9 +27,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * El estado (activo, suspendido, retirado) no se edita en el formulario: se cambia con
  * App\Actions\Conductores\CambiarEstadoConductor, que deja la novedad en el historial.
  */
-class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
+class Conductor extends Model implements RegistrableRndc
 {
-    use Auditable, PerteneceAEmpresa, \App\Models\Concerns\SeRegistraEnRndc, SoftDeletes, TieneDocumentosConVencimiento;
+    use \App\Models\Concerns\SeRegistraEnRndc, Auditable, PerteneceAEmpresa, SoftDeletes, TieneDocumentosConVencimiento;
 
     public const GENEROS = ['F' => 'Femenino', 'M' => 'Masculino', 'O' => 'Otro'];
 
@@ -134,7 +141,7 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
         // También revisa el archivo: si se perdió (p. ej. un despliegue sin volumen en storage/app),
         // el portal vuelve a pedirla en vez de registrar preoperacionales sin firma.
         return filled($this->firma_path)
-            && \Illuminate\Support\Facades\Storage::disk(\App\Actions\Pesv\GuardarFirmaConductor::DISCO)->exists($this->firma_path);
+            && Storage::disk(GuardarFirmaConductor::DISCO)->exists($this->firma_path);
     }
 
     public function asignacionesVigentes(): HasMany
@@ -166,7 +173,7 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
         $bloqueos = [];
 
         if ($this->estado !== EstadoConductor::Activo) {
-            $bloqueos[] = 'El conductor está ' . mb_strtolower($this->estado->getLabel()) . '.';
+            $bloqueos[] = 'El conductor está '.mb_strtolower($this->estado->getLabel()).'.';
         }
 
         $bloqueos = [...$bloqueos, ...$this->bloqueosDocumentales($fecha)];
@@ -197,10 +204,10 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
         }
 
         $bloqueos = [];
-        $fecha = fn (?string $f) => $f ? \Illuminate\Support\Carbon::parse($f)->timezone(config('app.timezone'))->format('d/m/Y') : '';
+        $fecha = fn (?string $f) => $f ? Carbon::parse($f)->timezone(config('app.timezone'))->format('d/m/Y') : '';
 
         if ($empresa->transito_bloquear_licencia && ($resumen['licencia']['suspendida'] ?? false)) {
-            $bloqueos[] = 'Licencia de conducción SUSPENDIDA según el RUNT (consulta del ' . $fecha($resumen['licencia']['consultado_at'] ?? null) . ').';
+            $bloqueos[] = 'Licencia de conducción SUSPENDIDA según el RUNT (consulta del '.$fecha($resumen['licencia']['consultado_at'] ?? null).').';
         }
 
         $comparendos = $resumen['comparendos'] ?? null;
@@ -208,8 +215,8 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
             $deuda = (float) ($comparendos['deuda'] ?? 0);
             $desde = $empresa->transito_bloquear_desde !== null ? (float) $empresa->transito_bloquear_desde : 0;
             if ($deuda >= $desde) {
-                $bloqueos[] = "Tiene {$comparendos['pendientes']} comparendo(s) pendiente(s) por $ " . number_format($deuda, 0, ',', '.')
-                    . ' según el SIMIT (consulta del ' . $fecha($comparendos['consultado_at'] ?? null) . ').';
+                $bloqueos[] = "Tiene {$comparendos['pendientes']} comparendo(s) pendiente(s) por $ ".number_format($deuda, 0, ',', '.')
+                    .' según el SIMIT (consulta del '.$fecha($comparendos['consultado_at'] ?? null).').';
             }
         }
 
@@ -231,7 +238,7 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function getNombreCompletoAttribute(): string
     {
-        return trim($this->nombres . ' ' . $this->apellidos);
+        return trim($this->nombres.' '.$this->apellidos);
     }
 
     // Scopes
@@ -243,12 +250,12 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
 
     // Consultas de tránsito
 
-    public function comparendosTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function comparendosTransito(): MorphMany
     {
         return $this->morphMany(ComparendoTransito::class, 'consultable');
     }
 
-    public function consultasTransito(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function consultasTransito(): MorphMany
     {
         return $this->morphMany(ConsultaTransito::class, 'consultable');
     }
@@ -262,7 +269,7 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function etiquetaRndc(): string
     {
-        return trim($this->nombres . ' ' . $this->apellidos) . ' · ' . ($this->tipoIdentificacion?->codigo ?? '') . ' ' . $this->documento;
+        return trim($this->nombres.' '.$this->apellidos).' · '.($this->tipoIdentificacion?->codigo ?? '').' '.$this->documento;
     }
 
     /** Nombres y apellidos como los pide el RNDC (el primer apellido y el resto). */
@@ -277,7 +284,7 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
     public function variablesRndc(Empresa $empresa): array
     {
         $this->loadMissing(['tipoIdentificacion', 'municipio']);
-        $c = \App\Support\Carga\CatalogoRndc::class;
+        $c = CatalogoRndc::class;
         $licencia = $this->licencia();
         $licencia?->loadMissing('categoriaLicencia');
         $tel = $c::digitos($this->telefono);
@@ -302,13 +309,13 @@ class Conductor extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function validarRndc(): array
     {
-        $c = \App\Support\Carga\CatalogoRndc::class;
+        $c = CatalogoRndc::class;
         $licencia = $this->licencia();
         $licencia?->loadMissing('categoriaLicencia');
         $tel = $c::digitos($this->telefono);
         [$a1] = $this->apellidosRndc();
 
-        return \App\Services\Rndc\ValidarTercero::errores($c::tipoId($this->tipoIdentificacion?->codigo), $this->documento, $this->nombres, $a1,
+        return ValidarTercero::errores($c::tipoId($this->tipoIdentificacion?->codigo), $this->documento, $this->nombres, $a1,
             strlen($tel) <= 7 ? $tel : null, strlen($tel) > 7 ? $tel : null, $this->direccion, $this->municipio_id, null,
             $licencia?->categoriaLicencia?->codigo, $licencia?->numero, $licencia?->fecha_vencimiento, esConductor: true);
     }

@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
+use Illuminate\Support\Carbon;
 
 /**
  * Estado calculado de un contrato o un FUEC según sus fechas y si fue anulado.
@@ -37,12 +38,12 @@ enum EstadoVigencia: string implements HasColor, HasLabel
 
     public static function para(\DateTimeInterface $inicio, \DateTimeInterface $fin, bool $anulado, ?\DateTimeInterface $hoy = null): self
     {
-        $hoy = \Illuminate\Support\Carbon::instance($hoy ?? now())->startOfDay();
+        $hoy = Carbon::instance($hoy ?? now())->startOfDay();
 
         return match (true) {
             $anulado => self::Anulado,
-            $hoy->lt(\Illuminate\Support\Carbon::instance($inicio)->startOfDay()) => self::Programado,
-            $hoy->gt(\Illuminate\Support\Carbon::instance($fin)->startOfDay()) => self::Vencido,
+            $hoy->lt(Carbon::instance($inicio)->startOfDay()) => self::Programado,
+            $hoy->gt(Carbon::instance($fin)->startOfDay()) => self::Vencido,
             default => self::Vigente,
         };
     }

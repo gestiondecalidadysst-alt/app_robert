@@ -43,7 +43,7 @@ class AsignarRol
         return Rol::query()
             ->deEmpresa($empresa)
             ->whereHas('users', fn ($q) => $q->whereKey($usuario->getKey())
-                ->where(config('permission.table_names.model_has_roles') . '.empresa_id', $empresa->id))
+                ->where(config('permission.table_names.model_has_roles').'.empresa_id', $empresa->id))
             ->first();
     }
 }

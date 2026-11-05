@@ -24,7 +24,7 @@ class VerificarReciboController extends Controller
 
         return response(PdfRecibo::recibo($pago), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . PdfRecibo::nombreRecibo($pago) . '"',
+            'Content-Disposition' => 'inline; filename="'.PdfRecibo::nombreRecibo($pago).'"',
         ]);
     }
 

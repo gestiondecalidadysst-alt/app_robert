@@ -81,7 +81,7 @@ final class Permisos
     {
         [$accion, $recurso] = explode('_', $permiso, 2);
 
-        return (self::ACCIONES[$accion] ?? $accion) . ' · ' . (self::RECURSOS[$recurso][0] ?? $recurso);
+        return (self::ACCIONES[$accion] ?? $accion).' · '.(self::RECURSOS[$recurso][0] ?? $recurso);
     }
 
     /** Permisos agrupados por recurso, para la matriz de la pantalla de roles. */

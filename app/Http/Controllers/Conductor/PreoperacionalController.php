@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Conductor;
 
 use App\Actions\Pesv\RegistrarInspeccion;
+use App\Enums\ModuloEmpresa;
 use App\Enums\TipoInspeccion;
 use App\Http\Controllers\Controller;
 use App\Models\Empresa;
@@ -10,6 +11,7 @@ use App\Models\Fuec;
 use App\Models\Inspeccion;
 use App\Models\ItemChequeo;
 use App\Models\Vehiculo;
+use App\Support\Modulos;
 use App\Support\Pdf\PdfInspeccion;
 use App\Support\Pesv\ServiciosConductor;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +29,7 @@ class PreoperacionalController extends Controller
     {
         $usuario = $request->user();
         abort_unless(ServiciosConductor::puedeInspeccionar($usuario, $vehiculo), 404);
-        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial), 404);
+        abort_unless(Modulos::activo($vehiculo->empresa_id, ModuloEmpresa::SeguridadVial), 404);
 
         $conductor = ServiciosConductor::conductorPara($usuario, $vehiculo->empresa_id);
         abort_unless($conductor, 404);
@@ -62,7 +64,7 @@ class PreoperacionalController extends Controller
     {
         $usuario = $request->user();
         abort_unless(ServiciosConductor::puedeInspeccionar($usuario, $vehiculo), 404);
-        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::SeguridadVial), 404);
+        abort_unless(Modulos::activo($vehiculo->empresa_id, ModuloEmpresa::SeguridadVial), 404);
         $conductor = ServiciosConductor::conductorPara($usuario, $vehiculo->empresa_id);
         abort_unless($conductor, 404);
 
@@ -105,7 +107,7 @@ class PreoperacionalController extends Controller
 
     public function historial(Request $request): View
     {
-        abort_unless(ServiciosConductor::conModulo($request->user(), \App\Enums\ModuloEmpresa::SeguridadVial), 404);
+        abort_unless(ServiciosConductor::conModulo($request->user(), ModuloEmpresa::SeguridadVial), 404);
         $ids = ServiciosConductor::conductores($request->user())->pluck('id');
 
         return view('conductor.historial', [
@@ -121,7 +123,7 @@ class PreoperacionalController extends Controller
 
         return response(PdfInspeccion::generar($inspeccion), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . PdfInspeccion::nombreArchivo($inspeccion) . '"',
+            'Content-Disposition' => 'inline; filename="'.PdfInspeccion::nombreArchivo($inspeccion).'"',
         ]);
     }
 

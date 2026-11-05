@@ -149,7 +149,7 @@ class DocumentoContrato extends Model
     {
         $numero = $this->datos['valores']['contrato.numero'] ?? $this->contrato_id;
 
-        return 'Contrato-' . $numero . ($this->firmado() ? '-firmado' : '') . '.pdf';
+        return 'Contrato-'.$numero.($this->firmado() ? '-firmado' : '').'.pdf';
     }
 
     public function scopeActivos(Builder $query): Builder

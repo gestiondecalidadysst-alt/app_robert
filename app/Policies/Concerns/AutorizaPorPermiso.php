@@ -15,7 +15,7 @@ trait AutorizaPorPermiso
 {
     protected function puede(User $user, string $accion): bool
     {
-        return $user->can($accion . '_' . static::RECURSO);
+        return $user->can($accion.'_'.static::RECURSO);
     }
 
     public function viewAny(User $user): bool

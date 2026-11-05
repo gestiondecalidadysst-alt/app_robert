@@ -42,7 +42,7 @@ final class PdfConsultaTransito
 
             return [
                 ['Conductor', $sujeto->nombre_completo],
-                ['Identificación', trim(($sujeto->tipoIdentificacion?->codigo ?? 'CC') . ' ' . $sujeto->documento)],
+                ['Identificación', trim(($sujeto->tipoIdentificacion?->codigo ?? 'CC').' '.$sujeto->documento)],
             ];
         }
         if ($sujeto instanceof Vehiculo) {
@@ -53,7 +53,7 @@ final class PdfConsultaTransito
                 ['Placa', Str::upper($sujeto->placa)],
                 ['Vehículo', trim(collect([$sujeto->marca?->nombre, $sujeto->linea?->nombre, $sujeto->modelo])->filter()->implode(' ')) ?: '—'],
                 $sujeto->numero_interno ? ['Número interno', (string) $sujeto->numero_interno] : null,
-                $propietario ? ['Propietario', $propietario->nombre_completo . ' · ' . trim(($propietario->tipoIdentificacion?->codigo ?? 'CC') . ' ' . $propietario->documento)] : null,
+                $propietario ? ['Propietario', $propietario->nombre_completo.' · '.trim(($propietario->tipoIdentificacion?->codigo ?? 'CC').' '.$propietario->documento)] : null,
             ]));
         }
 
@@ -69,6 +69,6 @@ final class PdfConsultaTransito
             default => 'runt',
         };
 
-        return $prefijo . '-' . Str::slug($c->referencia) . '-' . $c->created_at->format('Ymd') . '.pdf';
+        return $prefijo.'-'.Str::slug($c->referencia).'-'.$c->created_at->format('Ymd').'.pdf';
     }
 }

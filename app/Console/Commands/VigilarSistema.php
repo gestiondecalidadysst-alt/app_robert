@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use App\Support\Sistema\EstadoColas;
 use App\Support\Sistema\Latidos;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -27,17 +28,17 @@ class VigilarSistema extends Command
 
         if (! Latidos::vivo(Latidos::WORKER)) {
             $ultimo = Latidos::ultimo(Latidos::WORKER);
-            $problemas['worker'] = 'El worker de la cola no responde' . ($ultimo ? ' desde el ' . $ultimo->format('d/m h:i a') : '') . '. Revise el servicio worker en Easypanel.';
+            $problemas['worker'] = 'El worker de la cola no responde'.($ultimo ? ' desde el '.$ultimo->format('d/m h:i a') : '').'. Revise el servicio worker en Easypanel.';
         }
         if ($atascados = EstadoColas::atascados()) {
-            $problemas['atascados'] = "{$atascados} trabajo(s) llevan más de " . Latidos::MINUTOS_CAIDO . ' minutos esperando en la cola.';
+            $problemas['atascados'] = "{$atascados} trabajo(s) llevan más de ".Latidos::MINUTOS_CAIDO.' minutos esperando en la cola.';
         }
 
         $fallidos = EstadoColas::fallidos();
         $antes = (int) Cache::get('vigilante.fallidos', 0);
         Cache::forever('vigilante.fallidos', $fallidos);
         if ($fallidos > $antes) {
-            $problemas['fallidos'] = ($fallidos - $antes) . ' trabajo(s) fallaron después de todos sus reintentos.';
+            $problemas['fallidos'] = ($fallidos - $antes).' trabajo(s) fallaron después de todos sus reintentos.';
         }
 
         foreach ($problemas as $tipo => $mensaje) {
@@ -46,11 +47,11 @@ class VigilarSistema extends Command
             }
             $this->warn($mensaje);
             $notificacion = Notification::make()->danger()->title('Estado del sistema')->body($mensaje)
-                ->actions([\Filament\Actions\Action::make('ver')->label('Ver')->url(url('/admin/estado-sistema'))]);
+                ->actions([Action::make('ver')->label('Ver')->url(url('/admin/estado-sistema'))]);
             User::query()->withoutGlobalScopes()->where('es_superadmin', true)->where('activo', true)->get()
                 ->each(fn (User $u) => $notificacion->sendToDatabase($u));
             if ($correo = config('ruta.alertas_correo')) {
-                rescue(fn () => Mail::raw($mensaje . "\n\n" . url('/admin/estado-sistema'), fn ($m) => $m->to($correo)->subject('[Ruta] Estado del sistema')), report: false);
+                rescue(fn () => Mail::raw($mensaje."\n\n".url('/admin/estado-sistema'), fn ($m) => $m->to($correo)->subject('[Ruta] Estado del sistema')), report: false);
             }
         }
 

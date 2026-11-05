@@ -37,8 +37,8 @@ final class Jornada
 
         $min = $servicio->minutosConduccion();
         if ($maxContinua && $min && $min > $maxContinua && ! $servicio->ruta?->tieneParadas()) {
-            $avisos[] = 'Conducción continua estimada de ' . self::horas($min) . ' (máximo ' . self::horas($maxContinua)
-                . ' sin pausa): planee una parada segura en la ruta o un segundo conductor.';
+            $avisos[] = 'Conducción continua estimada de '.self::horas($min).' (máximo '.self::horas($maxContinua)
+                .' sin pausa): planee una parada segura en la ruta o un segundo conductor.';
         }
 
         $conductorIds = array_values(array_unique(array_map('intval', array_filter($conductorIds))));
@@ -77,7 +77,7 @@ final class Jornada
             foreach ($dias as $dia) {
                 $total = $suyos->filter(fn (Servicio $s) => $s->activoEl($dia))->sum(fn (Servicio $s) => $s->minutosConduccion() ?? 0);
                 if ($maxDia && $total > $maxDia) {
-                    $excesos[] = $dia->format('d/m') . ' (' . self::horas($total) . ')';
+                    $excesos[] = $dia->format('d/m').' ('.self::horas($total).')';
                 }
 
                 if ($descanso) {
@@ -87,16 +87,16 @@ final class Jornada
                         ->map(fn (Servicio $s) => self::intervalo($s, $dia)[0] ?? null)->filter()->min();
 
                     if ($finAnterior && $inicioHoy && $finAnterior->lt($inicioHoy) && $finAnterior->diffInMinutes($inicioHoy) < $descanso) {
-                        $descansos[] = $dia->format('d/m') . ' (' . self::horas((int) $finAnterior->diffInMinutes($inicioHoy)) . ')';
+                        $descansos[] = $dia->format('d/m').' ('.self::horas((int) $finAnterior->diffInMinutes($inicioHoy)).')';
                     }
                 }
             }
 
             if ($excesos) {
-                $avisos[] = "{$nombre} supera las " . self::horas($maxDia) . ' de conducción al día: ' . self::lista($excesos) . '.';
+                $avisos[] = "{$nombre} supera las ".self::horas($maxDia).' de conducción al día: '.self::lista($excesos).'.';
             }
             if ($descansos) {
-                $avisos[] = "{$nombre} descansa menos de " . self::horas($descanso) . ' entre jornadas: ' . self::lista($descansos) . '.';
+                $avisos[] = "{$nombre} descansa menos de ".self::horas($descanso).' entre jornadas: '.self::lista($descansos).'.';
             }
         }
 
@@ -175,6 +175,6 @@ final class Jornada
 
     private static function lista(array $items): string
     {
-        return count($items) > 6 ? implode(', ', array_slice($items, 0, 6)) . ' y ' . (count($items) - 6) . ' días más' : implode(', ', $items);
+        return count($items) > 6 ? implode(', ', array_slice($items, 0, 6)).' y '.(count($items) - 6).' días más' : implode(', ', $items);
     }
 }

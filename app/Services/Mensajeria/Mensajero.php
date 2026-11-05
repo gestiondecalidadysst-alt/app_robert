@@ -8,6 +8,7 @@ use App\Models\DocumentoContrato;
 use App\Models\Empresa;
 use App\Models\EnvioMensaje;
 use App\Support\Contacto;
+use App\Support\Sistema\FallasEnvio;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -142,8 +143,8 @@ final class Mensajero
     /** Falla de la cuenta del proveedor (sin créditos, IP, credenciales): aviso a la empresa, una vez al día. */
     private static function avisarSiEsDeLaCuenta(EnvioMensaje $envio): void
     {
-        if ($envio->estado === 'fallido' && ($tipo = \App\Support\Sistema\FallasEnvio::permanente($envio->error))) {
-            rescue(fn () => \App\Support\Sistema\FallasEnvio::avisar($envio, $tipo), report: false);
+        if ($envio->estado === 'fallido' && ($tipo = FallasEnvio::permanente($envio->error))) {
+            rescue(fn () => FallasEnvio::avisar($envio, $tipo), report: false);
         }
     }
 

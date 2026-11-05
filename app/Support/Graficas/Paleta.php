@@ -2,6 +2,8 @@
 
 namespace App\Support\Graficas;
 
+use Filament\Support\RawJs;
+
 /**
  * Colores de las gráficas (validados con el verificador de paletas: separación para daltonismo y
  * para visión normal). Las series toman los colores EN ESTE ORDEN, nunca rotados; los estados
@@ -54,7 +56,7 @@ final class Paleta
      * Convierte las opciones a JavaScript para formatear valores en pesos ($ 1.234.567) en el eje y
      * en el recuadro emergente.
      */
-    public static function enPesos(array $opciones, bool $horizontal = false): \Filament\Support\RawJs
+    public static function enPesos(array $opciones, bool $horizontal = false): RawJs
     {
         $eje = $horizontal ? 'x' : 'y';
         if (isset($opciones['scales'][$eje])) {
@@ -66,9 +68,9 @@ final class Paleta
         $js = str_replace('"', "'", json_encode($opciones, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         $formato = '(v) => `$ ` + Math.round(Number(v)).toLocaleString(`es-CO`)';
         $js = str_replace("'__PESOS_EJE__'", '(v) => { const n = Number(v); return n >= 1e6 ? `$ ` + (n / 1e6).toLocaleString(`es-CO`) + ` M` : `$ ` + n.toLocaleString(`es-CO`); }', $js);
-        $js = str_replace("'__PESOS_TT__'", "(c) => (c.dataset.label ? c.dataset.label + `: ` : (c.label ? c.label + `: ` : ``)) + ({$formato})(c.parsed." . ($horizontal ? 'x' : 'y') . ' ?? c.parsed)', $js);
+        $js = str_replace("'__PESOS_TT__'", "(c) => (c.dataset.label ? c.dataset.label + `: ` : (c.label ? c.label + `: ` : ``)) + ({$formato})(c.parsed.".($horizontal ? 'x' : 'y').' ?? c.parsed)', $js);
 
-        return \Filament\Support\RawJs::make($js);
+        return RawJs::make($js);
     }
 
     public static function dona(): array
@@ -102,7 +104,7 @@ final class Paleta
             'label' => $etiqueta,
             'data' => $datos,
             'borderColor' => $color,
-            'backgroundColor' => $color . '26',
+            'backgroundColor' => $color.'26',
             'fill' => true,
             'tension' => 0.35,
             'borderWidth' => 2,

@@ -24,7 +24,7 @@ class VerificarConsultaTransitoController extends Controller
 
         return response(PdfConsultaTransito::constancia($consulta), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . PdfConsultaTransito::nombre($consulta) . '"',
+            'Content-Disposition' => 'inline; filename="'.PdfConsultaTransito::nombre($consulta).'"',
         ]);
     }
 

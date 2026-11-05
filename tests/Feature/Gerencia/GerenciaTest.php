@@ -2,19 +2,20 @@
 
 namespace Tests\Feature\Gerencia;
 
-use App\Filament\App\Gerencia\Widgets\CarteraPorEdades;
 use App\Filament\App\Gerencia\Widgets\ResumenCartera;
-use App\Filament\App\Gerencia\Widgets\ResumenFlota;
-use App\Filament\App\Gerencia\Widgets\ResumenMantenimiento;
-use App\Filament\App\Gerencia\Widgets\ResumenOperacion;
-use App\Filament\App\Gerencia\Widgets\ResumenSeguridadVial;
-use App\Filament\App\Gerencia\Widgets\TablasGerencia;
-use App\Filament\App\Gerencia\Widgets\TendenciaFinanciera;
 use App\Filament\App\Pages\Informes;
+use App\Filament\App\Pages\TableroGerencia;
+use App\Filament\App\Widgets\ExtractosDeHoy;
+use App\Filament\App\Widgets\InicioOperacion;
+use App\Filament\App\Widgets\InicioPagosPorTipo;
+use App\Filament\App\Widgets\InicioRecaudoMes;
+use App\Filament\App\Widgets\PendientesPorCobrar;
+use App\Filament\App\Widgets\UltimosPagos;
 use App\Mail\CorreoInformeGerencia;
 use App\Models\Contrato;
 use App\Models\Fuec;
 use App\Models\Inspeccion;
+use App\Models\Oficina;
 use App\Models\WebhookEntrega;
 use App\Support\Gerencia\ExportarInforme;
 use App\Support\Gerencia\Indicadores;
@@ -61,7 +62,7 @@ class GerenciaTest extends ConfiguracionTestCase
         $this->assertSame($f['vehiculos'], $f['operando'] + $f['suspendidos'] + $f['taller']);
 
         // Oficina sin contratos: la cartera queda en cero.
-        $oficina = \App\Models\Oficina::query()->deEmpresa($this->demo)->where('nombre', 'Montería Oppal')->firstOrFail();
+        $oficina = Oficina::query()->deEmpresa($this->demo)->where('nombre', 'Montería Oppal')->firstOrFail();
         $this->assertEquals(0, (new Indicadores($this->demo->id, today()->startOfMonth(), today()->endOfMonth(), $oficina->id))->cartera()['cartera']);
     }
 
@@ -98,7 +99,7 @@ class GerenciaTest extends ConfiguracionTestCase
         $this->get('/app/cootrasec-demo/gerencia')->assertOk()->assertSee('Tablero de gerencia');
         $this->get('/app/cootrasec-demo/informes')->assertOk();
 
-        foreach ((new \App\Filament\App\Pages\TableroGerencia)->getWidgets() as $widget) {
+        foreach ((new TableroGerencia)->getWidgets() as $widget) {
             Livewire::test($widget, ['pageFilters' => ['periodo' => 'anio']])->assertOk();
         }
         Livewire::test(ResumenCartera::class, ['pageFilters' => ['periodo' => 'mes']])->assertSee('$ 12.000.000');
@@ -134,13 +135,13 @@ class GerenciaTest extends ConfiguracionTestCase
         // Inicio con lo operativo.
         $this->actingAs($this->usuario('admin@demo.test'));
         $this->get('/app/cootrasec-demo')->assertOk();
-        foreach ([\App\Filament\App\Widgets\InicioOperacion::class, \App\Filament\App\Widgets\InicioPagosPorTipo::class, \App\Filament\App\Widgets\InicioRecaudoMes::class] as $w) {
+        foreach ([InicioOperacion::class, InicioPagosPorTipo::class, InicioRecaudoMes::class] as $w) {
             Livewire::test($w)->assertOk();
         }
-        Livewire::test(\App\Filament\App\Widgets\InicioOperacion::class)->assertSee('$ 12.000.000')->assertSee('1 abonos');
-        Livewire::test(\App\Filament\App\Widgets\PendientesPorCobrar::class)->assertSee('Colegio Demo del Sinú')->assertDontSee('Agroindustrial Demo');
-        Livewire::test(\App\Filament\App\Widgets\UltimosPagos::class)->assertSee('Pago total')->assertSee('Abono');
-        Livewire::test(\App\Filament\App\Widgets\ExtractosDeHoy::class)->assertSee('DMO101')->assertSee('Pendiente');
+        Livewire::test(InicioOperacion::class)->assertSee('$ 12.000.000')->assertSee('1 abonos');
+        Livewire::test(PendientesPorCobrar::class)->assertSee('Colegio Demo del Sinú')->assertDontSee('Agroindustrial Demo');
+        Livewire::test(UltimosPagos::class)->assertSee('Pago total')->assertSee('Abono');
+        Livewire::test(ExtractosDeHoy::class)->assertSee('DMO101')->assertSee('Pendiente');
     }
 
     public function test_gerencia_ve_y_el_auxiliar_no(): void

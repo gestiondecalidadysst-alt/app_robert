@@ -130,7 +130,7 @@ class Contrato extends Model
 
     public function getVigenciaAttribute(): string
     {
-        return $this->fecha_inicio->format('d/m/Y') . ' – ' . $this->fecha_fin->format('d/m/Y');
+        return $this->fecha_inicio->format('d/m/Y').' – '.$this->fecha_fin->format('d/m/Y');
     }
 
     // Scopes

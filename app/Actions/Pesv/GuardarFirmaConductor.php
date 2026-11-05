@@ -24,7 +24,7 @@ class GuardarFirmaConductor
             ? self::desdeArchivo($firma)
             : [FirmaManuscrita::desdeDataUri($firma), 'png'];
 
-        $ruta = "conductores/{$conductor->empresa_id}/{$conductor->id}/firma-" . Str::lower(Str::random(10)) . ".{$extension}";
+        $ruta = "conductores/{$conductor->empresa_id}/{$conductor->id}/firma-".Str::lower(Str::random(10)).".{$extension}";
         // El disco no lanza errores (throw = false): se comprueba que el archivo quedó escrito.
         if (! Storage::disk(self::DISCO)->put($ruta, $contenido) || ! Storage::disk(self::DISCO)->exists($ruta)) {
             report(new \RuntimeException("No se pudo escribir la firma del conductor en storage/app/private/{$ruta}"));
@@ -42,7 +42,7 @@ class GuardarFirmaConductor
 
         activity('Conductor')->performedOn($conductor)->causedBy(auth()->user())
             ->tap(fn ($a) => $a->empresa_id = $conductor->empresa_id)
-            ->log(($anterior ? 'Reemplazó' : 'Registró') . ' la firma del conductor' . ($registradaPor ? " ({$registradaPor})" : ''));
+            ->log(($anterior ? 'Reemplazó' : 'Registró').' la firma del conductor'.($registradaPor ? " ({$registradaPor})" : ''));
 
         return $conductor;
     }

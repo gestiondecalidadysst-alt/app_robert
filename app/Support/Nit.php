@@ -45,6 +45,6 @@ final class Nit
 
         $dv ??= self::digitoVerificacion($digitos);
 
-        return number_format((int) $digitos, 0, ',', '.') . ($dv !== null ? "-{$dv}" : '');
+        return number_format((int) $digitos, 0, ',', '.').($dv !== null ? "-{$dv}" : '');
     }
 }

@@ -67,11 +67,11 @@ final class PdfRecibo
 
     public static function nombreRecibo(PagoContrato $pago): string
     {
-        return 'recibo-' . $pago->numero_recibo . '.pdf';
+        return 'recibo-'.$pago->numero_recibo.'.pdf';
     }
 
     public static function nombreEstadoCuenta(Contrato $contrato): string
     {
-        return ($contrato->pagado() ? 'paz-y-salvo-contrato-' : 'estado-de-cuenta-contrato-') . $contrato->numero_formateado . '.pdf';
+        return ($contrato->pagado() ? 'paz-y-salvo-contrato-' : 'estado-de-cuenta-contrato-').$contrato->numero_formateado.'.pdf';
     }
 }

@@ -38,7 +38,7 @@ final class PdfPlanViaje
 
     public static function nombre(Servicio $servicio): string
     {
-        return 'plan-de-viaje-' . $servicio->fecha_inicio->format('Y-m-d') . '-' . ($servicio->placa ?? 'sin-vehiculo') . '.pdf';
+        return 'plan-de-viaje-'.$servicio->fecha_inicio->format('Y-m-d').'-'.($servicio->placa ?? 'sin-vehiculo').'.pdf';
     }
 
     private static function generar(array $datos, int $empresaId): string

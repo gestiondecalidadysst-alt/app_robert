@@ -194,11 +194,11 @@ final class PlanPreventivo
         $partes = [];
         if ($fila['faltan_km'] !== null) {
             $partes[] = $fila['faltan_km'] > 0
-                ? 'faltan ' . number_format($fila['faltan_km'], 0, ',', '.') . ' km'
-                : 'pasado ' . number_format(abs($fila['faltan_km']), 0, ',', '.') . ' km';
+                ? 'faltan '.number_format($fila['faltan_km'], 0, ',', '.').' km'
+                : 'pasado '.number_format(abs($fila['faltan_km']), 0, ',', '.').' km';
         }
         if ($fila['faltan_dias'] !== null) {
-            $partes[] = $fila['faltan_dias'] > 0 ? 'faltan ' . $fila['faltan_dias'] . ' días' : 'vencido hace ' . abs($fila['faltan_dias']) . ' días';
+            $partes[] = $fila['faltan_dias'] > 0 ? 'faltan '.$fila['faltan_dias'].' días' : 'vencido hace '.abs($fila['faltan_dias']).' días';
         }
 
         return ucfirst(implode(' · ', $partes)) ?: '—';

@@ -72,10 +72,10 @@ class EmitirDocumentoContrato
             $documento->forceFill([
                 'datos' => $datos,
                 'firma_contratista_path' => $firmaContratista,
-                'huella_contenido' => hash('sha256', $documento->contenido . json_encode($datos, JSON_UNESCAPED_UNICODE)),
+                'huella_contenido' => hash('sha256', $documento->contenido.json_encode($datos, JSON_UNESCAPED_UNICODE)),
             ])->save();
 
-            $documento->registrar('emitido', ['plantilla' => 'versión ' . $plantilla->version_formateada]);
+            $documento->registrar('emitido', ['plantilla' => 'versión '.$plantilla->version_formateada]);
 
             return $documento;
         });

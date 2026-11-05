@@ -72,7 +72,7 @@ class Cliente extends Model
     {
         $codigo = $this->tipoIdentificacion?->codigo;
 
-        return trim($codigo . ' ' . ($this->dv !== null ? Nit::formatear($this->documento) : $this->documento));
+        return trim($codigo.' '.($this->dv !== null ? Nit::formatear($this->documento) : $this->documento));
     }
 
     public function scopeActivos(Builder $query): Builder

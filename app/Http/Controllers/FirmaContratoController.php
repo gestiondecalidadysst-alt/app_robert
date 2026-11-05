@@ -63,11 +63,11 @@ class FirmaContratoController extends Controller
                 $request->userAgent(),
             );
         } catch (ValidationException $e) {
-            return redirect()->to(route('contrato.firma', $token) . '#firmar')->withErrors($e->errors());
+            return redirect()->to(route('contrato.firma', $token).'#firmar')->withErrors($e->errors());
         }
 
-        return redirect()->to(route('contrato.firma', $token) . '#firmar')
-            ->with('codigo_enviado', ($enviado['canal'] === 'sms' ? 'por SMS al celular ' : 'al correo ') . $enviado['destino']);
+        return redirect()->to(route('contrato.firma', $token).'#firmar')
+            ->with('codigo_enviado', ($enviado['canal'] === 'sms' ? 'por SMS al celular ' : 'al correo ').$enviado['destino']);
     }
 
     public function firmar(Request $request, string $token): RedirectResponse
@@ -92,7 +92,7 @@ class FirmaContratoController extends Controller
                 $request->userAgent(),
             );
         } catch (ValidationException $e) {
-            return redirect()->to(route('contrato.firma', $token) . '#firmar')->withErrors($e->errors())->withInput($request->only('acepto'));
+            return redirect()->to(route('contrato.firma', $token).'#firmar')->withErrors($e->errors())->withInput($request->only('acepto'));
         }
 
         return redirect()->route('contrato.firma', $token)->with('firmado', true);
@@ -110,7 +110,7 @@ class FirmaContratoController extends Controller
 
         return response(PdfContrato::documento($documento), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $documento->nombreArchivo() . '"',
+            'Content-Disposition' => 'inline; filename="'.$documento->nombreArchivo().'"',
             'X-Robots-Tag' => 'noindex',
         ]);
     }

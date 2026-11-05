@@ -4,9 +4,11 @@ namespace App\Console\Commands;
 
 use App\Actions\Mantenimiento\AvisosPrograma;
 use App\Actions\Mantenimiento\SeguimientoPreventivo;
-use App\Models\Empresa;
 use App\Enums\EstadoVehiculo;
+use App\Enums\ModuloEmpresa;
+use App\Models\Empresa;
 use App\Models\Vehiculo;
+use App\Support\Modulos;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -29,7 +31,7 @@ class SeguimientoMantenimiento extends Command
         Vehiculo::query()->withoutGlobalScopes()->whereNull('deleted_at')
             ->where('estado', '!=', EstadoVehiculo::Desvinculado->value)
             ->each(function (Vehiculo $vehiculo) use (&$abiertos): void {
-                if (! \App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::Mantenimiento)) {
+                if (! Modulos::activo($vehiculo->empresa_id, ModuloEmpresa::Mantenimiento)) {
                     return;
                 }
                 try {
@@ -42,7 +44,7 @@ class SeguimientoMantenimiento extends Command
         $this->info("Planes de acción preventivos abiertos: {$abiertos}");
 
         Empresa::query()->where('activa', true)->each(function (Empresa $empresa): void {
-            if (! $empresa->tieneModulo(\App\Enums\ModuloEmpresa::Mantenimiento)) {
+            if (! $empresa->tieneModulo(ModuloEmpresa::Mantenimiento)) {
                 return;
             }
             try {

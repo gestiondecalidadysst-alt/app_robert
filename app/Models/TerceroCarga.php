@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\PerteneceAEmpresa;
 use App\Models\Concerns\SeRegistraEnRndc;
 use App\Services\Rndc\RegistrableRndc;
+use App\Services\Rndc\ValidarTercero;
 use App\Support\Carga\CatalogoRndc as C;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -57,7 +58,7 @@ class TerceroCarga extends Model implements RegistrableRndc
 
     public function getNombreCompletoAttribute(): string
     {
-        return trim($this->nombre . ' ' . $this->primer_apellido . ' ' . $this->segundo_apellido);
+        return trim($this->nombre.' '.$this->primer_apellido.' '.$this->segundo_apellido);
     }
 
     public function procesoRndc(): int
@@ -67,8 +68,8 @@ class TerceroCarga extends Model implements RegistrableRndc
 
     public function etiquetaRndc(): string
     {
-        return $this->nombre_completo . ' · ' . ($this->tipoIdentificacion?->codigo ?? '') . ' ' . $this->documento
-            . ($this->esJuridica() ? ' · sede ' . $this->sede_codigo : '');
+        return $this->nombre_completo.' · '.($this->tipoIdentificacion?->codigo ?? '').' '.$this->documento
+            .($this->esJuridica() ? ' · sede '.$this->sede_codigo : '');
     }
 
     public function variablesRndc(Empresa $empresa): array
@@ -94,7 +95,7 @@ class TerceroCarga extends Model implements RegistrableRndc
 
     public function validarRndc(): array
     {
-        return \App\Services\Rndc\ValidarTercero::errores(
+        return ValidarTercero::errores(
             C::tipoId($this->tipoIdentificacion?->codigo), $this->documento, $this->nombre, $this->primer_apellido,
             $this->telefono, $this->celular, $this->direccion, $this->municipio_id, juridicaConSede: $this->esJuridica() ? $this->sede_codigo : null,
         );

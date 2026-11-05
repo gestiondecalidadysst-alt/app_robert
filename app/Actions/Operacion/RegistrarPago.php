@@ -36,7 +36,7 @@ class RegistrarPago
             $saldo = $contrato->saldo();
             if ($valor > $saldo) {
                 throw ValidationException::withMessages([
-                    'valor' => 'El pago supera el saldo del contrato ($ ' . number_format($saldo, 0, ',', '.') . ').',
+                    'valor' => 'El pago supera el saldo del contrato ($ '.number_format($saldo, 0, ',', '.').').',
                 ]);
             }
 

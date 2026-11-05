@@ -18,7 +18,8 @@ use App\Services\Transito\ResultadoConsulta;
 use App\Support\Avisos;
 use App\Support\Webhooks;
 use Filament\Notifications\Notification;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -109,8 +110,8 @@ class ConsultarTransito
             $error('La plataforma no ha definido el precio de esta consulta.');
         }
         if ($empresa->transito_tope_mensual !== null && $empresa->gastoTransitoDelMes() + $precio > (float) $empresa->transito_tope_mensual) {
-            $error('Se alcanzó el tope mensual de consultas ($ ' . number_format((float) $empresa->transito_tope_mensual, 0, ',', '.')
-                . '). Súbalo en Configuración → Integraciones para seguir consultando.');
+            $error('Se alcanzó el tope mensual de consultas ($ '.number_format((float) $empresa->transito_tope_mensual, 0, ',', '.')
+                .'). Súbalo en Configuración → Integraciones para seguir consultando.');
         }
 
         if ($sujeto instanceof Conductor) {
@@ -165,8 +166,8 @@ class ConsultarTransito
             }
 
             if ($nuevos) {
-                $this->avisar($empresa, $sujeto, 'Comparendos nuevos', count($nuevos) . ' comparendo(s) nuevo(s) por $ '
-                    . number_format(collect($nuevos)->sum('valor'), 0, ',', '.') . '.', 'transito.comparendo_nuevo', ['comparendos' => $nuevos]);
+                $this->avisar($empresa, $sujeto, 'Comparendos nuevos', count($nuevos).' comparendo(s) nuevo(s) por $ '
+                    .number_format(collect($nuevos)->sum('valor'), 0, ',', '.').'.', 'transito.comparendo_nuevo', ['comparendos' => $nuevos]);
             }
         } elseif ($tipo === TipoConsultaTransito::ConductorLicencia) {
             $antes = (bool) ($resumen['licencia']['suspendida'] ?? false);
@@ -174,7 +175,7 @@ class ConsultarTransito
                 + ['consultado_at' => $ahora->toIso8601String()];
             if ($resumen['licencia']['suspendida'] && ! $antes) {
                 $this->avisar($empresa, $sujeto, 'Licencia suspendida', 'El RUNT reporta la licencia de conducción SUSPENDIDA.'
-                    . ($empresa->transito_bloquear_licencia ? ' No se le pueden expedir FUEC.' : ''), 'transito.licencia_suspendida', ['licencia' => $resumen['licencia']]);
+                    .($empresa->transito_bloquear_licencia ? ' No se le pueden expedir FUEC.' : ''), 'transito.licencia_suspendida', ['licencia' => $resumen['licencia']]);
             }
         } else {
             $runt = ($r->ok() ? Interpretar::runt($r->datos) : ['soat_vence' => null, 'soat_estado' => null, 'rtm_vence' => null, 'rtm_vigente' => null, 'estado_vehiculo' => null])
@@ -210,7 +211,7 @@ class ConsultarTransito
             if (! $registro->exists && $c['estado'] !== 'pagada') {
                 $nuevos[] = $c;
             }
-            $registro->forceFill([...\Illuminate\Support\Arr::only($c, ['numero', 'fecha', 'codigo', 'valor', 'estado', 'placa']), 'empresa_id' => $empresa->id, 'ultima_vez_at' => now(), 'ya_no_aparece_at' => null]);
+            $registro->forceFill([...Arr::only($c, ['numero', 'fecha', 'codigo', 'valor', 'estado', 'placa']), 'empresa_id' => $empresa->id, 'ultima_vez_at' => now(), 'ya_no_aparece_at' => null]);
             $registro->infraccion = $c['infraccion'] !== null ? Str::limit((string) $c['infraccion'], 500) : null;
             $registro->organismo = $c['organismo'] !== null ? Str::limit((string) $c['organismo'], 250) : null;
             $registro->tipo = $c['tipo'] !== null ? Str::limit((string) $c['tipo'], 20, '') : null;
@@ -232,8 +233,8 @@ class ConsultarTransito
             $enApp = $vehiculo->documentoVigente($tipo)?->fecha_vencimiento?->toDateString();
             $enRunt = $runt[$campo] ?? null;
             if ($enRunt && $enApp && $enRunt !== $enApp) {
-                $diferencias[] = "{$nombre}: en la app vence el " . \Illuminate\Support\Carbon::parse($enApp)->format('d/m/Y')
-                    . ' y en el RUNT el ' . \Illuminate\Support\Carbon::parse($enRunt)->format('d/m/Y') . '.';
+                $diferencias[] = "{$nombre}: en la app vence el ".Carbon::parse($enApp)->format('d/m/Y')
+                    .' y en el RUNT el '.Carbon::parse($enRunt)->format('d/m/Y').'.';
             } elseif ($enApp && ! $enRunt) {
                 $diferencias[] = "{$nombre}: registrado en la app pero el RUNT no reporta uno vigente.";
             }

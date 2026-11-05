@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 /**
  * Municipio (DANE).
  */
@@ -9,7 +11,7 @@ class Municipio extends Catalogo
 {
     protected $table = 'municipios';
 
-    public function departamento(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function departamento(): BelongsTo
     {
         return $this->belongsTo(Departamento::class);
     }

@@ -5,6 +5,7 @@ namespace App\Models\Concerns;
 use App\Enums\Contratos\TipoDocumento;
 use App\Enums\EstadoDocumento;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -34,7 +35,7 @@ trait TieneDocumentosConVencimiento
     public function documentosVigentes(): Collection
     {
         return $this->documentos
-            ->sortByDesc(fn (Model $d) => $d->fecha_vencimiento->format('Ymd') . str_pad((string) $d->getKey(), 10, '0', STR_PAD_LEFT))
+            ->sortByDesc(fn (Model $d) => $d->fecha_vencimiento->format('Ymd').str_pad((string) $d->getKey(), 10, '0', STR_PAD_LEFT))
             ->unique(fn (Model $d) => $d->tipo->value)
             ->keyBy(fn (Model $d) => $d->tipo->value);
     }
@@ -91,7 +92,7 @@ trait TieneDocumentosConVencimiento
     {
         $tipos = array_map(fn (TipoDocumento $t) => $t->value, static::tiposObligatorios());
 
-        $limite = \Illuminate\Support\Carbon::instance($fecha)->startOfDay();
+        $limite = Carbon::instance($fecha)->startOfDay();
 
         // filter por clave (no only(): en colecciones de modelos, only() filtra por id).
         return $this->documentosVigentes()
@@ -106,7 +107,7 @@ trait TieneDocumentosConVencimiento
             ->countBy(fn (EstadoDocumento $e) => $e->value);
 
         $partes = array_filter([
-            ($n = $conteo[EstadoDocumento::Vencido->value] ?? 0) ? "{$n} vencido" . ($n > 1 ? 's' : '') : null,
+            ($n = $conteo[EstadoDocumento::Vencido->value] ?? 0) ? "{$n} vencido".($n > 1 ? 's' : '') : null,
             ($n = $conteo[EstadoDocumento::Faltante->value] ?? 0) ? "{$n} sin registrar" : null,
             ($n = $conteo[EstadoDocumento::PorVencer->value] ?? 0) ? "{$n} por vencer" : null,
         ]);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Rol;
 use Spatie\Permission\DefaultTeamResolver;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -28,7 +29,7 @@ return [
          * `Spatie\Permission\Contracts\Role` contract.
          */
 
-        'role' => \App\Models\Rol::class,
+        'role' => Rol::class,
 
         /*
          * When using the "Teams" feature from this package, we need to know which

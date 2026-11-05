@@ -28,7 +28,7 @@ class EnviarRecibo
         [$email, $celular] = $this->validar($email, $celular, conSms: true);
         $canales = [];
         $estado = $pago->tipo() === PagoContrato::ABONO
-            ? 'Saldo pendiente: $ ' . number_format((float) $pago->saldo_despues, 0, ',', '.') . '.'
+            ? 'Saldo pendiente: $ '.number_format((float) $pago->saldo_despues, 0, ',', '.').'.'
             : 'El contrato quedó pagado en su totalidad.';
 
         if ($email) {
@@ -38,26 +38,26 @@ class EnviarRecibo
                 (string) $pago->contrato->cliente?->nombre,
                 $pago->contrato->numero_formateado,
                 "Recibo de caja No. {$pago->numero_recibo}",
-                "Recibimos su {$this->minuscula($pago->tipoEtiqueta())} por $ " . number_format((float) $pago->valor, 0, ',', '.')
-                    . " al contrato No. {$pago->contrato->numero_formateado}. {$estado}",
+                "Recibimos su {$this->minuscula($pago->tipoEtiqueta())} por $ ".number_format((float) $pago->valor, 0, ',', '.')
+                    ." al contrato No. {$pago->contrato->numero_formateado}. {$estado}",
                 base64_encode(PdfRecibo::recibo($pago)),
                 PdfRecibo::nombreRecibo($pago),
                 $pago->urlVerificacion(),
             ), ahora: true);
-            $canales[] = 'correo ' . Contacto::ocultarCorreo($email);
+            $canales[] = 'correo '.Contacto::ocultarCorreo($email);
         }
 
         if ($celular) {
             $texto = Str::limit(Contacto::textoSms($this->nombreEmpresa($empresa)), 24, '')
-                . ": Recibo {$pago->numero_recibo} por $" . number_format((float) $pago->valor, 0, ',', '.')
-                . ' contrato ' . $pago->contrato->numero_formateado . ': ' . $pago->urlVerificacion();
+                .": Recibo {$pago->numero_recibo} por $".number_format((float) $pago->valor, 0, ',', '.')
+                .' contrato '.$pago->contrato->numero_formateado.': '.$pago->urlVerificacion();
             $envio = Mensajero::sms($empresa, 'recibo_pago', $celular, $texto, ahora: true);
             if (in_array($envio->estado, ['omitido', 'fallido'], true)) {
                 if (! $email) {
-                    throw ValidationException::withMessages(['celular' => 'SMS no enviado: ' . $envio->error]);
+                    throw ValidationException::withMessages(['celular' => 'SMS no enviado: '.$envio->error]);
                 }
             } else {
-                $canales[] = 'SMS ' . Contacto::ocultarCelular($celular);
+                $canales[] = 'SMS '.Contacto::ocultarCelular($celular);
             }
         }
 
@@ -80,12 +80,12 @@ class EnviarRecibo
             $pagado ? 'Paz y salvo' : 'Estado de cuenta',
             $pagado
                 ? "El contrato No. {$contrato->numero_formateado} está pagado en su totalidad. Le enviamos la constancia de paz y salvo."
-                : "Le enviamos el estado de cuenta del contrato No. {$contrato->numero_formateado}. Saldo pendiente: $ " . number_format($contrato->saldo(), 0, ',', '.') . '.',
+                : "Le enviamos el estado de cuenta del contrato No. {$contrato->numero_formateado}. Saldo pendiente: $ ".number_format($contrato->saldo(), 0, ',', '.').'.',
             base64_encode(PdfRecibo::estadoCuenta($contrato)),
             PdfRecibo::nombreEstadoCuenta($contrato),
         ), ahora: true);
 
-        return ['correo ' . Contacto::ocultarCorreo($email)];
+        return ['correo '.Contacto::ocultarCorreo($email)];
     }
 
     /** Datos de contacto sugeridos: los del cliente o, si no, los del responsable del contrato. */

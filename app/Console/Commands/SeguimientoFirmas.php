@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Actions\Contratos\EnviarParaFirma;
 use App\Enums\EstadoFirma;
+use App\Enums\ModuloEmpresa;
 use App\Models\DocumentoContrato;
 use App\Models\Empresa;
 use App\Models\User;
@@ -34,7 +35,7 @@ class SeguimientoFirmas extends Command
         foreach ($pendientes as $documento) {
             $empresa = Empresa::find($documento->empresa_id);
 
-            if (! $empresa?->activa || ! $empresa->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros)) {
+            if (! $empresa?->activa || ! $empresa->tieneModulo(ModuloEmpresa::Pasajeros)) {
                 continue;
             }
 

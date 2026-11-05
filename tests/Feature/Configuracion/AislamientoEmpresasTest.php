@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Configuracion;
 
+use App\Models\Actividad;
 use App\Models\Oficina;
 use App\Models\ValorAdministracion;
 
@@ -34,7 +35,7 @@ class AislamientoEmpresasTest extends ConfiguracionTestCase
         $oficina = Oficina::create(['nombre' => 'Sede auditada']);
         $oficina->update(['telefono' => '3000000000']);
 
-        $actividad = \App\Models\Actividad::query()->latest('id')->first();
+        $actividad = Actividad::query()->latest('id')->first();
         $this->assertSame($this->demo->id, $actividad->empresa_id);
         $this->assertSame('updated', $actividad->event);
     }

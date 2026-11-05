@@ -26,7 +26,7 @@ class GuardarPlantillaContrato
         $desconocidas = array_diff(VariablesContrato::usadas($contenido), array_keys(VariablesContrato::definiciones()));
         if ($desconocidas) {
             throw ValidationException::withMessages([
-                'contenido' => 'Variables desconocidas: ' . implode(', ', $desconocidas) . '. Vuelva a insertarlas desde la lista.',
+                'contenido' => 'Variables desconocidas: '.implode(', ', $desconocidas).'. Vuelva a insertarlas desde la lista.',
             ]);
         }
 
@@ -38,7 +38,7 @@ class GuardarPlantillaContrato
 
             if ($version <= $ultima) {
                 throw ValidationException::withMessages([
-                    'version' => 'La versión debe ser mayor que la vigente (' . str_pad((string) $ultima, 2, '0', STR_PAD_LEFT) . ').',
+                    'version' => 'La versión debe ser mayor que la vigente ('.str_pad((string) $ultima, 2, '0', STR_PAD_LEFT).').',
                 ]);
             }
 

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Configuracion;
 
-use App\Models\Oficina;
+use App\Models\Rol;
 
 class AccesoPantallasTest extends ConfiguracionTestCase
 {
@@ -30,7 +30,7 @@ class AccesoPantallasTest extends ConfiguracionTestCase
             $this->get($url)->assertOk();
         }
 
-        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->first();
+        $rol = Rol::query()->deEmpresa($this->demo)->first();
         $this->get("/app/cootrasec-demo/roles/{$rol->id}/editar")->assertOk();
 
         $usuario = $this->usuario('auxiliar@demo.test');
@@ -95,7 +95,7 @@ class AccesoPantallasTest extends ConfiguracionTestCase
         $usuarioAjeno = $this->usuario('admin@ejemplo.test');
         $this->get("/app/cootrasec-demo/usuarios/{$usuarioAjeno->id}/editar")->assertNotFound();
 
-        $rolAjeno = \App\Models\Rol::query()->deEmpresa($this->otra)->first();
+        $rolAjeno = Rol::query()->deEmpresa($this->otra)->first();
         $this->get("/app/cootrasec-demo/roles/{$rolAjeno->id}/editar")->assertNotFound();
     }
 

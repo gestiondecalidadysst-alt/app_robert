@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Conductor;
 
 use App\Actions\Mantenimiento\RegistrarMantenimiento;
 use App\Enums\AccionMantenimiento;
+use App\Enums\ModuloEmpresa;
 use App\Http\Controllers\Controller;
+use App\Models\ActividadMantenimiento;
 use App\Models\Empresa;
 use App\Models\Mantenimiento;
 use App\Models\PlanAccion;
 use App\Models\Vehiculo;
 use App\Support\Mantenimiento\PlanPreventivo;
+use App\Support\Modulos;
 use App\Support\Pesv\ServiciosConductor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,14 +28,14 @@ class MantenimientoController extends Controller
 {
     public function inicio(Request $request): View
     {
-        abort_unless(ServiciosConductor::conModulo($request->user(), \App\Enums\ModuloEmpresa::Mantenimiento), 404);
+        abort_unless(ServiciosConductor::conModulo($request->user(), ModuloEmpresa::Mantenimiento), 404);
         $vehiculos = $this->vehiculos($request);
 
         return view('conductor.mantenimiento', [
             'vehiculos' => $vehiculos,
             'planes' => PlanAccion::query()->withoutGlobalScopes()->whereIn('vehiculo_id', $vehiculos->pluck('id'))->pendientes()
                 ->with('vehiculo')->orderByRaw("case prioridad when 'alta' then 0 when 'media' then 1 else 2 end")->latest('id')->get(),
-            'programadas' => \App\Models\ActividadMantenimiento::query()->withoutGlobalScopes()
+            'programadas' => ActividadMantenimiento::query()->withoutGlobalScopes()
                 ->whereIn('vehiculo_id', $vehiculos->pluck('id'))->pendientes()
                 ->whereHas('programa', fn ($q) => $q->whereIn('estado', ['aprobado', 'borrador']))
                 ->whereDate('fecha_programada', '<=', today()->addDays(30))
@@ -46,7 +49,7 @@ class MantenimientoController extends Controller
     public function formulario(Request $request, Vehiculo $vehiculo): View
     {
         abort_unless(ServiciosConductor::puedeInspeccionar($request->user(), $vehiculo), 404);
-        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::Mantenimiento), 404);
+        abort_unless(Modulos::activo($vehiculo->empresa_id, ModuloEmpresa::Mantenimiento), 404);
 
         $planes = PlanAccion::query()->withoutGlobalScopes()->where('vehiculo_id', $vehiculo->id)->pendientes()->latest('id')->get();
         $plan = $planes->firstWhere('id', $request->integer('plan'));
@@ -65,7 +68,7 @@ class MantenimientoController extends Controller
     {
         $usuario = $request->user();
         abort_unless(ServiciosConductor::puedeInspeccionar($usuario, $vehiculo), 404);
-        abort_unless(\App\Support\Modulos::activo($vehiculo->empresa_id, \App\Enums\ModuloEmpresa::Mantenimiento), 404);
+        abort_unless(Modulos::activo($vehiculo->empresa_id, ModuloEmpresa::Mantenimiento), 404);
         $conductor = ServiciosConductor::conductorPara($usuario, $vehiculo->empresa_id);
         abort_unless($conductor, 404);
 

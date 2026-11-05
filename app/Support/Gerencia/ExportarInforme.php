@@ -31,11 +31,11 @@ final class ExportarInforme
     {
         abort_unless(isset(self::INFORMES[$informe]), 404);
 
-        $ruta = tempnam(sys_get_temp_dir(), 'inf') . '.xlsx';
+        $ruta = tempnam(sys_get_temp_dir(), 'inf').'.xlsx';
         $writer = new Writer;
         $writer->openToFile($ruta);
         $writer->getCurrentSheet()->setName(mb_substr(ucfirst($informe), 0, 30));
-        $writer->addRow(Row::fromValues([self::INFORMES[$informe] . ' · ' . $desde->format('d/m/Y') . ' – ' . $hasta->format('d/m/Y')]));
+        $writer->addRow(Row::fromValues([self::INFORMES[$informe].' · '.$desde->format('d/m/Y').' – '.$hasta->format('d/m/Y')]));
 
         $rango = [$desde->toDateString(), $hasta->toDateString()];
         $fila = fn (array $v) => $writer->addRow(Row::fromValues($v));
@@ -51,7 +51,7 @@ final class ExportarInforme
                         $p->numero_recibo, $p->fecha->format('Y-m-d'), $p->contrato?->numero_formateado, $p->contrato?->cliente?->nombre,
                         $p->anulado() ? 'Anulado' : $p->tipoEtiqueta(), $p->metodo?->getLabel(), $p->referencia,
                         (float) $p->valor, $p->anulado() ? null : (float) $p->saldo_despues,
-                        $p->anulado() ? 'Anulado: ' . $p->motivo_anulacion : 'Vigente', $p->usuario?->name,
+                        $p->anulado() ? 'Anulado: '.$p->motivo_anulacion : 'Vigente', $p->usuario?->name,
                     ]));
             })(),
             'contratos' => (function () use ($fila, $empresaId, $rango, $oficina) {
@@ -77,7 +77,7 @@ final class ExportarInforme
                         $f->numero_formateado, $f->created_at->timezone('America/Bogota')->format('Y-m-d H:i'), $f->contrato?->numero_formateado,
                         $f->contrato?->cliente?->nombre, $f->placa, $f->conductores->map->nombre_completo->implode(', '),
                         $f->fecha_inicio->format('Y-m-d'), $f->fecha_fin->format('Y-m-d'), $f->horario()->franjaTexto(),
-                        $f->origen?->nombre, $f->destino?->nombre, $f->anulado() ? 'Anulado: ' . $f->motivo_anulacion : $f->estado()->getLabel(),
+                        $f->origen?->nombre, $f->destino?->nombre, $f->anulado() ? 'Anulado: '.$f->motivo_anulacion : $f->estado()->getLabel(),
                         $f->usuario?->name,
                     ]));
             })(),

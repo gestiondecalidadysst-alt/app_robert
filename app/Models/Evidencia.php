@@ -48,6 +48,6 @@ class Evidencia extends Model
 
     public function getTamanoTextoAttribute(): string
     {
-        return $this->tamano >= 1048576 ? round($this->tamano / 1048576, 1) . ' MB' : max(1, round($this->tamano / 1024)) . ' KB';
+        return $this->tamano >= 1048576 ? round($this->tamano / 1048576, 1).' MB' : max(1, round($this->tamano / 1024)).' KB';
     }
 }

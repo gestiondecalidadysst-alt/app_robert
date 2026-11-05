@@ -74,7 +74,7 @@ class PagoContrato extends Model
     /** RC-0001 */
     public function getNumeroReciboAttribute(): string
     {
-        return ($this->prefijo ? $this->prefijo . '-' : '') . str_pad((string) $this->numero, 4, '0', STR_PAD_LEFT);
+        return ($this->prefijo ? $this->prefijo.'-' : '').str_pad((string) $this->numero, 4, '0', STR_PAD_LEFT);
     }
 
     /**

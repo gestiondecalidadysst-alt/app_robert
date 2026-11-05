@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\Configuracion;
 
+use App\Actions\Pesv\RegistrarInspeccion;
 use App\Enums\ModuloEmpresa;
+use App\Enums\TipoInspeccion;
 use App\Filament\Admin\Resources\Empresas\Pages\EditarEmpresa;
+use App\Filament\App\Pages\Integraciones;
 use App\Models\Conductor;
 use App\Models\Fuec;
-use App\Models\Inspeccion;
+use App\Models\ItemChequeo;
+use App\Models\PlanAccion;
+use App\Models\Rol;
 use App\Models\Vehiculo;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
@@ -44,7 +49,7 @@ class ModulosEmpresaTest extends ConfiguracionTestCase
         $this->actingAs($this->usuario('admin@demo.test'));
         foreach (self::PANTALLAS as $grupo => $rutas) {
             foreach ($rutas as $ruta) {
-                $this->get('/app/cootrasec-demo' . $ruta)->assertOk();
+                $this->get('/app/cootrasec-demo'.$ruta)->assertOk();
             }
         }
     }
@@ -58,7 +63,7 @@ class ModulosEmpresaTest extends ConfiguracionTestCase
             $this->actingAs($this->usuario($email));
             foreach (self::PANTALLAS as $grupo => $rutas) {
                 foreach ($rutas as $ruta) {
-                    $respuesta = $this->get('/app/cootrasec-demo' . $ruta);
+                    $respuesta = $this->get('/app/cootrasec-demo'.$ruta);
                     $grupo === 'base'
                         ? $respuesta->assertOk()
                         : $respuesta->assertForbidden();
@@ -74,7 +79,7 @@ class ModulosEmpresaTest extends ConfiguracionTestCase
             ->assertDontSee('Planeador')->assertDontSee('FUEC')->assertDontSee('Tablero')->assertDontSee('Planes de acción');
         $this->get('/app/cootrasec-demo/integraciones')->assertOk()
             ->assertDontSee('Firma electrónica de contratos')->assertDontSee('Recibos de caja')->assertSee('Mensajes de texto');
-        $rol = \App\Models\Rol::query()->deEmpresa($this->demo)->where('name', \App\Models\Rol::AUXILIAR)->firstOrFail();
+        $rol = Rol::query()->deEmpresa($this->demo)->where('name', Rol::AUXILIAR)->firstOrFail();
         $this->get("/app/cootrasec-demo/roles/{$rol->id}/editar")->assertOk()->assertDontSee('FUEC (extractos)')->assertSee('Vehículos');
 
         // La otra empresa no se afecta.
@@ -91,7 +96,7 @@ class ModulosEmpresaTest extends ConfiguracionTestCase
         // Guardar Integraciones con secciones ocultas no pierde sus valores.
         $this->demo->update(['firma_dias_enlace' => 9]);
         $this->entrarComo('admin@demo.test');
-        Livewire::test(\App\Filament\App\Pages\Integraciones::class)->call('guardar')->assertHasNoErrors();
+        Livewire::test(Integraciones::class)->call('guardar')->assertHasNoErrors();
         $this->assertSame(9, (int) $this->demo->refresh()->firma_dias_enlace);
 
         // Al volver a contratar, los roles conservan sus permisos.
@@ -106,7 +111,7 @@ class ModulosEmpresaTest extends ConfiguracionTestCase
         $this->actingAs($this->usuario('superadmin@ruta.test'));
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
-        $this->get('/admin/empresas/' . $this->demo->id . '/editar')->assertOk()->assertSee('Módulos contratados')->assertSee('Carga (RNDC)');
+        $this->get('/admin/empresas/'.$this->demo->id.'/editar')->assertOk()->assertSee('Módulos contratados')->assertSee('Carga (RNDC)');
         Livewire::test(EditarEmpresa::class, ['record' => $this->demo->getRouteKey()])
             ->fillForm(['modulos' => [ModuloEmpresa::Mantenimiento->value]])
             ->call('save')->assertHasNoFormErrors();
@@ -142,17 +147,17 @@ class ModulosEmpresaTest extends ConfiguracionTestCase
         $this->demo->update(['modulos' => [ModuloEmpresa::Pasajeros->value, ModuloEmpresa::SeguridadVial->value]]);
         $this->entrarComo('admin@demo.test');
         $vehiculo = Vehiculo::query()->deEmpresa($this->demo)->where('placa', 'DMO101')->firstOrFail();
-        $item = \App\Models\ItemChequeo::query()->deEmpresa($this->demo)->deTipo(\App\Enums\TipoInspeccion::Preoperacional)->where('critico', true)->firstOrFail();
-        $respuestas = \App\Models\ItemChequeo::query()->deEmpresa($this->demo)->deTipo(\App\Enums\TipoInspeccion::Preoperacional)->activos()->pluck('id')
+        $item = ItemChequeo::query()->deEmpresa($this->demo)->deTipo(TipoInspeccion::Preoperacional)->where('critico', true)->firstOrFail();
+        $respuestas = ItemChequeo::query()->deEmpresa($this->demo)->deTipo(TipoInspeccion::Preoperacional)->activos()->pluck('id')
             ->mapWithKeys(fn ($id) => [$id => ['respuesta' => 'si']])->all();
         $respuestas[$item->id] = ['respuesta' => 'no', 'observacion' => 'Llanta lisa'];
 
-        $antes = \App\Models\PlanAccion::query()->deEmpresa($this->demo)->count();
-        $inspeccion = app(\App\Actions\Pesv\RegistrarInspeccion::class)(
-            $this->demo, \App\Enums\TipoInspeccion::Preoperacional, $vehiculo, $respuestas,
+        $antes = PlanAccion::query()->deEmpresa($this->demo)->count();
+        $inspeccion = app(RegistrarInspeccion::class)(
+            $this->demo, TipoInspeccion::Preoperacional, $vehiculo, $respuestas,
             Conductor::query()->deEmpresa($this->demo)->where('documento', '20000001')->first(), null, 130500, null, [], $this->usuario('admin@demo.test'),
         );
         $this->assertFalse($inspeccion->apta(), 'La falla crítica sigue dejando NO APTO.');
-        $this->assertSame($antes, \App\Models\PlanAccion::query()->deEmpresa($this->demo)->count(), 'Sin mantenimiento no se abren planes.');
+        $this->assertSame($antes, PlanAccion::query()->deEmpresa($this->demo)->count(), 'Sin mantenimiento no se abren planes.');
     }
 }

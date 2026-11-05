@@ -5,8 +5,8 @@ namespace App\Support\Contratos;
 use App\Enums\FormaPago;
 use App\Models\Contrato;
 use App\Models\Empresa;
-use App\Support\NumeroEnLetras;
 use App\Support\Nit;
+use App\Support\NumeroEnLetras;
 use Illuminate\Support\Carbon;
 
 /**
@@ -111,7 +111,7 @@ final class VariablesContrato
             'contrato.recorrido' => $contrato->recorrido,
             'contrato.zonas_disposicion' => $contrato->disposicion_total ? $contrato->zonas_disposicion : null,
             'contrato.valor_letras' => $valor > 0 ? NumeroEnLetras::pesos($valor) : null,
-            'contrato.valor_numeros' => $valor > 0 ? '$ ' . number_format($valor, 0, ',', '.') : null,
+            'contrato.valor_numeros' => $valor > 0 ? '$ '.number_format($valor, 0, ',', '.') : null,
             'contrato.forma_pago' => self::formaPago($contrato),
             'contrato.responsable_nombre' => $contrato->responsable_nombre,
             'contrato.responsable_documento' => $contrato->responsable_documento,
@@ -137,7 +137,7 @@ final class VariablesContrato
             'empresa.representante_expedicion' => $empresa->representante_expedicion,
 
             'documento.fecha_emision' => self::fecha($fecha),
-            'documento.fecha_emision_larga' => $fecha->day . ' días del mes de ' . $fecha->locale('es')->translatedFormat('F') . ' de ' . $fecha->year,
+            'documento.fecha_emision_larga' => $fecha->day.' días del mes de '.$fecha->locale('es')->translatedFormat('F').' de '.$fecha->year,
         ];
     }
 
@@ -203,7 +203,7 @@ final class VariablesContrato
 
         $h = Carbon::createFromFormat(strlen($hora) > 5 ? 'H:i:s' : 'H:i', $hora);
 
-        return $h->format('g:i') . ($h->hour < 12 ? ' a. m.' : ' p. m.');
+        return $h->format('g:i').($h->hour < 12 ? ' a. m.' : ' p. m.');
     }
 
     private static function horasEntre(?string $inicio, ?string $fin): ?string
@@ -223,7 +223,7 @@ final class VariablesContrato
         $horas = round($minutos / 60, 1);
         $texto = rtrim(rtrim(number_format($horas, 1, ',', '.'), '0'), ',');
 
-        return $texto . ($horas == 1 ? ' hora' : ' horas');
+        return $texto.($horas == 1 ? ' hora' : ' horas');
     }
 
     private static function municipio(?string $nombre): ?string
@@ -249,15 +249,15 @@ final class VariablesContrato
         }
 
         if ($cliente->dv !== null) {
-            return 'NIT ' . Nit::formatear($cliente->documento, $cliente->dv);
+            return 'NIT '.Nit::formatear($cliente->documento, $cliente->dv);
         }
 
         $tipo = $cliente->tipoIdentificacion?->codigo ?? 'C.C.';
         $tipo = $tipo === 'CC' ? 'C.C.' : $tipo;
-        $texto = "{$tipo} No. " . self::numeroDocumento($cliente->documento);
+        $texto = "{$tipo} No. ".self::numeroDocumento($cliente->documento);
 
         return $cliente->expedicionMunicipio
-            ? $texto . ' expedida en ' . self::municipio($cliente->expedicionMunicipio->nombre)
+            ? $texto.' expedida en '.self::municipio($cliente->expedicionMunicipio->nombre)
             : $texto;
     }
 
@@ -266,7 +266,7 @@ final class VariablesContrato
         return match ($contrato->forma_pago) {
             FormaPago::Contado => 'de contado, antes de iniciar el servicio',
             FormaPago::Credito => $contrato->fecha_limite_pago
-                ? 'a crédito, a más tardar el ' . self::fecha($contrato->fecha_limite_pago)
+                ? 'a crédito, a más tardar el '.self::fecha($contrato->fecha_limite_pago)
                 : 'a crédito, en la fecha acordada entre las partes',
             default => null,
         };

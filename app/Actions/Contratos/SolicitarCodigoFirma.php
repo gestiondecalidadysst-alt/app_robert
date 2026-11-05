@@ -30,7 +30,7 @@ class SolicitarCodigoFirma
         $recientes = $documento->codigos()->where('created_at', '>=', now()->subMinutes(CodigoFirma::MINUTOS_VENTANA))->count();
         if ($recientes >= CodigoFirma::MAX_POR_VENTANA) {
             throw ValidationException::withMessages([
-                'codigo' => 'Ya enviamos ' . CodigoFirma::MAX_POR_VENTANA . ' códigos. Espere unos minutos e intente de nuevo.',
+                'codigo' => 'Ya enviamos '.CodigoFirma::MAX_POR_VENTANA.' códigos. Espere unos minutos e intente de nuevo.',
             ]);
         }
 
@@ -61,7 +61,7 @@ class SolicitarCodigoFirma
 
         $envio = $canal === 'sms'
             ? Mensajero::sms($empresa, 'codigo_firma', $documento->firmante_celular,
-                Str::limit(Contacto::textoSms($nombreEmpresa), 24, '') . ": su codigo para firmar el contrato No {$numero} es {$codigo}. Vence en 10 min. No lo comparta.",
+                Str::limit(Contacto::textoSms($nombreEmpresa), 24, '').": su codigo para firmar el contrato No {$numero} es {$codigo}. Vence en 10 min. No lo comparta.",
                 $documento, ahora: true)
             : Mensajero::correo($empresa, 'codigo_firma', $documento->firmante_email,
                 new CorreoFirmaContrato(CorreoFirmaContrato::CODIGO, $nombreEmpresa, $numero, (string) $documento->firmante_nombre, codigo: $codigo),
@@ -72,8 +72,8 @@ class SolicitarCodigoFirma
             $otro = array_values(array_diff($canales, [$canal]))[0] ?? null;
 
             throw ValidationException::withMessages([
-                'codigo' => 'No pudimos enviar el código por ' . ($canal === 'sms' ? 'SMS' : 'correo') . '.'
-                    . ($otro ? ' Intente por ' . ($otro === 'sms' ? 'SMS' : 'correo') . '.' : ' Intente de nuevo en un momento.'),
+                'codigo' => 'No pudimos enviar el código por '.($canal === 'sms' ? 'SMS' : 'correo').'.'
+                    .($otro ? ' Intente por '.($otro === 'sms' ? 'SMS' : 'correo').'.' : ' Intente de nuevo en un momento.'),
             ]);
         }
 

@@ -169,7 +169,7 @@ class PlaneadorTest extends ConfiguracionTestCase
             '/app/cootrasec-demo/planeador',
             '/app/cootrasec-demo/planeador?modo=conductor',
             '/app/cootrasec-demo/servicios',
-            '/app/cootrasec-demo/servicios/planificar?fecha=' . today()->toDateString(),
+            '/app/cootrasec-demo/servicios/planificar?fecha='.today()->toDateString(),
             "/app/cootrasec-demo/servicios/{$servicio->id}",
             "/app/cootrasec-demo/servicios/{$servicio->id}/editar",
             '/app/cootrasec-demo/rutogramas',

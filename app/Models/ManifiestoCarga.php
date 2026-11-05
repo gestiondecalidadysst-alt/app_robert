@@ -9,6 +9,7 @@ use App\Support\Carga\CatalogoRndc as C;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 /**
@@ -53,19 +54,70 @@ class ManifiestoCarga extends Model implements RegistrableRndc
         });
     }
 
-    public function origen(): BelongsTo { return $this->belongsTo(Municipio::class, 'origen_id'); }
-    public function destino(): BelongsTo { return $this->belongsTo(Municipio::class, 'destino_id'); }
-    public function municipioPago(): BelongsTo { return $this->belongsTo(Municipio::class, 'municipio_pago_id'); }
-    public function municipioIntermedio(): BelongsTo { return $this->belongsTo(Municipio::class, 'municipio_intermedio_id'); }
-    public function vehiculo(): BelongsTo { return $this->belongsTo(Vehiculo::class)->withoutGlobalScopes(); }
-    public function remolque(): BelongsTo { return $this->belongsTo(Remolque::class); }
-    public function remolque2(): BelongsTo { return $this->belongsTo(Remolque::class, 'remolque_2_id'); }
-    public function conductor(): BelongsTo { return $this->belongsTo(Conductor::class)->withoutGlobalScopes(); }
-    public function conductor2(): BelongsTo { return $this->belongsTo(Conductor::class, 'conductor_2_id')->withoutGlobalScopes(); }
-    public function titularPropietario(): BelongsTo { return $this->belongsTo(Propietario::class, 'titular_propietario_id')->withoutGlobalScopes(); }
-    public function titularTercero(): BelongsTo { return $this->belongsTo(TerceroCarga::class, 'titular_tercero_id'); }
-    public function remesas(): HasMany { return $this->hasMany(RemesaCarga::class, 'manifiesto_id'); }
-    public function cumplido(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(CumplidoManifiesto::class, 'manifiesto_id'); }
+    public function origen(): BelongsTo
+    {
+        return $this->belongsTo(Municipio::class, 'origen_id');
+    }
+
+    public function destino(): BelongsTo
+    {
+        return $this->belongsTo(Municipio::class, 'destino_id');
+    }
+
+    public function municipioPago(): BelongsTo
+    {
+        return $this->belongsTo(Municipio::class, 'municipio_pago_id');
+    }
+
+    public function municipioIntermedio(): BelongsTo
+    {
+        return $this->belongsTo(Municipio::class, 'municipio_intermedio_id');
+    }
+
+    public function vehiculo(): BelongsTo
+    {
+        return $this->belongsTo(Vehiculo::class)->withoutGlobalScopes();
+    }
+
+    public function remolque(): BelongsTo
+    {
+        return $this->belongsTo(Remolque::class);
+    }
+
+    public function remolque2(): BelongsTo
+    {
+        return $this->belongsTo(Remolque::class, 'remolque_2_id');
+    }
+
+    public function conductor(): BelongsTo
+    {
+        return $this->belongsTo(Conductor::class)->withoutGlobalScopes();
+    }
+
+    public function conductor2(): BelongsTo
+    {
+        return $this->belongsTo(Conductor::class, 'conductor_2_id')->withoutGlobalScopes();
+    }
+
+    public function titularPropietario(): BelongsTo
+    {
+        return $this->belongsTo(Propietario::class, 'titular_propietario_id')->withoutGlobalScopes();
+    }
+
+    public function titularTercero(): BelongsTo
+    {
+        return $this->belongsTo(TerceroCarga::class, 'titular_tercero_id');
+    }
+
+    public function remesas(): HasMany
+    {
+        return $this->hasMany(RemesaCarga::class, 'manifiesto_id');
+    }
+
+    public function cumplido(): HasOne
+    {
+        return $this->hasOne(CumplidoManifiesto::class, 'manifiesto_id');
+    }
 
     /** El titular del manifiesto puede ser el propietario (persona natural o jurídica) o un tercero. */
     public function titular(): Propietario|TerceroCarga|null
@@ -73,25 +125,49 @@ class ManifiestoCarga extends Model implements RegistrableRndc
         return $this->titularPropietario ?? $this->titularTercero;
     }
 
-    public function anulado(): bool { return $this->anulado_at !== null; }
+    public function anulado(): bool
+    {
+        return $this->anulado_at !== null;
+    }
 
-    public function numeroFormateado(): string { return 'MC-' . str_pad((string) $this->numero, 6, '0', STR_PAD_LEFT); }
+    public function numeroFormateado(): string
+    {
+        return 'MC-'.str_pad((string) $this->numero, 6, '0', STR_PAD_LEFT);
+    }
 
     public function saldo(): int
     {
         return max(0, (int) $this->valor_flete - (int) $this->anticipo - $this->retefuente() - $this->reteica() - $this->retefopat());
     }
 
-    public function retefuente(): int { return (int) round((float) $this->valor_flete * (float) $this->retencion_fuente_pct / 100); }
-    public function reteica(): int { return (int) round((float) $this->valor_flete * (float) $this->reteica_por_mil / 1000); }
-    public function retefopat(): int { return (int) round((float) $this->valor_flete * (float) $this->retencion_fopat_pct / 1000); }
-    public function valorNeto(): int { return max(0, (int) $this->valor_flete - $this->retefuente() - $this->reteica() - $this->retefopat()); }
+    public function retefuente(): int
+    {
+        return (int) round((float) $this->valor_flete * (float) $this->retencion_fuente_pct / 100);
+    }
 
-    public function procesoRndc(): int { return 4; }
+    public function reteica(): int
+    {
+        return (int) round((float) $this->valor_flete * (float) $this->reteica_por_mil / 1000);
+    }
+
+    public function retefopat(): int
+    {
+        return (int) round((float) $this->valor_flete * (float) $this->retencion_fopat_pct / 1000);
+    }
+
+    public function valorNeto(): int
+    {
+        return max(0, (int) $this->valor_flete - $this->retefuente() - $this->reteica() - $this->retefopat());
+    }
+
+    public function procesoRndc(): int
+    {
+        return 4;
+    }
 
     public function etiquetaRndc(): string
     {
-        return $this->numeroFormateado() . ' · ' . ($this->origen?->nombre ?? '—') . ' → ' . ($this->destino?->nombre ?? '—');
+        return $this->numeroFormateado().' · '.($this->origen?->nombre ?? '—').' → '.($this->destino?->nombre ?? '—');
     }
 
     public function variablesRndc(Empresa $empresa): array

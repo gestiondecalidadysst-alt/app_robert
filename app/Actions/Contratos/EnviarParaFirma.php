@@ -27,7 +27,7 @@ class EnviarParaFirma
     public function __invoke(DocumentoContrato $documento, array $firmante, bool $recordatorio = false): array
     {
         if ($documento->anulado() || $documento->firmado()) {
-            throw ValidationException::withMessages(['firmante' => 'El documento ya está ' . mb_strtolower($documento->estado->getLabel()) . '.']);
+            throw ValidationException::withMessages(['firmante' => 'El documento ya está '.mb_strtolower($documento->estado->getLabel()).'.']);
         }
 
         $empresa = Empresa::findOrFail($documento->empresa_id);
@@ -48,7 +48,7 @@ class EnviarParaFirma
         $smsDisponible = $celular && Mensajero::motivoSinSms($empresa) === null;
         if (! $smsDisponible && ! $email && ! isset($errores['celular'])) {
             $errores['celular'] = $celular
-                ? Mensajero::motivoSinSms($empresa) . ' Registre un correo para enviar el enlace.'
+                ? Mensajero::motivoSinSms($empresa).' Registre un correo para enviar el enlace.'
                 : 'Registre un celular o un correo para enviar el enlace.';
         }
         if ($errores) {
@@ -89,8 +89,8 @@ class EnviarParaFirma
             // El envío manual va de inmediato (quien envía ve si Onurix lo aceptó); el recordatorio, en cola.
             $envio = Mensajero::sms($empresa, $tipo, $celular, $texto, $documento, ahora: ! $recordatorio);
             in_array($envio->estado, ['omitido', 'fallido'], true)
-                ? $omitidos[] = 'SMS no enviado: ' . $envio->error
-                : $canales[] = 'SMS ' . Contacto::ocultarCelular($celular);
+                ? $omitidos[] = 'SMS no enviado: '.$envio->error
+                : $canales[] = 'SMS '.Contacto::ocultarCelular($celular);
         }
 
         if ($email) {
@@ -102,7 +102,7 @@ class EnviarParaFirma
                 enlace: $enlace,
                 vence: $vence,
             ), $documento);
-            $canales[] = 'correo ' . Contacto::ocultarCorreo($email);
+            $canales[] = 'correo '.Contacto::ocultarCorreo($email);
         }
 
         // Lo omitido (p. ej. SMS sin configurar) queda en el historial de mensajes, no en las evidencias.

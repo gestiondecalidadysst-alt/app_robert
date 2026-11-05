@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Mantenimiento;
 
+use App\Actions\Mantenimiento\AnularMantenimiento;
 use App\Actions\Mantenimiento\GestionarPlanAccion;
+use App\Actions\Mantenimiento\PlanDeVehiculo;
 use App\Actions\Mantenimiento\RegistrarMantenimiento;
 use App\Actions\Mantenimiento\SeguimientoPreventivo;
 use App\Actions\Pesv\RegistrarInspeccion;
@@ -12,11 +14,14 @@ use App\Enums\PrioridadPlan;
 use App\Enums\TipoInspeccion;
 use App\Filament\App\Resources\Mantenimientos\Pages\RegistrarMantenimiento as PaginaRegistrar;
 use App\Filament\App\Resources\PlanesAccion\Pages\VerPlanAccion;
+use App\Filament\App\Resources\Vehiculos\Pages\VerVehiculo;
+use App\Filament\App\Resources\Vehiculos\RelationManagers\MantenimientosRelationManager;
 use App\Models\Conductor;
 use App\Models\Evidencia;
 use App\Models\ItemChequeo;
 use App\Models\Mantenimiento;
 use App\Models\PlanAccion;
+use App\Models\PlantillaMantenimiento;
 use App\Models\RutinaMantenimiento;
 use App\Models\Vehiculo;
 use App\Support\Mantenimiento\PlanPreventivo;
@@ -99,7 +104,7 @@ class MantenimientoTest extends ConfiguracionTestCase
     public function test_cada_empresa_recibe_las_rutinas_base_una_vez(): void
     {
         $this->assertSame(count(RutinasBase::RUTINAS), RutinaMantenimiento::query()->deEmpresa($this->otra)->count());
-        $this->assertTrue(\App\Models\PlantillaMantenimiento::query()->deEmpresa($this->otra)->where('por_defecto', true)->exists());
+        $this->assertTrue(PlantillaMantenimiento::query()->deEmpresa($this->otra)->where('por_defecto', true)->exists());
         RutinasBase::crear($this->otra);
         $this->assertSame(count(RutinasBase::RUTINAS), RutinaMantenimiento::query()->deEmpresa($this->otra)->count());
     }
@@ -123,7 +128,7 @@ class MantenimientoTest extends ConfiguracionTestCase
         $this->assertSame(PlanPreventivo::VENCIDO, PlanPreventivo::para($vehiculo, 105000)->firstWhere('rutina.id', $aceite->id)['estado']);
 
         // Plan personalizado: cambia el intervalo; el mantenimiento hecho con la rutina de la plantilla cuenta.
-        \App\Actions\Mantenimiento\PlanDeVehiculo::personalizar($vehiculo, PlanPreventivo::rutinasDe($vehiculo)->map(fn ($r) => [
+        PlanDeVehiculo::personalizar($vehiculo, PlanPreventivo::rutinasDe($vehiculo)->map(fn ($r) => [
             'nombre' => $r->nombre, 'intervalo_km' => $r->nombre === $aceite->nombre ? 8000 : $r->intervalo_km, 'intervalo_meses' => $r->intervalo_meses,
         ])->all());
         $fila = PlanPreventivo::para($vehiculo->refresh(), 101000)->firstWhere('rutina.nombre', $aceite->nombre);
@@ -212,7 +217,7 @@ class MantenimientoTest extends ConfiguracionTestCase
         }
 
         $m = $this->registrar(['kilometraje' => 130000, 'rutinas' => [$this->rutina()->id]]);
-        app(\App\Actions\Mantenimiento\AnularMantenimiento::class)($m, 'Error de digitación', $this->usuario('admin@demo.test'));
+        app(AnularMantenimiento::class)($m, 'Error de digitación', $this->usuario('admin@demo.test'));
         $this->assertTrue($m->refresh()->anulado());
         $this->assertSame(PlanPreventivo::SIN_REGISTRO, PlanPreventivo::para($this->vehiculo())->firstWhere('rutina.id', $this->rutina()->id)['estado'], 'Anulado no cuenta.');
     }
@@ -295,9 +300,9 @@ class MantenimientoTest extends ConfiguracionTestCase
         $vehiculo = $this->vehiculo('DMO102');
         $this->registrar(['kilometraje' => 90000, 'rutinas' => [$this->rutina()->id], 'actividad' => 'Cambio de aceite sintético'], vehiculo: $vehiculo);
 
-        Livewire::test(\App\Filament\App\Resources\Vehiculos\RelationManagers\MantenimientosRelationManager::class, [
+        Livewire::test(MantenimientosRelationManager::class, [
             'ownerRecord' => $vehiculo,
-            'pageClass' => \App\Filament\App\Resources\Vehiculos\Pages\VerVehiculo::class,
+            'pageClass' => VerVehiculo::class,
         ])->assertSee('Plan preventivo')->assertSee('95.000 km')->assertSee('Cambio de aceite sintético');
     }
 }

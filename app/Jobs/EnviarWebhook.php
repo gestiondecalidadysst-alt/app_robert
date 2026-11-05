@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Empresa;
 use App\Models\WebhookEntrega;
+use App\Support\Sistema\Colas;
 use App\Support\Webhooks;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,7 +27,7 @@ class EnviarWebhook implements ShouldBeEncrypted, ShouldQueue
 
     public function __construct(public int $entregaId)
     {
-        $this->onQueue(\App\Support\Sistema\Colas::BAJA);
+        $this->onQueue(Colas::BAJA);
     }
 
     public function handle(): void
@@ -61,7 +62,7 @@ class EnviarWebhook implements ShouldBeEncrypted, ShouldQueue
             $entrega->forceFill([
                 'codigo_respuesta' => $respuesta->status(),
                 'estado' => $respuesta->successful() ? 'enviado' : 'fallido',
-                'error' => $respuesta->successful() ? null : mb_substr('HTTP ' . $respuesta->status() . ': ' . $respuesta->body(), 0, 500),
+                'error' => $respuesta->successful() ? null : mb_substr('HTTP '.$respuesta->status().': '.$respuesta->body(), 0, 500),
                 'enviado_at' => $respuesta->successful() ? now() : null,
             ])->save();
 

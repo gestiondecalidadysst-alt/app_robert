@@ -9,6 +9,7 @@ use App\Enums\TipoInspeccion;
 use App\Models\Inspeccion;
 use App\Models\PlanAccion;
 use App\Models\Vehiculo;
+use App\Support\Webhooks;
 
 /**
  * Las fallas de un preoperacional o una inspección mensual abren (o alimentan) el plan de acción del
@@ -78,9 +79,9 @@ final class PlanesDesdeInspeccion
             'inspeccion_id' => $inspeccion->id,
             'prioridad' => $critica ? PrioridadPlan::Alta : PrioridadPlan::Media,
             'titulo' => ($inspeccion->tipo === TipoInspeccion::Mensual ? 'Fallas en la inspección mensual' : 'Fallas en el preoperacional')
-                . " del {$inspeccion->fecha->format('d/m/Y')}",
+                ." del {$inspeccion->fecha->format('d/m/Y')}",
             'hallazgos' => $nuevos->values()->all(),
-            'accion' => 'Corregir: ' . $nuevos->pluck('descripcion')->implode('; ') . '. Registrar el mantenimiento con la evidencia (factura o fotos).',
+            'accion' => 'Corregir: '.$nuevos->pluck('descripcion')->implode('; ').'. Registrar el mantenimiento con la evidencia (factura o fotos).',
             'responsable' => $vehiculo?->propietario?->nombre_completo ?? 'Propietario del vehículo',
             'fecha_limite' => today()->addDays($critica ? 1 : 7)->toDateString(),
             'user_id' => $inspeccion->user_id,
@@ -88,7 +89,7 @@ final class PlanesDesdeInspeccion
         $plan->empresa_id = $inspeccion->empresa_id;
         $plan->save();
 
-        \App\Support\Webhooks::emitir($plan->empresa_id, 'plan_accion.creado', RegistrarMantenimiento::datosPlan($plan, $vehiculo));
+        Webhooks::emitir($plan->empresa_id, 'plan_accion.creado', RegistrarMantenimiento::datosPlan($plan, $vehiculo));
 
         return $plan;
     }

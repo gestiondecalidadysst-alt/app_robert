@@ -4,12 +4,14 @@ namespace App\Support\Gerencia;
 
 use App\Mail\CorreoInformeGerencia;
 use App\Models\Empresa;
+use App\Models\Oficina;
 use App\Models\User;
 use App\Services\Mensajeria\Mensajero;
 use App\Support\Pdf\Imagenes;
 use App\Support\Webhooks;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -27,7 +29,7 @@ final class InformeGerencia
             'empresa' => $empresa,
             'logo' => Imagenes::deDisco($empresa->logo_path, 'public'),
             'i' => $i,
-            'oficina' => $i->oficinaId ? \App\Models\Oficina::query()->withoutGlobalScopes()->find($i->oficinaId)?->nombre : null,
+            'oficina' => $i->oficinaId ? Oficina::query()->withoutGlobalScopes()->find($i->oficinaId)?->nombre : null,
             'flota' => $i->flota(),
             'operacion' => $i->operacion(),
             'cartera' => $i->cartera(),
@@ -40,7 +42,7 @@ final class InformeGerencia
 
     public static function nombre(Indicadores $i): string
     {
-        return 'resumen-gerencia-' . $i->desde->format('Y-m-d') . '-a-' . $i->hasta->format('Y-m-d') . '.pdf';
+        return 'resumen-gerencia-'.$i->desde->format('Y-m-d').'-a-'.$i->hasta->format('Y-m-d').'.pdf';
     }
 
     /**
@@ -88,7 +90,7 @@ final class InformeGerencia
     }
 
     /** Usuarios activos de la empresa con permiso de gerencia y correo. */
-    public static function destinatarios(Empresa $empresa): \Illuminate\Support\Collection
+    public static function destinatarios(Empresa $empresa): Collection
     {
         $registrar = app(PermissionRegistrar::class);
         $anterior = $registrar->getPermissionsTeamId();

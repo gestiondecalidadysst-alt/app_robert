@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Conductor;
 
+use App\Enums\EstadoConductor;
 use App\Http\Controllers\Controller;
 use App\Models\Conductor;
 use App\Models\User;
-use App\Enums\EstadoConductor;
+use App\Support\Pesv\ServiciosConductor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,7 @@ class AccesoController extends Controller
     {
         // Solo si ya hay un conductor con sesión. Con la sesión de un usuario de oficina abierta en el
         // mismo navegador se muestra el formulario normal (ingresar como conductor cierra esa sesión).
-        if ($request->user() && \App\Support\Pesv\ServiciosConductor::conductores($request->user())->isNotEmpty()) {
+        if ($request->user() && ServiciosConductor::conductores($request->user())->isNotEmpty()) {
             return redirect()->route('conductor.inicio');
         }
 

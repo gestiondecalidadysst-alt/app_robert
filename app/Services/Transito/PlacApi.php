@@ -35,9 +35,9 @@ final class PlacApi
         try {
             $respuesta = Http::acceptJson()->asJson()->timeout(45)->connectTimeout(10)
                 ->withHeaders(['x-api-key' => (string) $this->proveedor->api_key])
-                ->post(rtrim((string) $this->proveedor->url, '/') . self::RUTAS[$tipo->value], array_filter($parametros, 'filled'));
+                ->post(rtrim((string) $this->proveedor->url, '/').self::RUTAS[$tipo->value], array_filter($parametros, 'filled'));
         } catch (ConnectionException $e) {
-            return new ResultadoConsulta('error', error: 'No hubo conexión con el proveedor: ' . $e->getMessage(), duracionMs: self::ms($inicio));
+            return new ResultadoConsulta('error', error: 'No hubo conexión con el proveedor: '.$e->getMessage(), duracionMs: self::ms($inicio));
         } catch (Throwable $e) {
             return new ResultadoConsulta('error', error: $e->getMessage(), duracionMs: self::ms($inicio));
         }
@@ -67,7 +67,7 @@ final class PlacApi
             401 => 'El proveedor rechazó la API key.',
             402 => 'La cuenta del proveedor no tiene saldo (recargue créditos).',
             429 => 'Demasiadas consultas seguidas al proveedor; intente en un momento.',
-            default => "El proveedor respondió {$status}" . ($detalle ? ": {$detalle}" : '.'),
+            default => "El proveedor respondió {$status}".($detalle ? ": {$detalle}" : '.'),
         };
     }
 

@@ -46,7 +46,7 @@ final class PdfInspeccion
 
         // Filas: los ítems tal como se respondieron (en orden de aparición), incluidos los que ya no existen.
         $filas = $inspecciones->sortBy('id')->flatMap(fn (Inspeccion $i) => $i->respuestas)
-            ->unique(fn (array $r) => $r['grupo'] . '|' . $r['descripcion'])->values();
+            ->unique(fn (array $r) => $r['grupo'].'|'.$r['descripcion'])->values();
 
         // Firma de cada conductor del período (la copia guardada en su último preoperacional del rango).
         $firmas = $inspecciones->sortByDesc('id')

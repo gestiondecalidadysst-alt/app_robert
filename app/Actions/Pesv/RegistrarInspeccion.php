@@ -2,7 +2,10 @@
 
 namespace App\Actions\Pesv;
 
+use App\Actions\Mantenimiento\PlanesDesdeInspeccion;
+use App\Actions\Mantenimiento\SeguimientoPreventivo;
 use App\Enums\EstadoVigencia;
+use App\Enums\ModuloEmpresa;
 use App\Enums\ResultadoInspeccion;
 use App\Enums\TipoInspeccion;
 use App\Models\Conductor;
@@ -12,8 +15,11 @@ use App\Models\Inspeccion;
 use App\Models\ItemChequeo;
 use App\Models\User;
 use App\Models\Vehiculo;
+use App\Support\Modulos;
 use App\Support\Nit;
+use App\Support\Webhooks;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -50,7 +56,7 @@ class RegistrarInspeccion
         ?User $usuario = null,
         ?\DateTimeInterface $fecha = null,
     ): Inspeccion {
-        $fecha = $fecha ? \Illuminate\Support\Carbon::instance($fecha)->startOfDay() : today();
+        $fecha = $fecha ? Carbon::instance($fecha)->startOfDay() : today();
         $preoperacional = $tipo === TipoInspeccion::Preoperacional;
         $errores = [];
 
@@ -128,7 +134,7 @@ class RegistrarInspeccion
 
         // Un plan de acción de prioridad alta pendiente (falla crítica sin corregir) deja el vehículo NO APTO.
         // Solo si la empresa tiene el módulo de mantenimiento (sin él no hay cómo cerrar el plan).
-        $conMantenimiento = \App\Support\Modulos::activo($empresa->id, \App\Enums\ModuloEmpresa::Mantenimiento);
+        $conMantenimiento = Modulos::activo($empresa->id, ModuloEmpresa::Mantenimiento);
         $planAlta = $preoperacional && $conMantenimiento ? $vehiculo->planAltaPendiente() : null;
         $noApto = $noApto || $planAlta !== null;
 
@@ -170,10 +176,10 @@ class RegistrarInspeccion
         // Fallas → plan de acción; nuevo kilometraje → revisa el preventivo. Un error aquí no deshace la inspección.
         try {
             if ($conMantenimiento) {
-                \App\Actions\Mantenimiento\PlanesDesdeInspeccion::procesar($inspeccion);
+                PlanesDesdeInspeccion::procesar($inspeccion);
             }
             if ($conMantenimiento && $kilometraje !== null) {
-                \App\Actions\Mantenimiento\SeguimientoPreventivo::revisar($vehiculo);
+                SeguimientoPreventivo::revisar($vehiculo);
             }
         } catch (\Throwable $e) {
             report($e);
@@ -181,7 +187,7 @@ class RegistrarInspeccion
 
         if ($noApto) {
             self::avisarNoApto($empresa, $inspeccion);
-            \App\Support\Webhooks::emitir($empresa, 'preoperacional.no_apto', [
+            Webhooks::emitir($empresa, 'preoperacional.no_apto', [
                 'inspeccion_id' => $inspeccion->id,
                 'placa' => $vehiculo->placa,
                 'conductor' => $inspeccion->conductor_nombre,
@@ -249,7 +255,7 @@ class RegistrarInspeccion
                 ->danger()
                 ->title("Vehículo {$inspeccion->placa} no apto")
                 ->body(($inspeccion->conductor_nombre ? "{$inspeccion->conductor_nombre}: " : '')
-                    . ($fallas !== '' ? "falla en {$fallas}." : "plan de acción {$inspeccion->datos['plan_pendiente']} pendiente de cierre."))
+                    .($fallas !== '' ? "falla en {$fallas}." : "plan de acción {$inspeccion->datos['plan_pendiente']} pendiente de cierre."))
                 ->sendToDatabase($u));
 
         $registrar->setPermissionsTeamId($anterior);

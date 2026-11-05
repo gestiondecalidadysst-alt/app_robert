@@ -19,7 +19,7 @@ final class ExportarPrograma
 {
     public static function excel(ProgramaMantenimiento $programa): string
     {
-        $ruta = tempnam(sys_get_temp_dir(), 'pesv') . '.xlsx';
+        $ruta = tempnam(sys_get_temp_dir(), 'pesv').'.xlsx';
         $writer = new Writer;
         $writer->openToFile($ruta);
 

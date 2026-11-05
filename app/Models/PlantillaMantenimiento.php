@@ -63,8 +63,8 @@ class PlantillaMantenimiento extends Model
     {
         return match (true) {
             $this->por_defecto => 'Vehículos sin otra plantilla',
-            $this->criterio === CriterioPlantilla::Clase => 'Clase ' . ($this->claseVehiculo?->nombre ?? '—'),
-            $this->criterio === CriterioPlantilla::MarcaLinea => trim(($this->marca?->nombre ?? '—') . ' ' . ($this->linea?->nombre ?? '(todas las líneas)')),
+            $this->criterio === CriterioPlantilla::Clase => 'Clase '.($this->claseVehiculo?->nombre ?? '—'),
+            $this->criterio === CriterioPlantilla::MarcaLinea => trim(($this->marca?->nombre ?? '—').' '.($this->linea?->nombre ?? '(todas las líneas)')),
             default => 'Vehículos asignados a mano',
         };
     }

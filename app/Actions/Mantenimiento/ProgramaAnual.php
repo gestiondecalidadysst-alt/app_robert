@@ -131,7 +131,7 @@ final class ProgramaAnual
             throw ValidationException::withMessages(['fecha' => "La fecha debe ser del año {$actividad->programa->anio}."]);
         }
 
-        $actividad->registrar('reprogramada', "De {$actividad->fecha_programada->format('d/m/Y')} a {$nueva->format('d/m/Y')}. Motivo: " . trim($motivo), $usuario);
+        $actividad->registrar('reprogramada', "De {$actividad->fecha_programada->format('d/m/Y')} a {$nueva->format('d/m/Y')}. Motivo: ".trim($motivo), $usuario);
         $actividad->fecha_programada = $nueva;
         $actividad->avisado_proximo_at = null;
         $actividad->avisado_vencido_at = null;
@@ -188,8 +188,8 @@ final class ProgramaAnual
             ]);
             $desviacion = $actividad->desviacionDias();
             $actividad->registrar('ejecutada', "Mantenimiento del {$mantenimiento->fecha->format('d/m/Y')}"
-                . ($mantenimiento->kilometraje !== null ? ' a ' . number_format($mantenimiento->kilometraje, 0, ',', '.') . ' km' : '')
-                . ($desviacion ? ($desviacion > 0 ? " ({$desviacion} días tarde)" : ' (' . abs($desviacion) . ' días antes)') : ' (a tiempo)') . '.', $usuario);
+                .($mantenimiento->kilometraje !== null ? ' a '.number_format($mantenimiento->kilometraje, 0, ',', '.').' km' : '')
+                .($desviacion ? ($desviacion > 0 ? " ({$desviacion} días tarde)" : ' ('.abs($desviacion).' días antes)') : ' (a tiempo)').'.', $usuario);
             $actividad->save();
             $ejecutadas++;
 
@@ -320,9 +320,9 @@ final class ProgramaAnual
                 ]);
                 $actividad->empresa_id = $programa->empresa_id;
                 $actividad->registrar('programada', ($incorporada ? 'Incorporada al programa aprobado. ' : '')
-                    . ($o['atrasada'] ? 'Estaba vencida al programar. ' : '')
-                    . "Base: {$baseFecha->format('d/m/Y')}" . ($baseKm !== null ? ' a ' . number_format($baseKm, 0, ',', '.') . ' km' : '')
-                    . ($ultimo ? '' : ' (sin historial: se toma hoy)') . "; {$kmDia} km/día.", $usuario);
+                    .($o['atrasada'] ? 'Estaba vencida al programar. ' : '')
+                    ."Base: {$baseFecha->format('d/m/Y')}".($baseKm !== null ? ' a '.number_format($baseKm, 0, ',', '.').' km' : '')
+                    .($ultimo ? '' : ' (sin historial: se toma hoy)')."; {$kmDia} km/día.", $usuario);
                 $actividad->save();
                 $creadas++;
             }
@@ -334,7 +334,7 @@ final class ProgramaAnual
     private static function exigirPendiente(ActividadMantenimiento $actividad): void
     {
         if ($actividad->estado !== EstadoActividad::Programada) {
-            throw ValidationException::withMessages(['estado' => 'La actividad ya está ' . mb_strtolower($actividad->estado->getLabel()) . '.']);
+            throw ValidationException::withMessages(['estado' => 'La actividad ya está '.mb_strtolower($actividad->estado->getLabel()).'.']);
         }
         if ($actividad->programa->estado === EstadoPrograma::Reemplazado) {
             throw ValidationException::withMessages(['estado' => 'El programa fue reemplazado por otra versión.']);

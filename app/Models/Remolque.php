@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\PerteneceAEmpresa;
 use App\Models\Concerns\SeRegistraEnRndc;
 use App\Services\Rndc\RegistrableRndc;
+use App\Services\Rndc\ValidarVehiculo;
 use App\Support\Carga\CatalogoRndc as C;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,7 +48,7 @@ class Remolque extends Model implements RegistrableRndc
 
     public function etiquetaRndc(): string
     {
-        return 'Remolque ' . $this->placa . ' · ' . (C::CONFIGURACIONES_REMOLQUE[$this->configuracion] ?? $this->configuracion);
+        return 'Remolque '.$this->placa.' · '.(C::CONFIGURACIONES_REMOLQUE[$this->configuracion] ?? $this->configuracion);
     }
 
     public function variablesRndc(Empresa $empresa): array
@@ -77,7 +78,7 @@ class Remolque extends Model implements RegistrableRndc
 
     public function validarRndc(): array
     {
-        $e = \App\Services\Rndc\ValidarVehiculo::comunes($this->placa, $this->configuracion, $this->marca_codigo, $this->modelo,
+        $e = ValidarVehiculo::comunes($this->placa, $this->configuracion, $this->marca_codigo, $this->modelo,
             $this->peso_vacio, $this->capacidad, $this->numero_ejes, $this->propietario, $this->tenedor ?? $this->propietario);
         if (! preg_match('/^R\d{5}$/', (string) $this->placa)) {
             $e[] = 'La placa de un remolque o semirremolque es R seguida de 5 números.';

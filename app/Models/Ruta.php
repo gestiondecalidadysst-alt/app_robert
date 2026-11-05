@@ -75,7 +75,7 @@ class Ruta extends Model
             return '—';
         }
 
-        return trim((intdiv($minutos, 60) ? intdiv($minutos, 60) . ' h ' : '') . ($minutos % 60 ? ($minutos % 60) . ' min' : ''));
+        return trim((intdiv($minutos, 60) ? intdiv($minutos, 60).' h ' : '').($minutos % 60 ? ($minutos % 60).' min' : ''));
     }
 
     /**

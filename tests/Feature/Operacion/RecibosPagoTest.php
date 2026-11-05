@@ -15,6 +15,7 @@ use App\Models\Cliente;
 use App\Models\Contrato;
 use App\Models\EnvioMensaje;
 use App\Models\PagoContrato;
+use App\Support\Contratos\VariablesContrato;
 use App\Support\Pdf\PdfRecibo;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -109,7 +110,7 @@ class RecibosPagoTest extends ConfiguracionTestCase
         $this->assertStringStartsWith('%PDF', PdfRecibo::estadoCuenta($contrato->refresh()));
         $html = view('pdf.recibo-pago', [
             'pago' => $pago, 'contrato' => $contrato, 'empresa' => $this->demo, 'logo' => null, 'qr' => '',
-            'v' => \App\Support\Contratos\VariablesContrato::valores($contrato, $this->demo),
+            'v' => VariablesContrato::valores($contrato, $this->demo),
             'letras' => 'DOSCIENTOS CINCUENTA MIL PESOS M/CTE', 'abonadoAntes' => 0,
         ])->render();
         $this->assertStringContainsString('RECIBO DE CAJA', $html);
@@ -118,7 +119,7 @@ class RecibosPagoTest extends ConfiguracionTestCase
         auth()->logout();
         $this->get($pago->urlVerificacion())->assertOk()->assertSee($pago->numero_recibo)->assertSee('Válido');
         $this->get($pago->urlPdf())->assertOk()->assertHeader('Content-Type', 'application/pdf');
-        $this->get('/verificar/recibo/' . str_repeat('a', 24))->assertNotFound();
+        $this->get('/verificar/recibo/'.str_repeat('a', 24))->assertNotFound();
 
         app(AnularPago::class)($pago, 'Error de digitación');
         $this->get($pago->urlVerificacion())->assertOk()->assertSee('Anulado');
@@ -131,11 +132,11 @@ class RecibosPagoTest extends ConfiguracionTestCase
         $contrato = $this->contrato();
         $pago = $this->pagar($contrato, 1000000);
 
-        $this->assertSame('paz-y-salvo-contrato-' . $contrato->numero_formateado . '.pdf', PdfRecibo::nombreEstadoCuenta($contrato->refresh()));
+        $this->assertSame('paz-y-salvo-contrato-'.$contrato->numero_formateado.'.pdf', PdfRecibo::nombreEstadoCuenta($contrato->refresh()));
         $html = view('pdf.estado-cuenta', [
             'contrato' => $contrato->load('pagos'), 'pagos' => $contrato->pagos, 'pagado' => 1000000.0, 'saldo' => 0.0, 'pazYSalvo' => true,
             'ultimoPago' => $pago, 'empresa' => $this->demo, 'logo' => null, 'firma' => null, 'letras' => 'UN MILLÓN DE PESOS M/CTE',
-            'v' => \App\Support\Contratos\VariablesContrato::valores($contrato, $this->demo),
+            'v' => VariablesContrato::valores($contrato, $this->demo),
         ])->render();
         $this->assertStringContainsString('A PAZ Y SALVO', $html);
 

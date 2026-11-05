@@ -15,7 +15,7 @@ final class PlantillaBase
 
     public static function contenido(): string
     {
-        $v = fn (string $id): string => '<span data-type="mergeTag" data-id="' . $id . '"></span>';
+        $v = fn (string $id): string => '<span data-type="mergeTag" data-id="'.$id.'"></span>';
 
         $parrafos = [
             "<h2>CONTRATO DE PRESTACIÓN DE SERVICIOS N° {$v('contrato.numero')}</h2>",

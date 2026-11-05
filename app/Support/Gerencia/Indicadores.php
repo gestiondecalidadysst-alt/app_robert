@@ -5,11 +5,11 @@ namespace App\Support\Gerencia;
 use App\Actions\Mantenimiento\ProgramaAnual;
 use App\Enums\EstadoActividad;
 use App\Enums\EstadoConductor;
-use App\Enums\EstadoServicio;
 use App\Enums\EstadoVehiculo;
 use App\Enums\PrioridadPlan;
 use App\Enums\ResultadoInspeccion;
 use App\Enums\TipoMantenimiento;
+use App\Filament\App\Resources\Vehiculos\VehiculoResource;
 use App\Models\ActividadMantenimiento;
 use App\Models\Conductor;
 use App\Models\Contrato;
@@ -27,6 +27,7 @@ use App\Support\Operacion\Jornada;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Indicadores del tablero de gerencia y del informe mensual. Todo sale de lo que ya se registra
@@ -74,7 +75,7 @@ final class Indicadores
     {
         return $this->desde->isSameDay($this->hasta->copy()->startOfDay())
             ? $this->desde->format('d/m/Y')
-            : $this->desde->format('d/m/Y') . ' – ' . $this->hasta->format('d/m/Y');
+            : $this->desde->format('d/m/Y').' – '.$this->hasta->format('d/m/Y');
     }
 
     // ── Flota (estado a hoy) ──────────────────────────────────────────────
@@ -95,7 +96,7 @@ final class Indicadores
             'operando' => (int) ($porEstado[EstadoVehiculo::Operando->value] ?? 0),
             'suspendidos' => (int) ($porEstado[EstadoVehiculo::Suspendido->value] ?? 0),
             'taller' => (int) ($porEstado[EstadoVehiculo::Taller->value] ?? 0),
-            'sin_documentos' => \App\Filament\App\Resources\Vehiculos\VehiculoResource::conDocumentosVencidosOFaltantes(clone $vehiculos)->count(),
+            'sin_documentos' => VehiculoResource::conDocumentosVencidosOFaltantes(clone $vehiculos)->count(),
             'docs_vencidos' => $docsVehiculo()->vencidos()->count(),
             'docs_por_vencer' => $docsVehiculo()->porVencer()->count(),
             'conductores' => Conductor::query()->deEmpresa($this->empresaId)->where('estado', EstadoConductor::Activo->value)->count(),
@@ -253,7 +254,7 @@ final class Indicadores
                 $d = $f->fecha_inicio->copy()->max($desde->copy()->startOfDay());
                 $fin = $f->fecha_fin->copy()->min($hasta->copy()->startOfDay());
                 for (; $d->lte($fin); $d->addDay()) {
-                    $pares[$f->vehiculo_id . '|' . $d->toDateString()] = true;
+                    $pares[$f->vehiculo_id.'|'.$d->toDateString()] = true;
                 }
             });
 
@@ -264,7 +265,7 @@ final class Indicadores
         $resultados = Inspeccion::query()->deEmpresa($this->empresaId)->preoperacionales()
             ->whereDate('fecha', '>=', $desde->toDateString())->whereDate('fecha', '<=', $hasta->toDateString())
             ->get(['vehiculo_id', 'fecha', 'resultado'])
-            ->groupBy(fn (Inspeccion $i) => $i->vehiculo_id . '|' . $i->fecha->toDateString())
+            ->groupBy(fn (Inspeccion $i) => $i->vehiculo_id.'|'.$i->fecha->toDateString())
             ->map(fn ($g) => $g->contains(fn (Inspeccion $i) => $i->resultado === ResultadoInspeccion::Apto) ? 'apto' : 'no_apto');
 
         $aptos = $noAptos = 0;
@@ -432,7 +433,7 @@ final class Indicadores
             ->withSum(['pagos' => fn ($q) => $q->whereNull('anulado_at')], 'valor')->with('cliente')->get()
             ->filter(fn (Contrato $c) => $c->saldo() > 0)
             ->groupBy('cliente_id')
-            ->map(fn ($g) => ['cliente' => \Illuminate\Support\Str::limit($g->first()->cliente?->nombre ?? '—', 28), 'saldo' => (float) $g->sum(fn (Contrato $c) => $c->saldo())])
+            ->map(fn ($g) => ['cliente' => Str::limit($g->first()->cliente?->nombre ?? '—', 28), 'saldo' => (float) $g->sum(fn (Contrato $c) => $c->saldo())])
             ->sortByDesc('saldo')->take(8)->values()->all();
     }
 
@@ -478,6 +479,6 @@ final class Indicadores
     /** "$ 1.234.567" */
     public static function pesos(float|int|null $valor): string
     {
-        return '$ ' . number_format((float) $valor, 0, ',', '.');
+        return '$ '.number_format((float) $valor, 0, ',', '.');
     }
 }

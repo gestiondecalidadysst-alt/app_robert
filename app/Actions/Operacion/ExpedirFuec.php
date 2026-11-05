@@ -12,6 +12,7 @@ use App\Models\Municipio;
 use App\Models\Vehiculo;
 use App\Support\DireccionesTerritoriales;
 use App\Support\Nit;
+use App\Support\Operacion\Horario;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -105,7 +106,7 @@ class ExpedirFuec
         };
 
         if ($faltan = $empresa->faltantesHabilitacion()) {
-            $agregar('contrato_id', 'Complete en «Mi empresa»: ' . implode(', ', $faltan) . '. Son parte del número del FUEC.');
+            $agregar('contrato_id', 'Complete en «Mi empresa»: '.implode(', ', $faltan).'. Son parte del número del FUEC.');
         } elseif (! array_key_exists((string) $empresa->codigo_territorial, DireccionesTerritoriales::CODIGOS)) {
             $agregar('contrato_id', "El código territorial «{$empresa->codigo_territorial}» no es de una Dirección Territorial del Ministerio. Corríjalo en «Mi empresa».");
         }
@@ -165,7 +166,7 @@ class ExpedirFuec
         if ($ids === []) {
             $agregar('conductores', 'Elija al menos un conductor.');
         } elseif (count($ids) > self::MAX_CONDUCTORES) {
-            $agregar('conductores', 'Máximo ' . self::MAX_CONDUCTORES . ' conductores por FUEC.');
+            $agregar('conductores', 'Máximo '.self::MAX_CONDUCTORES.' conductores por FUEC.');
         } elseif (count(array_unique($ids)) !== count($ids)) {
             $agregar('conductores', 'Hay un conductor repetido.');
         } else {
@@ -184,7 +185,7 @@ class ExpedirFuec
 
         // Cruce de horarios: el vehículo y los conductores no pueden estar en otro servicio al mismo tiempo.
         if ($inicio && $fin && ! $fin->lt($inicio) && ! isset($errores['hora_fin'])) {
-            $horario = new \App\Support\Operacion\Horario($inicio, $fin, $horaInicio, $horaFin);
+            $horario = new Horario($inicio, $fin, $horaInicio, $horaFin);
 
             foreach ($this->cruces($empresa, $horario, $vehiculo?->id, $ids) as [$campo, $mensaje]) {
                 $agregar($campo, $mensaje);
@@ -207,8 +208,8 @@ class ExpedirFuec
 
             if ($vencenAntes !== []) {
                 $limite = $this->fechaMaxima = collect($vencenAntes)->min(fn ($v) => $v[0])->copy();
-                $agregar('fecha_fin', 'Con esta vigencia vencen documentos: ' . collect($vencenAntes)->pluck(1)->implode('; ')
-                    . ". La fecha de vencimiento máxima posible es {$limite->format('d/m/Y')}; acórtela o renueve antes los documentos.");
+                $agregar('fecha_fin', 'Con esta vigencia vencen documentos: '.collect($vencenAntes)->pluck(1)->implode('; ')
+                    .". La fecha de vencimiento máxima posible es {$limite->format('d/m/Y')}; acórtela o renueve antes los documentos.");
             }
         }
 
@@ -249,11 +250,11 @@ class ExpedirFuec
         $bloque = fn ($valor, int $largo) => str_pad(substr(preg_replace('/\D/', '', (string) $valor), -$largo), $largo, '0', STR_PAD_LEFT);
 
         return $bloque($empresa->codigo_territorial, 3)
-            . $bloque($empresa->resolucion_habilitacion, 4)
-            . $bloque($empresa->anio_habilitacion, 2)
-            . $bloque($anioExpedicion, 4)
-            . $bloque($numeroContrato, 4)
-            . $bloque($consecutivo, 4);
+            .$bloque($empresa->resolucion_habilitacion, 4)
+            .$bloque($empresa->anio_habilitacion, 2)
+            .$bloque($anioExpedicion, 4)
+            .$bloque($numeroContrato, 4)
+            .$bloque($consecutivo, 4);
     }
 
     /**
@@ -261,7 +262,7 @@ class ExpedirFuec
      *
      * @return list<array{0:string,1:string}> [campo, mensaje]
      */
-    private function cruces(Empresa $empresa, \App\Support\Operacion\Horario $horario, ?int $vehiculoId, array $conductorIds): array
+    private function cruces(Empresa $empresa, Horario $horario, ?int $vehiculoId, array $conductorIds): array
     {
         $conductorIds = array_map('intval', $conductorIds);
         if (! $vehiculoId && $conductorIds === []) {

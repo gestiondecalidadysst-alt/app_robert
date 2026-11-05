@@ -48,7 +48,7 @@ class CumplidoRemesa extends Model implements RegistrableRndc
 
     public function etiquetaRndc(): string
     {
-        return 'Cumplido de ' . ($this->remesa?->numeroFormateado() ?? '—');
+        return 'Cumplido de '.($this->remesa?->numeroFormateado() ?? '—');
     }
 
     public function variablesRndc(Empresa $empresa): array
@@ -103,7 +103,7 @@ class CumplidoRemesa extends Model implements RegistrableRndc
         if ($this->tipo !== 'S') {
             foreach (['llegada_descargue', 'entrada_descargue', 'salida_descargue'] as $campo) {
                 if (! $this->{$campo}) {
-                    $e[] = 'Falta ' . str_replace('_', ' ', $campo) . '.';
+                    $e[] = 'Falta '.str_replace('_', ' ', $campo).'.';
                 }
             }
             if ($this->remesa->operacion !== 'V' && (! $this->cantidad_entregada || $this->cantidad_entregada <= 0)) {

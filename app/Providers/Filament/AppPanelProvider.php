@@ -51,6 +51,7 @@ class AppPanelProvider extends PanelProvider
             // Los conductores entran por /conductor con su documento, no por aquí.
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.partes.enlace-portal-conductor'))
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.partes.version'))
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.partes.version'))
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([

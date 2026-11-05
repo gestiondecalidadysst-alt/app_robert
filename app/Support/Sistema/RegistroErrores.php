@@ -4,6 +4,7 @@ namespace App\Support\Sistema;
 
 use App\Models\ErrorSistema;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Mail;
@@ -34,7 +35,7 @@ final class RegistroErrores
             $archivo = self::rutaRelativa($e->getFile());
             $mensaje = Str::limit(trim($e->getMessage()) ?: '(sin mensaje)', 2000);
             // La huella ignora números para agrupar "id 15" e "id 16" como el mismo error.
-            $huella = hash('sha256', get_class($e) . '|' . $archivo . '|' . $e->getLine() . '|' . preg_replace('/\d+/', '#', Str::limit($mensaje, 300)));
+            $huella = hash('sha256', get_class($e).'|'.$archivo.'|'.$e->getLine().'|'.preg_replace('/\d+/', '#', Str::limit($mensaje, 300)));
             $ahora = now();
             $peticion = app()->runningInConsole() && ! app()->runningUnitTests() ? null : request();
 
@@ -78,12 +79,12 @@ final class RegistroErrores
 
     private static function alertar(ErrorSistema $error, bool $nuevo): void
     {
-        $titulo = ($nuevo ? 'Error nuevo' : "Error repetido ({$error->ocurrencias} veces)") . " · {$error->referencia}";
-        $cuerpo = "{$error->clase_corta}: " . Str::limit($error->mensaje, 180) . " — {$error->archivo}:{$error->linea}";
+        $titulo = ($nuevo ? 'Error nuevo' : "Error repetido ({$error->ocurrencias} veces)")." · {$error->referencia}";
+        $cuerpo = "{$error->clase_corta}: ".Str::limit($error->mensaje, 180)." — {$error->archivo}:{$error->linea}";
 
         try {
             $notificacion = Notification::make()->danger()->title($titulo)->body($cuerpo)
-                ->actions([\Filament\Actions\Action::make('ver')->label('Ver en Estado del sistema')->url(url('/admin/estado-sistema'))]);
+                ->actions([Action::make('ver')->label('Ver en Estado del sistema')->url(url('/admin/estado-sistema'))]);
             User::query()->withoutGlobalScopes()->where('es_superadmin', true)->where('activo', true)->get()
                 ->each(fn (User $u) => $notificacion->sendToDatabase($u));
         } catch (Throwable) {
@@ -91,8 +92,8 @@ final class RegistroErrores
 
         if ($correo = config('ruta.alertas_correo')) {
             try {
-                Mail::raw("{$titulo}\n\n{$cuerpo}\n\nURL: {$error->url}\nUsuario: " . ($error->user_id ?? '—') . "\nEmpresa: " . ($error->empresa_id ?? '—')
-                    . "\n\nDetalle en " . url('/admin/estado-sistema'), fn ($m) => $m->to($correo)->subject('[Ruta] ' . $titulo));
+                Mail::raw("{$titulo}\n\n{$cuerpo}\n\nURL: {$error->url}\nUsuario: ".($error->user_id ?? '—')."\nEmpresa: ".($error->empresa_id ?? '—')
+                    ."\n\nDetalle en ".url('/admin/estado-sistema'), fn ($m) => $m->to($correo)->subject('[Ruta] '.$titulo));
             } catch (Throwable) {
             }
         }
@@ -109,6 +110,6 @@ final class RegistroErrores
 
     private static function rutaRelativa(string $archivo): string
     {
-        return Str::after($archivo, base_path() . DIRECTORY_SEPARATOR);
+        return Str::after($archivo, base_path().DIRECTORY_SEPARATOR);
     }
 }

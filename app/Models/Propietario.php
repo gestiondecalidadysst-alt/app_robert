@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Models\Concerns\PerteneceAEmpresa;
+use App\Services\Rndc\RegistrableRndc;
+use App\Services\Rndc\ValidarTercero;
+use App\Support\Carga\CatalogoRndc;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,9 +17,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Propietario (afiliado) de uno o varios vehículos. Puede ser persona natural
  * o jurídica (la propia empresa también puede ser propietaria).
  */
-class Propietario extends Model implements \App\Services\Rndc\RegistrableRndc
+class Propietario extends Model implements RegistrableRndc
 {
-    use Auditable, PerteneceAEmpresa, \App\Models\Concerns\SeRegistraEnRndc, SoftDeletes;
+    use \App\Models\Concerns\SeRegistraEnRndc, Auditable, PerteneceAEmpresa, SoftDeletes;
 
     public const GENEROS = ['F' => 'Femenino', 'M' => 'Masculino', 'O' => 'Otro'];
 
@@ -60,7 +63,7 @@ class Propietario extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function getNombreCompletoAttribute(): string
     {
-        return trim($this->nombres . ' ' . $this->apellidos);
+        return trim($this->nombres.' '.$this->apellidos);
     }
 
     public function scopeActivos(Builder $query): Builder
@@ -77,7 +80,7 @@ class Propietario extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function etiquetaRndc(): string
     {
-        return trim($this->nombres . ' ' . $this->apellidos) . ' · ' . ($this->tipoIdentificacion?->codigo ?? '') . ' ' . $this->documento;
+        return trim($this->nombres.' '.$this->apellidos).' · '.($this->tipoIdentificacion?->codigo ?? '').' '.$this->documento;
     }
 
     /** Nombres y apellidos como los pide el RNDC (el primer apellido y el resto). */
@@ -91,7 +94,7 @@ class Propietario extends Model implements \App\Services\Rndc\RegistrableRndc
     public function variablesRndc(Empresa $empresa): array
     {
         $this->loadMissing(['tipoIdentificacion', 'municipio']);
-        $c = \App\Support\Carga\CatalogoRndc::class;
+        $c = CatalogoRndc::class;
         $tipo = $c::tipoId($this->tipoIdentificacion?->codigo);
         $tel = $c::digitos($this->telefono);
         [$a1, $a2] = $this->apellidosRndc();
@@ -114,11 +117,11 @@ class Propietario extends Model implements \App\Services\Rndc\RegistrableRndc
 
     public function validarRndc(): array
     {
-        $c = \App\Support\Carga\CatalogoRndc::class;
+        $c = CatalogoRndc::class;
         $tel = $c::digitos($this->telefono);
         [$a1] = $this->apellidosRndc();
 
-        return \App\Services\Rndc\ValidarTercero::errores($c::tipoId($this->tipoIdentificacion?->codigo), $this->documento, $this->nombres, $a1,
+        return ValidarTercero::errores($c::tipoId($this->tipoIdentificacion?->codigo), $this->documento, $this->nombres, $a1,
             strlen($tel) <= 7 ? $tel : null, strlen($tel) === 10 ? $tel : ($tel !== '' && strlen($tel) > 7 ? $tel : null), $this->direccion, $this->municipio_id);
     }
 }

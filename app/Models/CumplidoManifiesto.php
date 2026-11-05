@@ -63,7 +63,7 @@ class CumplidoManifiesto extends Model implements RegistrableRndc
 
     public function etiquetaRndc(): string
     {
-        return 'Cumplido de ' . ($this->manifiesto?->numeroFormateado() ?? '—');
+        return 'Cumplido de '.($this->manifiesto?->numeroFormateado() ?? '—');
     }
 
     /** Lo que efectivamente queda por pagar al titular después del cumplido. */
