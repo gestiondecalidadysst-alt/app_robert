@@ -14,7 +14,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -38,7 +37,6 @@ final class ManifiestoCargaForm
                 self::pasoPago(),
             ])
                 ->columnSpanFull()
-                ->persistStepInQueryString()
                 ->skippable(false)
                 ->submitAction(view('filament.app.carga.boton-expedir')),
         ]);
@@ -85,12 +83,12 @@ final class ManifiestoCargaForm
                 Select::make('conductor_id')->label('Conductor')->required()->searchable()->native(false)->columnSpanFull()
                     ->options(fn () => Conductor::query()->vinculados()->orderBy('nombres')->get()
                         ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo . ' · CC ' . $c->documento])),
-                Text::make('**Titular del manifiesto.** Puede ser el propietario, el tenedor o un tercero; elija solo uno.')
-                    ->columnSpanFull(),
                 Select::make('titular_propietario_id')->label('Titular: propietario o tenedor')->searchable()->native(false)
+                    ->helperText('El titular del manifiesto puede ser el propietario o tenedor del vehículo, o un tercero. Elija solo uno de los dos.')
                     ->options(fn () => Propietario::query()->where('activo', true)->orderBy('nombres')->get()
                         ->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento])),
                 Select::make('titular_tercero_id')->label('Titular: tercero (titular en comisión)')->searchable()->native(false)
+                    ->helperText('Solo si el titular no es propietario ni tenedor del vehículo.')
                     ->options(fn () => TerceroCarga::query()->where('activo', true)->orderBy('nombre')->get()
                         ->mapWithKeys(fn ($t) => [$t->id => $t->nombre_completo . ' · ' . $t->documento])),
             ])
