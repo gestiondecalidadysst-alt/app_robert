@@ -30,7 +30,7 @@ final class VehiculoInfolist
                 ->icon('heroicon-o-exclamation-triangle')
                 ->columnSpanFull()
                 ->description(fn (Vehiculo $record) => new HtmlString(
-                    collect($record->bloqueosOperacion())->map(fn (string $m) => '• ' . e($m))->implode('<br>')
+                    collect($record->bloqueosOperacion())->map(fn (string $m) => '• '.e($m))->implode('<br>')
                 ))
                 ->visible(fn (Vehiculo $record) => ! $record->puedeOperar()),
 
@@ -47,9 +47,9 @@ final class VehiculoInfolist
                         ->columnSpan(fn (Vehiculo $record) => filled($record->foto_path) ? 3 : 4)
                         ->schema([
                             TextEntry::make('placa')
-                                ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">' . e($state) . '</span>')),
+                                ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">'.e($state).'</span>')),
                             TextEntry::make('estado')->badge()
-                                ->helperText(fn (Vehiculo $record) => $record->estado_desde ? 'Desde ' . $record->estado_desde->format('d/m/Y') : null),
+                                ->helperText(fn (Vehiculo $record) => $record->estado_desde ? 'Desde '.$record->estado_desde->format('d/m/Y') : null),
                             TextEntry::make('numero_interno')->label('Número interno')->placeholder('—'),
                             TextEntry::make('descripcion')->label('Vehículo'),
                             TextEntry::make('claseVehiculo.nombre')->label('Clase'),
@@ -61,7 +61,7 @@ final class VehiculoInfolist
                                 ->label('Conductores')
                                 ->state(fn (Vehiculo $record) => $record->asignacionesVigentes
                                     ->sortByDesc('principal')
-                                    ->map(fn ($a) => $a->conductor?->nombre_completo . ($a->principal ? ' (principal)' : ''))
+                                    ->map(fn ($a) => $a->conductor?->nombre_completo.($a->principal ? ' (principal)' : ''))
                                     ->implode(', '))
                                 ->placeholder('Sin asignar')
                                 ->columnSpan(2),
@@ -80,7 +80,7 @@ final class VehiculoInfolist
                         ->color(fn (Vehiculo $record) => $record->estadoDocumento($tipo)->getColor())
                         ->helperText(fn (Vehiculo $record) => match ($record->estadoDocumento($tipo)) {
                             EstadoDocumento::Vencido => 'Vencido',
-                            EstadoDocumento::PorVencer => 'Vence en ' . $record->documentoVigente($tipo)->diasParaVencer() . ' días',
+                            EstadoDocumento::PorVencer => 'Vence en '.$record->documentoVigente($tipo)->diasParaVencer().' días',
                             default => null,
                         })
                 )->all()),

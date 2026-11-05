@@ -12,13 +12,13 @@ final class ContratoInfolist
 {
     public static function configure(Schema $schema): Schema
     {
-        $pesos = fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.');
+        $pesos = fn ($state) => '$ '.number_format((float) $state, 0, ',', '.');
 
         return $schema->components([
             Callout::make('Contrato anulado')
                 ->danger()
                 ->columnSpanFull()
-                ->description(fn (Contrato $record) => $record->anulado_at?->timezone('America/Bogota')->format('d/m/Y') . ': ' . $record->motivo_anulacion)
+                ->description(fn (Contrato $record) => $record->anulado_at?->timezone('America/Bogota')->format('d/m/Y').': '.$record->motivo_anulacion)
                 ->visible(fn (Contrato $record) => $record->anulado()),
 
             Section::make()
@@ -35,9 +35,9 @@ final class ContratoInfolist
                     TextEntry::make('destino.nombre_completo')->label('Destino')->placeholder('—'),
                     TextEntry::make('recorrido')->label('Recorrido')->placeholder('—')->columnSpan(2),
                     TextEntry::make('disposicion_total')->label('Disposición total')
-                        ->formatStateUsing(fn (bool $state, Contrato $record) => $state ? 'Sí · ' . $record->zonas_disposicion : 'No'),
+                        ->formatStateUsing(fn (bool $state, Contrato $record) => $state ? 'Sí · '.$record->zonas_disposicion : 'No'),
                     TextEntry::make('cantidad_pasajeros')->label('Pasajeros / vehículos')
-                        ->state(fn (Contrato $record) => ($record->cantidad_pasajeros ?? '—') . ' / ' . ($record->cantidad_vehiculos ?? '—')),
+                        ->state(fn (Contrato $record) => ($record->cantidad_pasajeros ?? '—').' / '.($record->cantidad_vehiculos ?? '—')),
                 ]),
 
             Section::make('Valor')
@@ -50,7 +50,7 @@ final class ContratoInfolist
                     TextEntry::make('saldo')->label('Saldo')->state(fn (Contrato $record) => $pesos($record->saldo()))
                         ->color(fn (Contrato $record) => $record->saldo() > 0 ? 'danger' : 'success')->weight('bold'),
                     TextEntry::make('forma_pago')->label('Forma de pago')
-                        ->helperText(fn (Contrato $record) => $record->fecha_limite_pago ? 'Pagar antes del ' . $record->fecha_limite_pago->format('d/m/Y') : null),
+                        ->helperText(fn (Contrato $record) => $record->fecha_limite_pago ? 'Pagar antes del '.$record->fecha_limite_pago->format('d/m/Y') : null),
                 ]),
 
             Section::make('Responsable')

@@ -88,7 +88,7 @@ final class ServicioForm
                         ->options(fn () => FuecForm::opcionesVehiculos())->searchable()->live()->disabled($bloqueado)
                         ->afterStateUpdated(fn (Set $set, ?string $state) => FuecForm::sugerirConductores($set, $state)),
                     ...collect(FuecForm::CAMPOS_CONDUCTOR)->map(fn (string $campo, int $i) => Select::make($campo)
-                        ->label('Conductor ' . ($i + 1))
+                        ->label('Conductor '.($i + 1))
                         ->options(fn () => FuecForm::opcionesConductores())
                         ->searchable()->live()->disabled($bloqueado))->all(),
                 ]),
@@ -97,8 +97,8 @@ final class ServicioForm
                 ->columnSpanFull()
                 ->status('warning')
                 ->icon('heroicon-o-exclamation-triangle')
-                ->description(fn (Get $get, ?Servicio $record) => new HtmlString(collect(self::avisos($get, $record))->map(fn ($m) => '• ' . e($m))->implode('<br>')
-                    . '<br><span style="opacity:.75">Solo son avisos: puede guardar el plan.</span>'))
+                ->description(fn (Get $get, ?Servicio $record) => new HtmlString(collect(self::avisos($get, $record))->map(fn ($m) => '• '.e($m))->implode('<br>')
+                    .'<br><span style="opacity:.75">Solo son avisos: puede guardar el plan.</span>'))
                 ->visible(fn (Get $get, ?Servicio $record) => self::avisos($get, $record) !== []),
 
             Textarea::make('observaciones')->rows(2)->columnSpanFull(),

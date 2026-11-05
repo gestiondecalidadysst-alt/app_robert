@@ -59,8 +59,8 @@ final class AccionesRndc
             ->requiresConfirmation()
             ->modalHeading('Registrar en el RNDC')
             ->modalDescription(fn (Model $record) => ($p = Rndc::pendientes($record))
-                ? 'Corrija primero: ' . implode(' ', $p)
-                : 'Se envían los datos de ' . $record->etiquetaRndc() . ' al Registro Nacional de Despachos de Carga.')
+                ? 'Corrija primero: '.implode(' ', $p)
+                : 'Se envían los datos de '.$record->etiquetaRndc().' al Registro Nacional de Despachos de Carga.')
             ->modalSubmitAction(fn (Action $action, Model $record) => $action->getModalSubmitAction()->disabled(Rndc::pendientes($record) !== []))
             ->action(function (Model $record): void {
                 try {
@@ -73,7 +73,7 @@ final class AccionesRndc
                 $registro->estado === 'registrado'
                     ? Notification::make()->success()->title('Registrado en el RNDC')->body("Radicado No. {$registro->ingresoid}.")->send()
                     : Notification::make()->danger()->title('El RNDC rechazó el registro')
-                        ->body(collect($registro->errores)->map(fn ($e) => trim(($e['codigo'] ? $e['codigo'] . ': ' : '') . $e['mensaje']))->implode("\n"))->persistent()->send();
+                        ->body(collect($registro->errores)->map(fn ($e) => trim(($e['codigo'] ? $e['codigo'].': ' : '').$e['mensaje']))->implode("\n"))->persistent()->send();
             });
     }
 
@@ -98,7 +98,7 @@ final class AccionesRndc
             ->label('Ficha RNDC (PDF)')
             ->icon('heroicon-o-document-arrow-down')
             ->visible(fn () => self::puedeVer())
-            ->action(fn (Model $record) => response()->streamDownload(fn () => print(PdfFichaRndc::fichas([$record])), PdfFichaRndc::nombre($record), ['Content-Type' => 'application/pdf']));
+            ->action(fn (Model $record) => response()->streamDownload(fn () => print (PdfFichaRndc::fichas([$record])), PdfFichaRndc::nombre($record), ['Content-Type' => 'application/pdf']));
     }
 
     public static function xml(): Action
@@ -119,7 +119,7 @@ final class AccionesRndc
             ->label('Fichas RNDC (PDF)')
             ->icon('heroicon-o-document-arrow-down')
             ->visible(fn () => self::puedeVer())
-            ->action(fn (Collection $records) => response()->streamDownload(fn () => print(PdfFichaRndc::fichas($records)), 'fichas-rndc-' . now()->format('Ymd-His') . '.pdf', ['Content-Type' => 'application/pdf']));
+            ->action(fn (Collection $records) => response()->streamDownload(fn () => print (PdfFichaRndc::fichas($records)), 'fichas-rndc-'.now()->format('Ymd-His').'.pdf', ['Content-Type' => 'application/pdf']));
     }
 
     public static function columnaEstado(): TextColumn
@@ -130,7 +130,7 @@ final class AccionesRndc
             ->state(fn (Model $record) => $record->estadoRndc())
             ->formatStateUsing(fn (string $state, Model $record) => $record::etiquetaEstadoRndc($state))
             ->color(fn (string $state, Model $record) => $record::colorEstadoRndc($state))
-            ->description(fn (Model $record) => $record->ultimoRegistroRndc?->ingresoid ? 'No. ' . $record->ultimoRegistroRndc->ingresoid : null)
+            ->description(fn (Model $record) => $record->ultimoRegistroRndc?->ingresoid ? 'No. '.$record->ultimoRegistroRndc->ingresoid : null)
             ->visible(fn () => self::puedeVer());
     }
 }

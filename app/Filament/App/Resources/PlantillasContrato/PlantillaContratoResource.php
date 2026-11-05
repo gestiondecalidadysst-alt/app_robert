@@ -121,16 +121,16 @@ class PlantillaContratoResource extends Resource
     public static function conEtiquetas(string $contenido): HtmlString
     {
         $etiquetas = collect(VariablesContrato::etiquetas())
-            ->map(fn (string $etiqueta) => '⟦' . $etiqueta . '⟧')
+            ->map(fn (string $etiqueta) => '⟦'.$etiqueta.'⟧')
             ->all();
 
         $html = RichContentRenderer::make($contenido)->mergeTags($etiquetas)->toHtml();
 
-        return new HtmlString('<div class="ruta-plantilla">' . preg_replace(
+        return new HtmlString('<div class="ruta-plantilla">'.preg_replace(
             '/⟦([^⟧]+)⟧/u',
             '<mark style="background:#FDEEE6;color:#9A3412;border-radius:4px;padding:0 4px">$1</mark>',
             $html,
-        ) . '</div>');
+        ).'</div>');
     }
 
     public static function table(Table $table): Table

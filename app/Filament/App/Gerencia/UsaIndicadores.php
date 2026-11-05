@@ -44,7 +44,7 @@ trait UsaIndicadores
     {
         static $secciones = [];
         $i = $this->indicadores();
-        $clave = spl_object_id($i) . $nombre;
+        $clave = spl_object_id($i).$nombre;
 
         return $secciones[$clave] ??= $i->{$nombre}();
     }

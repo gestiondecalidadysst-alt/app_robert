@@ -17,7 +17,7 @@ class ListarVencimientos extends ListRecords
     /** Pestañas Vehículos | Conductores (un solo «Vencimientos» en el menú). */
     protected function getHeaderActions(): array
     {
-        return \App\Filament\App\Resources\Vencimientos\VencimientoResource::pestanas('vehiculos');
+        return VencimientoResource::pestanas('vehiculos');
     }
 
     protected function getHeaderWidgets(): array

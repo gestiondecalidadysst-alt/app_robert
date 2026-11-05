@@ -13,6 +13,7 @@ use App\Models\Marca;
 use App\Models\Propietario;
 use App\Models\TipoServicio;
 use App\Models\Vehiculo;
+use App\Support\Carga\CatalogoRndc;
 use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -21,6 +22,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -70,12 +72,12 @@ final class VehiculoForm
     /** Datos que pide el RNDC para registrar el vehículo (camión rígido o tractocamión). */
     private static function carga(): array
     {
-        $c = \App\Support\Carga\CatalogoRndc::class;
-        $propietarios = fn () => \App\Models\Propietario::query()->where('activo', true)->orderBy('nombres')->get()
-            ->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento]);
+        $c = CatalogoRndc::class;
+        $propietarios = fn () => Propietario::query()->where('activo', true)->orderBy('nombres')->get()
+            ->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo.' · '.$p->documento]);
 
         return [
-            \Filament\Schemas\Components\Text::make('Solo para vehículos de carga. Los códigos de marca, línea, color, carrocería y aseguradora son los de las tablas del anexo del RNDC. La capacidad se toma de «Ficha técnica».')->columnSpanFull()->color('gray'),
+            Text::make('Solo para vehículos de carga. Los códigos de marca, línea, color, carrocería y aseguradora son los de las tablas del anexo del RNDC. La capacidad se toma de «Ficha técnica».')->columnSpanFull()->color('gray'),
             Select::make('rndc_configuracion')->label('Configuración')->options($c::CONFIGURACIONES_VEHICULO)->live()
                 ->helperText('Vacío = no es vehículo de carga.'),
             TextInput::make('numero_ejes')->label('Número de ejes')->numeric()->minValue(1)->maxValue(20)

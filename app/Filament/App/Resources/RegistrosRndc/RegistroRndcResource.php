@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 /** Bitácora de envíos al RNDC: qué se envió, el radicado o los errores, quién y cuándo. */
@@ -51,7 +52,7 @@ class RegistroRndcResource extends Resource
                 TextColumn::make('estado')->label('Resultado')->badge()
                     ->formatStateUsing(fn (string $state, RegistroRndc $r) => $r->etiquetaEstado())
                     ->color(fn (string $state) => $state === 'error' ? 'danger' : 'success')
-                    ->description(fn (RegistroRndc $r) => $r->errores ? \Illuminate\Support\Str::limit(collect($r->errores)->pluck('mensaje')->implode(' '), 120) : null),
+                    ->description(fn (RegistroRndc $r) => $r->errores ? Str::limit(collect($r->errores)->pluck('mensaje')->implode(' '), 120) : null),
                 TextColumn::make('ingresoid')->label('Radicado')->placeholder('—')->copyable(),
                 TextColumn::make('usuario.name')->label('Usuario')->visibleFrom('md'),
             ])

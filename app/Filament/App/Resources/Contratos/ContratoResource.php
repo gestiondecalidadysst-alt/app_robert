@@ -66,7 +66,7 @@ class ContratoResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $pesos = fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.');
+        $pesos = fn ($state) => '$ '.number_format((float) $state, 0, ',', '.');
 
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['cliente.tipoIdentificacion', 'documentos'])->withSum(['pagos' => fn ($q) => $q->whereNull('anulado_at')], 'valor')->withCount(['fuecs' => fn ($q) => $q->noAnulados()]))

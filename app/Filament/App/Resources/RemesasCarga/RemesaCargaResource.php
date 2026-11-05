@@ -7,16 +7,21 @@ use App\Filament\App\Resources\RemesasCarga\Pages\CrearRemesa;
 use App\Filament\App\Resources\RemesasCarga\Pages\EditarRemesa;
 use App\Filament\App\Resources\RemesasCarga\Pages\ListarRemesas;
 use App\Filament\App\Resources\RemesasCarga\Schemas\RemesaCargaForm;
+use App\Models\CumplidoRemesa;
 use App\Models\RemesaCarga;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Filament\Notifications\Notification;
 use UnitEnum;
 
 /** Remesas terrestres de carga: documento oficial por envío (proceso 3 del RNDC). */
@@ -80,29 +85,29 @@ class RemesaCargaResource extends Resource
                         'observaciones' => $r->cumplido?->observaciones,
                     ])
                     ->schema([
-                        \Filament\Forms\Components\Select::make('tipo')->options(\App\Models\CumplidoRemesa::TIPOS)->default('C')->required()->live(),
-                        \Filament\Forms\Components\Select::make('motivo_suspension')->options(\App\Models\CumplidoRemesa::MOTIVOS_SUSPENSION)
+                        Select::make('tipo')->options(CumplidoRemesa::TIPOS)->default('C')->required()->live(),
+                        Select::make('motivo_suspension')->options(CumplidoRemesa::MOTIVOS_SUSPENSION)
                             ->visible(fn ($get) => $get('tipo') === 'S')->required(fn ($get) => $get('tipo') === 'S'),
-                        \Filament\Forms\Components\DateTimePicker::make('llegada_descargue')->label('Llegada al descargue')->seconds(false)
+                        DateTimePicker::make('llegada_descargue')->label('Llegada al descargue')->seconds(false)
                             ->required(fn ($get) => $get('tipo') !== 'S')->hidden(fn ($get) => $get('tipo') === 'S'),
-                        \Filament\Forms\Components\DateTimePicker::make('entrada_descargue')->label('Entrada al descargue')->seconds(false)
+                        DateTimePicker::make('entrada_descargue')->label('Entrada al descargue')->seconds(false)
                             ->required(fn ($get) => $get('tipo') !== 'S')->hidden(fn ($get) => $get('tipo') === 'S'),
-                        \Filament\Forms\Components\DateTimePicker::make('salida_descargue')->label('Salida del descargue')->seconds(false)
+                        DateTimePicker::make('salida_descargue')->label('Salida del descargue')->seconds(false)
                             ->required(fn ($get) => $get('tipo') !== 'S')->hidden(fn ($get) => $get('tipo') === 'S'),
-                        \Filament\Forms\Components\TextInput::make('cantidad_entregada')->numeric()->minValue(0)
+                        TextInput::make('cantidad_entregada')->numeric()->minValue(0)
                             ->hidden(fn ($get) => $get('tipo') === 'S'),
-                        \Filament\Forms\Components\Textarea::make('observaciones')->rows(2)->maxLength(200),
+                        Textarea::make('observaciones')->rows(2)->maxLength(200),
                     ])
                     ->action(function (RemesaCarga $r, array $data): void {
-                        \App\Models\CumplidoRemesa::updateOrCreate(
+                        CumplidoRemesa::updateOrCreate(
                             ['remesa_id' => $r->id],
                             ['empresa_id' => $r->empresa_id, 'user_id' => auth()->id(), ...$data]
                         );
-                        \Filament\Notifications\Notification::make()->success()->title('Cumplido guardado')->body('Envíe al RNDC desde la bitácora cuando esté todo listo.')->send();
+                        Notification::make()->success()->title('Cumplido guardado')->body('Envíe al RNDC desde la bitácora cuando esté todo listo.')->send();
                     }),
                 Action::make('anular')->label('Anular')->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
                     ->visible(fn (RemesaCarga $r) => auth()->user()?->can('anular_remesas_carga') && ! $r->anulado() && ! $r->manifiesto_id)
-                    ->schema([\Filament\Forms\Components\Textarea::make('motivo')->required()->maxLength(200)])
+                    ->schema([Textarea::make('motivo')->required()->maxLength(200)])
                     ->action(function (RemesaCarga $r, array $data): void {
                         $r->update(['anulado_at' => now(), 'motivo_anulacion' => $data['motivo']]);
                         Notification::make()->success()->title('Remesa anulada')->body('Reporte la anulación al RNDC (proceso 9) cuando esté disponible.')->send();

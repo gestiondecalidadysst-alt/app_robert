@@ -63,7 +63,7 @@ final class DocumentoConductorForm
             FileUpload::make('archivo_path')
                 ->label('Archivo (PDF o imagen)')
                 ->disk(DocumentoConductor::DISCO)
-                ->directory(fn () => 'documentos-conductor/' . (filament()->getTenant()?->getKey() ?? 'sin-empresa'))
+                ->directory(fn () => 'documentos-conductor/'.(filament()->getTenant()?->getKey() ?? 'sin-empresa'))
                 ->visibility('private')
                 ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
                 ->maxSize(5120)

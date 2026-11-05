@@ -19,6 +19,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -65,7 +66,7 @@ class RegistrarInspeccionMensual extends Page
                     ->columns(['default' => 1, 'md' => 2])
                     ->schema($grupo->flatMap(fn (ItemChequeo $item) => [
                         ToggleButtons::make("respuestas.{$item->id}.respuesta")
-                            ->label($item->descripcion . ($item->critico ? ' (crítico)' : ''))
+                            ->label($item->descripcion.($item->critico ? ' (crítico)' : ''))
                             ->options(RegistrarInspeccion::RESPUESTAS)
                             ->colors(['si' => 'success', 'no' => 'danger', 'na' => 'gray'])
                             ->inline()
@@ -99,15 +100,15 @@ class RegistrarInspeccionMensual extends Page
                 observaciones: $datos['observaciones'] ?? null,
                 contexto: ['ip' => request()->ip(), 'user_agent' => request()->userAgent()],
                 usuario: auth()->user(),
-                fecha: \Illuminate\Support\Carbon::parse($datos['fecha']),
+                fecha: Carbon::parse($datos['fecha']),
             );
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $campo) => [
-                'data.' . (str_starts_with($campo, 'respuestas') ? $campo : ($campo === 'vehiculo' ? 'vehiculo_id' : $campo)) => $m,
+                'data.'.(str_starts_with($campo, 'respuestas') ? $campo : ($campo === 'vehiculo' ? 'vehiculo_id' : $campo)) => $m,
             ])->all());
         }
 
-        Notification::make()->success()->title('Inspección registrada: ' . $inspeccion->resultado->getLabel())->send();
+        Notification::make()->success()->title('Inspección registrada: '.$inspeccion->resultado->getLabel())->send();
 
         $this->redirect(InspeccionResource::getUrl('view', ['record' => $inspeccion]));
     }

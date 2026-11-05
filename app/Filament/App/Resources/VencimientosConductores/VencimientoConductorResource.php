@@ -6,7 +6,9 @@ use App\Enums\EstadoDocumento;
 use App\Enums\TipoDocumentoConductor;
 use App\Filament\App\Resources\Conductores\ConductorResource;
 use App\Filament\App\Resources\Conductores\Schemas\DocumentoConductorForm;
+use App\Filament\App\Resources\Vencimientos\VencimientoResource;
 use App\Filament\App\Resources\VencimientosConductores\Pages\ListarVencimientosConductores;
+use App\Models\Conductor;
 use App\Models\DocumentoConductor;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -48,7 +50,7 @@ class VencimientoConductorResource extends Resource
     /** En el menú va dentro de «Vencimientos» (pestaña Conductores); solo aparece sola si no se ven los de vehículos. */
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canViewAny() && ! \App\Filament\App\Resources\Vencimientos\VencimientoResource::canViewAny();
+        return static::canViewAny() && ! VencimientoResource::canViewAny();
     }
 
     public static function getNavigationBadge(): ?string
@@ -73,7 +75,7 @@ class VencimientoConductorResource extends Resource
     {
         return DocumentoConductor::query()
             ->vigentes()
-            ->whereIn('tipo', array_map(fn ($t) => $t->value, \App\Models\Conductor::tiposObligatorios()))
+            ->whereIn('tipo', array_map(fn ($t) => $t->value, Conductor::tiposObligatorios()))
             ->whereHas('conductor', fn (Builder $q) => $q->vinculados());
     }
 
@@ -103,7 +105,7 @@ class VencimientoConductorResource extends Resource
                 TextColumn::make('dias')
                     ->label('Días')
                     ->state(fn (DocumentoConductor $r) => $r->diasParaVencer())
-                    ->formatStateUsing(fn (int $state) => $state < 0 ? 'Hace ' . abs($state) : ($state === 0 ? 'Hoy' : "En {$state}"))
+                    ->formatStateUsing(fn (int $state) => $state < 0 ? 'Hace '.abs($state) : ($state === 0 ? 'Hoy' : "En {$state}"))
                     ->color(fn (DocumentoConductor $r) => $r->estado()->getColor()),
                 TextColumn::make('estado')->label('Estado')->badge()->state(fn (DocumentoConductor $r) => $r->estado()),
             ])

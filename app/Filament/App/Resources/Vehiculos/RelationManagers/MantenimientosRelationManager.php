@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\Vehiculos\RelationManagers;
 
 use App\Filament\App\Resources\Mantenimientos\MantenimientoResource;
+use App\Filament\App\Resources\Vehiculos\VehiculoResource;
 use App\Models\Mantenimiento;
 use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -41,7 +42,7 @@ class MantenimientosRelationManager extends RelationManager
             ->headerActions([
                 Action::make('plan')->label('Plan de mantenimiento')->icon('heroicon-o-adjustments-horizontal')->color('gray')
                     ->visible(fn () => auth()->user()?->can('ver_rutinas_mantenimiento'))
-                    ->url(fn () => \App\Filament\App\Resources\Vehiculos\VehiculoResource::getUrl('plan-mantenimiento', ['record' => $this->getOwnerRecord()])),
+                    ->url(fn () => VehiculoResource::getUrl('plan-mantenimiento', ['record' => $this->getOwnerRecord()])),
                 Action::make('registrar')->label('Registrar mantenimiento')->icon('heroicon-o-plus')
                     ->visible(fn () => auth()->user()?->can('crear_mantenimientos'))
                     ->url(fn () => MantenimientoResource::getUrl('create', ['vehiculo' => $this->getOwnerRecord()->id])),

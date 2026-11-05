@@ -10,7 +10,7 @@ class ExtractosPeriodo extends Grafica
 
     public function getHeading(): ?string
     {
-        return 'Extractos expedidos · ' . $this->indicadores()->etiquetaPeriodo();
+        return 'Extractos expedidos · '.$this->indicadores()->etiquetaPeriodo();
     }
 
     protected function getType(): string

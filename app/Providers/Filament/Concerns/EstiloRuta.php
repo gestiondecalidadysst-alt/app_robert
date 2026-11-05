@@ -7,7 +7,6 @@ use Filament\Panel;
 use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
-use Filament\View\PanelsRenderHook;
 
 /**
  * Apariencia común de los paneles (estilo acordado en docs/DECISIONES.md).

@@ -14,7 +14,7 @@ class VerMantenimiento extends ViewRecord
     {
         $r = $this->getRecord();
 
-        return 'Mantenimiento ' . mb_strtolower($r->tipo->getLabel()) . ' · ' . $r->vehiculo?->placa . ' · ' . $r->fecha->format('d/m/Y');
+        return 'Mantenimiento '.mb_strtolower($r->tipo->getLabel()).' · '.$r->vehiculo?->placa.' · '.$r->fecha->format('d/m/Y');
     }
 
     protected function getHeaderActions(): array

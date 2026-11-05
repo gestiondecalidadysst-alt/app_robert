@@ -17,8 +17,8 @@ use App\Support\Pdf\PdfContrato;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
@@ -74,13 +74,13 @@ class DocumentosRelationManager extends RelationManager
                     ->badge()
                     ->state(fn (DocumentoContrato $r) => $r->estadoFirma())
                     ->description(fn (DocumentoContrato $r) => match (true) {
-                        $r->firmado() => 'Firmó ' . $r->firmante_nombre . ' el ' . $r->firmado_at->format('d/m/Y h:i a'),
+                        $r->firmado() => 'Firmó '.$r->firmante_nombre.' el '.$r->firmado_at->format('d/m/Y h:i a'),
                         $r->anulado() => $r->motivo_anulacion,
-                        $r->token_expira_at !== null => 'Enlace vence el ' . $r->token_expira_at->format('d/m/Y'),
+                        $r->token_expira_at !== null => 'Enlace vence el '.$r->token_expira_at->format('d/m/Y'),
                         default => null,
                     }),
                 TextColumn::make('version_plantilla')->label('Plantilla')
-                    ->formatStateUsing(fn (DocumentoContrato $r) => ($r->codigo_formato ? $r->codigo_formato . ' · ' : '') . 'v' . str_pad((string) $r->version_plantilla, 2, '0', STR_PAD_LEFT))
+                    ->formatStateUsing(fn (DocumentoContrato $r) => ($r->codigo_formato ? $r->codigo_formato.' · ' : '').'v'.str_pad((string) $r->version_plantilla, 2, '0', STR_PAD_LEFT))
                     ->visibleFrom('md'),
                 TextColumn::make('firmante_nombre')->label('Firmante')->placeholder('—')
                     ->description(fn (DocumentoContrato $r) => collect([
@@ -125,7 +125,7 @@ class DocumentosRelationManager extends RelationManager
 
                 return response()->streamDownload(
                     fn () => print (PdfContrato::vistaPrevia($this->contrato(), $plantilla, $empresa)),
-                    'Vista-previa-contrato-' . $this->contrato()->numero_formateado . '.pdf',
+                    'Vista-previa-contrato-'.$this->contrato()->numero_formateado.'.pdf',
                     ['Content-Type' => 'application/pdf'],
                 );
             });
@@ -144,7 +144,7 @@ class DocumentosRelationManager extends RelationManager
 
                 return $faltantes === []
                     ? 'Se congela el texto con la plantilla vigente y los datos actuales. Después no se puede editar: si hay que cambiar algo, se anula y se emite de nuevo.'
-                    : new HtmlString('<strong>No se puede emitir todavía. Falta:</strong><br>' . collect($faltantes)->map(fn ($f) => '• ' . e($f))->implode('<br>'));
+                    : new HtmlString('<strong>No se puede emitir todavía. Falta:</strong><br>'.collect($faltantes)->map(fn ($f) => '• '.e($f))->implode('<br>'));
             })
             ->modalSubmitAction(fn (Action $action) => app(EmitirDocumentoContrato::class)->revisar($this->contrato(), Filament::getTenant()) === []
                 ? $action->label('Emitir')
@@ -174,7 +174,7 @@ class DocumentosRelationManager extends RelationManager
                 $motivo = Mensajero::motivoSinSms(Filament::getTenant());
 
                 return 'Se enviará el enlace del contrato por SMS (si hay celular) y por correo (si hay correo). Revise que los datos sean correctos.'
-                    . ($motivo ? " Nota: {$motivo}" : '');
+                    .($motivo ? " Nota: {$motivo}" : '');
             })
             ->fillForm(fn (DocumentoContrato $r) => $r->firmante_nombre
                 ? ['nombre' => $r->firmante_nombre, 'documento' => $r->firmante_documento, 'celular' => $r->firmante_celular, 'email' => $r->firmante_email]
@@ -194,11 +194,11 @@ class DocumentosRelationManager extends RelationManager
 
                 if ($resultado['canales'] === []) {
                     $notificacion->warning()->title('No se envió ningún mensaje')
-                        ->body(implode(' ', $resultado['omitidos']) . ' Use «Copiar enlace» para compartirlo.')->persistent();
+                        ->body(implode(' ', $resultado['omitidos']).' Use «Copiar enlace» para compartirlo.')->persistent();
                 } elseif ($resultado['omitidos']) {
-                    $notificacion->warning()->body('Por ' . implode(' y ', $resultado['canales']) . '. ' . implode(' ', $resultado['omitidos']))->persistent();
+                    $notificacion->warning()->body('Por '.implode(' y ', $resultado['canales']).'. '.implode(' ', $resultado['omitidos']))->persistent();
                 } else {
-                    $notificacion->success()->body('Por ' . implode(' y ', $resultado['canales']) . '.');
+                    $notificacion->success()->body('Por '.implode(' y ', $resultado['canales']).'.');
                 }
 
                 $notificacion->send();
@@ -246,14 +246,14 @@ class DocumentosRelationManager extends RelationManager
             ->schema(fn (DocumentoContrato $r) => [
                 Callout::make('Huella del contenido (SHA-256)')
                     ->info()
-                    ->description($r->huella_contenido . ($r->huella_pdf ? " · PDF firmado: {$r->huella_pdf}" : '')),
+                    ->description($r->huella_contenido.($r->huella_pdf ? " · PDF firmado: {$r->huella_pdf}" : '')),
                 Section::make('Eventos')->schema([
                     RepeatableEntry::make('eventos')
                         ->hiddenLabel()
                         ->state(fn () => $r->eventos()->with('usuario')->get()->map(fn (EventoDocumentoContrato $e) => [
                             'fecha' => $e->created_at?->format('d/m/Y h:i:s a'),
                             'evento' => $e->nombre,
-                            'quien' => $e->usuario?->name ?? ($e->ip ? 'Cliente · IP ' . $e->ip : '—'),
+                            'quien' => $e->usuario?->name ?? ($e->ip ? 'Cliente · IP '.$e->ip : '—'),
                             'detalle' => collect($e->detalle ?? [])->map(fn ($v, $k) => is_array($v) ? implode(', ', $v) : "{$k}: {$v}")->implode(' · ') ?: '—',
                         ])->all())
                         ->columns(['default' => 2, 'md' => 4])
@@ -270,8 +270,8 @@ class DocumentosRelationManager extends RelationManager
                         ->state(fn () => $r->envios()->get()->map(fn (EnvioMensaje $m) => [
                             'fecha' => $m->created_at->format('d/m/Y h:i a'),
                             'tipo' => $m->tipo_nombre,
-                            'canal' => ($m->canal === 'sms' ? 'SMS ' : 'Correo ') . $m->destino,
-                            'estado' => ucfirst($m->estado) . ($m->error ? ' · ' . $m->error : ''),
+                            'canal' => ($m->canal === 'sms' ? 'SMS ' : 'Correo ').$m->destino,
+                            'estado' => ucfirst($m->estado).($m->error ? ' · '.$m->error : ''),
                         ])->all())
                         ->placeholder('Sin mensajes')
                         ->columns(['default' => 2, 'md' => 4])

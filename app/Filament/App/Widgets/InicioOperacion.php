@@ -9,7 +9,6 @@ use App\Models\Contrato;
 use App\Models\Fuec;
 use App\Models\Servicio;
 use App\Support\Gerencia\Indicadores;
-use App\Support\Graficas\Paleta;
 use Filament\Facades\Filament;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -59,26 +58,26 @@ class InicioOperacion extends StatsOverviewWidget
 
         return [
             Stat::make('Contratos vigentes', (clone $vigentes)->count())
-                ->description('Por ' . $p((clone $vigentes)->sum('valor')) . ' · ' . Contrato::query()->noAnulados()->whereDate('created_at', today())->count() . ' elaborados hoy')
+                ->description('Por '.$p((clone $vigentes)->sum('valor')).' · '.Contrato::query()->noAnulados()->whereDate('created_at', today())->count().' elaborados hoy')
                 ->descriptionIcon('heroicon-m-document-text')->color('info')
                 ->url(ContratoResource::getUrl()),
             Stat::make('Extractos vigentes hoy', (clone $extractosHoy)->count())
-                ->description(Fuec::query()->noAnulados()->whereDate('created_at', today())->count() . ' expedidos hoy · ' . array_sum($serie['extractos']) . ' en el mes')
+                ->description(Fuec::query()->noAnulados()->whereDate('created_at', today())->count().' expedidos hoy · '.array_sum($serie['extractos']).' en el mes')
                 ->descriptionIcon('heroicon-m-document-check')->color('primary')
                 ->chart(array_slice($serie['extractos'], 0, $hastaHoy))
                 ->url(FuecResource::getUrl()),
             Stat::make('Servicios de hoy', (clone $servicios)->count())
-                ->description((clone $servicios)->whereNull('fuec_id')->count() . ' sin extracto')
+                ->description((clone $servicios)->whereNull('fuec_id')->count().' sin extracto')
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->color((clone $servicios)->whereNull('fuec_id')->exists() ? 'warning' : 'success')
                 ->url(Planeador::getUrl()),
             Stat::make('Pendiente por cobrar', $p($cartera['cartera']))
-                ->description("{$cartera['contratos_con_saldo']} contratos con saldo · vencido " . $p($cartera['cartera_vencida']))
+                ->description("{$cartera['contratos_con_saldo']} contratos con saldo · vencido ".$p($cartera['cartera_vencida']))
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color($cartera['cartera_vencida'] > 0 ? 'danger' : 'warning')
                 ->url(ContratoResource::getUrl('index', ['filters' => ['con_saldo' => ['value' => 1]]])),
             Stat::make('Recaudado este mes', $p($cartera['recaudado']))
-                ->description('Hoy: ' . $p($cartera['recaudo_hoy']))
+                ->description('Hoy: '.$p($cartera['recaudo_hoy']))
                 ->descriptionIcon('heroicon-m-banknotes')->color('success')
                 ->chart(array_slice($serie['recaudo'], 0, $hastaHoy)),
             Stat::make('Pagos del mes', $tipos['abono']['n'] + $tipos['abono_final']['n'] + $tipos['total']['n'])

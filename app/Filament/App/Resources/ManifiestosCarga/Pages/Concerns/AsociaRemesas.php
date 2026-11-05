@@ -64,9 +64,18 @@ trait AsociaRemesas
 
     protected function afterSave(): void
     {
-        $record = $this->getRecord();
+        $asociadas = AsociadorDeRemesas::aplicar($this->getRecord(), $this->remesasElegidas ?? []);
 
-        AsociadorDeRemesas::aplicar($record, $this->remesasElegidas ?? []);
+        // Red de seguridad: si por lo que sea la asociación no quedó, se deshace todo.
+        // Vale más no expedir el manifiesto que expedirlo vacío ante el RNDC.
+        if ($asociadas === 0) {
+            Notification::make()->danger()
+                ->title('No se pudo asociar la remesa')
+                ->body('El manifiesto no se expidió. La remesa puede estar anulada o ya ir en otro manifiesto; vuelva al paso «Remesas» y elija otra.')
+                ->persistent()->send();
+
+            throw (new Halt)->rollBackDatabaseTransaction();
+        }
     }
 
     protected function afterCreate(): void

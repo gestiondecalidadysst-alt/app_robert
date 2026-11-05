@@ -2,11 +2,13 @@
 
 namespace App\Filament\App\Resources\Vehiculos\Pages;
 
+use App\Filament\App\Carga\AccionesRndc;
 use App\Filament\App\Resources\Vehiculos\Acciones\CambiarEstadoAction;
 use App\Filament\App\Resources\Vehiculos\VehiculoResource;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\On;
 
 /**
@@ -22,7 +24,7 @@ class VerVehiculo extends ViewRecord
         return "Vehículo {$this->getRecord()->placa}";
     }
 
-    protected function resolveRecord(int|string $key): \Illuminate\Database\Eloquent\Model
+    protected function resolveRecord(int|string $key): Model
     {
         return parent::resolveRecord($key)->load([
             'marca', 'linea', 'claseVehiculo', 'carroceria', 'combustible', 'tipoServicio',
@@ -34,7 +36,7 @@ class VerVehiculo extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            \App\Filament\App\Carga\AccionesRndc::grupo(),
+            AccionesRndc::grupo(),
             CambiarEstadoAction::make()->after(fn () => $this->refrescar()),
             EditAction::make(),
         ];
@@ -51,5 +53,4 @@ class VerVehiculo extends ViewRecord
     {
         return 'Resumen';
     }
-
 }

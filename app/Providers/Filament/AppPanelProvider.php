@@ -4,17 +4,17 @@ namespace App\Providers\Filament;
 
 use App\Filament\App\Pages\Inicio;
 use App\Filament\App\Pages\Tenancy\EditarEmpresa;
+use App\Http\Middleware\AutenticarPanel;
 use App\Http\Middleware\PrepararEmpresaActiva;
 use App\Models\Empresa;
 use App\Providers\Filament\Concerns\EstiloRuta;
-use Filament\View\PanelsRenderHook;
-use App\Http\Middleware\AutenticarPanel;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -50,6 +50,7 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('filament.partes.rol-topbar'))
             // Los conductores entran por /conductor con su documento, no por aquí.
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.partes.enlace-portal-conductor'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.partes.version'))
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([

@@ -67,7 +67,7 @@ class ProveedorConsultas extends Page implements HasSchemas
                     Toggle::make('activo')->label('Consultas disponibles')->inline(false),
                     TextInput::make('url')->label('URL del API')->url()->required(),
                     TextInput::make('api_key')->label('API key')->password()->revealable()->autocomplete('new-password')
-                        ->helperText(filled($p->api_key) ? 'Guardada: ••••' . mb_substr((string) $p->api_key, -4) . '. Déjela vacía para conservarla.' : 'Sin configurar.'),
+                        ->helperText(filled($p->api_key) ? 'Guardada: ••••'.mb_substr((string) $p->api_key, -4).'. Déjela vacía para conservarla.' : 'Sin configurar.'),
                     TextInput::make('costo_credito')->label('Lo que les cuesta un crédito (COP)')->numeric()->minValue(0)->required()
                         ->helperText('Solo lo ve el superadministrador. Para calcular el margen.'),
                 ]),
@@ -86,10 +86,10 @@ class ProveedorConsultas extends Page implements HasSchemas
     {
         $costo = $costoCredito * $creditos;
         if ($precio === null || $precio === '') {
-            return 'Costo $ ' . number_format($costo, 0, ',', '.') . ' · sin precio de venta';
+            return 'Costo $ '.number_format($costo, 0, ',', '.').' · sin precio de venta';
         }
 
-        return 'Costo $ ' . number_format($costo, 0, ',', '.') . ' · margen $ ' . number_format((float) $precio - $costo, 0, ',', '.');
+        return 'Costo $ '.number_format($costo, 0, ',', '.').' · margen $ '.number_format((float) $precio - $costo, 0, ',', '.');
     }
 
     public function guardar(): void

@@ -7,6 +7,7 @@ use App\Filament\App\Resources\Rutas\Pages\CrearRuta;
 use App\Filament\App\Resources\Rutas\Pages\EditarRuta;
 use App\Filament\App\Resources\Rutas\Pages\ListarRutas;
 use App\Filament\Compartido\CamposComunes;
+use App\Models\Municipio;
 use App\Models\Ruta;
 use App\Support\Pdf\PdfPlanViaje;
 use BackedEnum;
@@ -26,6 +27,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 /**
@@ -92,7 +94,7 @@ class RutaResource extends Resource
                         ->reorderable()
                         ->collapsible()
                         ->itemLabel(fn (array $state) => filled($state['nombre'] ?? null)
-                            ? (self::tipo($state['tipo'] ?? null)?->getLabel() ?? 'Punto') . ' · ' . $state['nombre'] : null)
+                            ? (self::tipo($state['tipo'] ?? null)?->getLabel() ?? 'Punto').' · '.$state['nombre'] : null)
                         ->addActionLabel('Agregar punto')
                         ->defaultItems(0),
                 ]),
@@ -119,8 +121,8 @@ class RutaResource extends Resource
         if (filled($get('nombre')) || ! $get('origen_municipio_id') || ! $get('destino_municipio_id')) {
             return;
         }
-        $m = \App\Models\Municipio::query()->whereKey([$get('origen_municipio_id'), $get('destino_municipio_id')])->pluck('nombre', 'id');
-        $set('nombre', mb_convert_case(mb_strtolower($m[$get('origen_municipio_id')] ?? ''), MB_CASE_TITLE) . ' – ' . mb_convert_case(mb_strtolower($m[$get('destino_municipio_id')] ?? ''), MB_CASE_TITLE));
+        $m = Municipio::query()->whereKey([$get('origen_municipio_id'), $get('destino_municipio_id')])->pluck('nombre', 'id');
+        $set('nombre', mb_convert_case(mb_strtolower($m[$get('origen_municipio_id')] ?? ''), MB_CASE_TITLE).' – '.mb_convert_case(mb_strtolower($m[$get('destino_municipio_id')] ?? ''), MB_CASE_TITLE));
     }
 
     public static function table(Table $table): Table
@@ -132,18 +134,18 @@ class RutaResource extends Resource
             ->emptyStateDescription('Cree las rutas frecuentes: el planeador sugiere la que corresponde al origen y destino de cada servicio.')
             ->columns([
                 TextColumn::make('nombre')->searchable()->weight('bold')
-                    ->description(fn (Ruta $r) => $r->origen?->nombre . ' → ' . $r->destino?->nombre . ($r->ida_y_vuelta ? ' (ida y vuelta)' : '')),
+                    ->description(fn (Ruta $r) => $r->origen?->nombre.' → '.$r->destino?->nombre.($r->ida_y_vuelta ? ' (ida y vuelta)' : '')),
                 TextColumn::make('distancia_km')->label('Distancia')->suffix(' km')->placeholder('—')->alignEnd(),
                 TextColumn::make('duracion_min')->label('Conducción')->formatStateUsing(fn ($state) => Ruta::duracionTexto($state))->placeholder('—'),
                 TextColumn::make('velocidad_maxima')->label('Vel. máx.')->suffix(' km/h')->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('puntos')->label('Puntos')->visibleFrom('md')
-                    ->state(fn (Ruta $r) => $r->puntosDe(TipoPuntoRuta::Critico)->count() . ' críticos · ' . $r->puntosDe(TipoPuntoRuta::Parada)->count() . ' paradas'),
+                    ->state(fn (Ruta $r) => $r->puntosDe(TipoPuntoRuta::Critico)->count().' críticos · '.$r->puntosDe(TipoPuntoRuta::Parada)->count().' paradas'),
                 IconColumn::make('activo')->boolean(),
             ])
             ->filters([TernaryFilter::make('activo')->default(true)])
             ->recordActions([
                 Action::make('pdf')->label('Rutograma')->icon('heroicon-o-arrow-down-tray')->color('gray')
-                    ->action(fn (Ruta $record) => response()->streamDownload(fn () => print (PdfPlanViaje::rutograma($record)), 'rutograma-' . \Illuminate\Support\Str::slug($record->nombre) . '.pdf', ['Content-Type' => 'application/pdf'])),
+                    ->action(fn (Ruta $record) => response()->streamDownload(fn () => print (PdfPlanViaje::rutograma($record)), 'rutograma-'.Str::slug($record->nombre).'.pdf', ['Content-Type' => 'application/pdf'])),
                 EditAction::make(),
             ]);
     }

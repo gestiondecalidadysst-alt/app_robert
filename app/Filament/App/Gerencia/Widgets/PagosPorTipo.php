@@ -13,7 +13,7 @@ class PagosPorTipo extends Grafica
 
     public function getDescription(): ?string
     {
-        return 'Abonos, abonos finales y pagos totales · ' . $this->indicadores()->etiquetaPeriodo();
+        return 'Abonos, abonos finales y pagos totales · '.$this->indicadores()->etiquetaPeriodo();
     }
 
     protected function getType(): string

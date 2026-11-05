@@ -35,7 +35,7 @@ class EditarServicio extends EditRecord
             return app(PlanificarServicio::class)->guardar(Filament::getTenant(), ServicioForm::aDatos($data), $record);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $campo) => [
-                'data.' . ($campo === 'conductores' ? 'conductor_1' : $campo) => $m,
+                'data.'.($campo === 'conductores' ? 'conductor_1' : $campo) => $m,
             ])->all());
         }
     }

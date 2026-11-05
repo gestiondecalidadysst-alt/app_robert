@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources\Servicios\Pages;
 use App\Actions\Operacion\PlanificarServicio;
 use App\Filament\App\Resources\Servicios\Schemas\ServicioForm;
 use App\Filament\App\Resources\Servicios\ServicioResource;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -34,7 +35,7 @@ class CrearServicio extends CreateRecord
             return app(PlanificarServicio::class)->guardar(Filament::getTenant(), ServicioForm::aDatos($data));
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $campo) => [
-                'data.' . ($campo === 'conductores' ? 'conductor_1' : $campo) => $m,
+                'data.'.($campo === 'conductores' ? 'conductor_1' : $campo) => $m,
             ])->all());
         }
     }
@@ -44,7 +45,7 @@ class CrearServicio extends CreateRecord
         return static::getResource()::getUrl('view', ['record' => $this->getRecord()]);
     }
 
-    protected function getCreateFormAction(): \Filament\Actions\Action
+    protected function getCreateFormAction(): Action
     {
         return parent::getCreateFormAction()->label('Guardar plan');
     }

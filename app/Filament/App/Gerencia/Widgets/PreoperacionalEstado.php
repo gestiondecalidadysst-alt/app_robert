@@ -12,7 +12,7 @@ class PreoperacionalEstado extends Grafica
 
     public function getDescription(): ?string
     {
-        return $this->indicadores()->etiquetaPeriodo() . ' (hasta hoy).';
+        return $this->indicadores()->etiquetaPeriodo().' (hasta hoy).';
     }
 
     protected function getType(): string

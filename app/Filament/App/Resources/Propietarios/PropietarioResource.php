@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Propietarios;
 
+use App\Filament\App\Carga\AccionesRndc;
 use App\Filament\App\Resources\Propietarios\Pages\GestionarPropietarios;
 use App\Filament\App\Resources\Vehiculos\VehiculoResource;
 use App\Filament\Compartido\CamposComunes;
@@ -9,6 +10,7 @@ use App\Models\Propietario;
 use App\Models\TipoIdentificacion;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
@@ -98,7 +100,7 @@ class PropietarioResource extends Resource
                     ->weight('bold')
                     ->searchable(['nombres', 'apellidos'])
                     ->sortable(['nombres'])
-                    ->description(fn (Propietario $record) => trim(($record->tipoIdentificacion?->codigo ?? '') . ' ' . $record->documento)),
+                    ->description(fn (Propietario $record) => trim(($record->tipoIdentificacion?->codigo ?? '').' '.$record->documento)),
                 TextColumn::make('documento')->label('Documento')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('telefono')->label('Teléfono')->visibleFrom('md'),
                 TextColumn::make('email')->label('Correo')->toggleable()->visibleFrom('lg'),
@@ -108,15 +110,15 @@ class PropietarioResource extends Resource
                     ->badge()
                     ->color(fn (int $state) => $state > 0 ? 'primary' : 'gray')
                     ->sortable(),
-                \App\Filament\App\Carga\AccionesRndc::columnaEstado(),
+                AccionesRndc::columnaEstado(),
                 IconColumn::make('activo')->boolean(),
             ])
             ->filters([
                 TernaryFilter::make('activo'),
             ])
-            ->toolbarActions([\Filament\Actions\BulkActionGroup::make([\App\Filament\App\Carga\AccionesRndc::fichasMasivas()])])
+            ->toolbarActions([BulkActionGroup::make([AccionesRndc::fichasMasivas()])])
             ->recordActions([
-                \App\Filament\App\Carga\AccionesRndc::grupo(),
+                AccionesRndc::grupo(),
                 Action::make('vehiculos')
                     ->label('Vehículos')
                     ->icon('heroicon-o-truck')

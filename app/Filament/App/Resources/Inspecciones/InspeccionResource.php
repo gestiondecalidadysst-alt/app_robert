@@ -11,6 +11,7 @@ use App\Filament\App\Resources\Inspecciones\Pages\VerInspeccion;
 use App\Models\Conductor;
 use App\Models\Inspeccion;
 use App\Models\Vehiculo;
+use App\Support\Pdf\Imagenes;
 use App\Support\Pdf\PdfInspeccion;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -28,6 +29,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use UnitEnum;
 
 /**
@@ -64,7 +66,7 @@ class InspeccionResource extends Resource
                     ->description(fn (Inspeccion $r) => $r->created_at->format('h:i a')),
                 TextColumn::make('tipo')->formatStateUsing(fn (TipoInspeccion $state) => $state->corto())->badge()->color('gray'),
                 TextColumn::make('placa')->label('Vehículo')->weight('bold')
-                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('vehiculo', fn ($v) => $v->where('placa', 'like', '%' . strtoupper($search) . '%'))),
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('vehiculo', fn ($v) => $v->where('placa', 'like', '%'.strtoupper($search).'%'))),
                 TextColumn::make('conductor_nombre')->label('Conductor')->placeholder('—')
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('conductor', fn ($c) => $c->where('nombres', 'like', "%{$search}%")->orWhere('apellidos', 'like', "%{$search}%")->orWhere('documento', 'like', "%{$search}%"))),
                 TextColumn::make('kilometraje')->numeric(thousandsSeparator: '.')->placeholder('—')->toggleable(),
@@ -89,8 +91,8 @@ class InspeccionResource extends Resource
                         ->when($data['desde'] ?? null, fn ($q, $d) => $q->whereDate('fecha', '>=', $d))
                         ->when($data['hasta'] ?? null, fn ($q, $d) => $q->whereDate('fecha', '<=', $d)))
                     ->indicateUsing(fn (array $data) => array_filter([
-                        ($data['desde'] ?? null) ? 'Desde ' . \Illuminate\Support\Carbon::parse($data['desde'])->format('d/m/Y') : null,
-                        ($data['hasta'] ?? null) ? 'Hasta ' . \Illuminate\Support\Carbon::parse($data['hasta'])->format('d/m/Y') : null,
+                        ($data['desde'] ?? null) ? 'Desde '.Carbon::parse($data['desde'])->format('d/m/Y') : null,
+                        ($data['hasta'] ?? null) ? 'Hasta '.Carbon::parse($data['hasta'])->format('d/m/Y') : null,
                     ])),
             ])
             ->recordActions([
@@ -111,9 +113,9 @@ class InspeccionResource extends Resource
                     TextEntry::make('created_at')->label('Registrada')->dateTime('d/m/Y h:i a'),
                     TextEntry::make('kilometraje')->numeric(thousandsSeparator: '.')->placeholder('—'),
                     TextEntry::make('placa')->label('Vehículo')
-                        ->helperText(fn (Inspeccion $r) => trim(($r->datos['vehiculo']['marca'] ?? '') . ' ' . ($r->datos['vehiculo']['linea'] ?? '') . ' ' . ($r->datos['vehiculo']['modelo'] ?? ''))),
+                        ->helperText(fn (Inspeccion $r) => trim(($r->datos['vehiculo']['marca'] ?? '').' '.($r->datos['vehiculo']['linea'] ?? '').' '.($r->datos['vehiculo']['modelo'] ?? ''))),
                     TextEntry::make('conductor_nombre')->label('Conductor')->placeholder('—')
-                        ->helperText(fn (Inspeccion $r) => ($r->datos['conductor']['documento'] ?? null) ? 'C.C. ' . $r->datos['conductor']['documento'] : null),
+                        ->helperText(fn (Inspeccion $r) => ($r->datos['conductor']['documento'] ?? null) ? 'C.C. '.$r->datos['conductor']['documento'] : null),
                     TextEntry::make('fuec')->label('FUEC')->state(fn (Inspeccion $r) => $r->datos['fuec']['numero'] ?? null)->placeholder('Sin servicio'),
                     TextEntry::make('registrado')->label('Registrada por')
                         ->state(fn (Inspeccion $r) => ($r->datos['registrado_por_conductor'] ?? false) ? 'El conductor (portal)' : ($r->datos['registrado_por'] ?? '—')),
@@ -130,14 +132,14 @@ class InspeccionResource extends Resource
                 ->columns(['default' => 1, 'md' => 3])
                 ->schema([
                     ImageEntry::make('firma')->label('Firma estampada')
-                        ->state(fn (Inspeccion $r) => \App\Support\Pdf\Imagenes::deDisco($r->firma_path, Inspeccion::DISCO))
+                        ->state(fn (Inspeccion $r) => Imagenes::deDisco($r->firma_path, Inspeccion::DISCO))
                         ->imageHeight(70)
                         ->extraImgAttributes(['style' => 'background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:4px'])
                         ->placeholder('—'),
                     Grid::make(1)->schema([
                         TextEntry::make('ip')->label('IP')->placeholder('—'),
                         TextEntry::make('ubicacion')->label('Ubicación')
-                            ->state(fn (Inspeccion $r) => $r->latitud !== null ? number_format($r->latitud, 5) . ', ' . number_format($r->longitud, 5) : null)
+                            ->state(fn (Inspeccion $r) => $r->latitud !== null ? number_format($r->latitud, 5).', '.number_format($r->longitud, 5) : null)
                             ->url(fn (Inspeccion $r) => $r->latitud !== null ? "https://www.google.com/maps?q={$r->latitud},{$r->longitud}" : null, true)
                             ->placeholder('No compartida'),
                     ]),

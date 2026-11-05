@@ -26,7 +26,7 @@ class ResumenMantenimiento extends StatsOverviewWidget
         $m = $this->seccion('mantenimiento');
 
         return [
-            Stat::make('Cumplimiento del programa', $m['programa_cumplimiento'] === null ? '—' : $m['programa_cumplimiento'] . ' %')
+            Stat::make('Cumplimiento del programa', $m['programa_cumplimiento'] === null ? '—' : $m['programa_cumplimiento'].' %')
                 ->description($m['programa'] ? "{$m['programa_ejecutadas']} de {$m['programa_exigibles']} exigibles a la fecha" : 'Sin programa del año')
                 ->icon('heroicon-o-calendar')->color($m['programa_cumplimiento'] === null ? 'gray' : ($m['programa_cumplimiento'] >= 90 ? 'success' : 'warning'))
                 ->url(ProgramaMantenimientoResource::getUrl()),
@@ -38,7 +38,7 @@ class ResumenMantenimiento extends StatsOverviewWidget
                 ->icon('heroicon-o-wrench-screwdriver')->color($m['correctivos'] > $m['preventivos'] ? 'warning' : 'success')
                 ->url(MantenimientoResource::getUrl()),
             Stat::make('Costo de mantenimiento', Indicadores::pesos($m['costo']))
-                ->description($m['costo_km'] ? Indicadores::pesos($m['costo_km']) . ' por km recorrido' : 'Sin km suficientes para el costo por km')
+                ->description($m['costo_km'] ? Indicadores::pesos($m['costo_km']).' por km recorrido' : 'Sin km suficientes para el costo por km')
                 ->icon('heroicon-o-currency-dollar')->color('gray'),
         ];
     }

@@ -16,6 +16,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -48,10 +49,10 @@ class RemolqueResource extends Resource
     public static function form(Schema $schema): Schema
     {
         $propietarios = fn () => Propietario::query()->where('activo', true)->orderBy('nombres')->get()
-            ->mapWithKeys(fn (Propietario $p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento]);
+            ->mapWithKeys(fn (Propietario $p) => [$p->id => $p->nombre_completo.' · '.$p->documento]);
 
         return $schema->components([
-            \Filament\Schemas\Components\Section::make('Identificación')
+            Section::make('Identificación')
                 ->columns(['default' => 1, 'md' => 2])
                 ->schema([
                     TextInput::make('placa')->label('Placa')->required()->maxLength(6)->placeholder('R12345')->regex('/^[Rr]\d{5}$/')
@@ -72,7 +73,7 @@ class RemolqueResource extends Resource
                         ->helperText('Tabla «Tipos de Carrocería» del anexo.'),
                     Toggle::make('activo')->default(true)->inline(false),
                 ]),
-            \Filament\Schemas\Components\Section::make('Medidas y capacidad')
+            Section::make('Medidas y capacidad')
                 ->columns(['default' => 1, 'md' => 2])
                 ->schema([
                     TextInput::make('peso_vacio')->label('Peso vacío')->required()->numeric()->minValue(201)->maxValue(52999)->suffix('kg'),
@@ -81,14 +82,14 @@ class RemolqueResource extends Resource
                         ->helperText('Obligatoria para semirremolques de más de 3 ejes, remolques de más de 4 ejes y balanceados de más de 4 ejes.'),
                     Select::make('unidad_capacidad')->label('Unidad de la capacidad')->options(CatalogoRndc::UNIDADES_CAPACIDAD)->default(1)->required()->native(false),
                 ]),
-            \Filament\Schemas\Components\Section::make('Propietario y tenedor')
+            Section::make('Propietario y tenedor')
                 ->columns(['default' => 1, 'md' => 2])
                 ->schema([
                     Select::make('propietario_id')->label('Propietario')->required()->searchable()->options($propietarios)->native(false),
                     Select::make('tenedor_id')->label('Tenedor (poseedor)')->searchable()->options($propietarios)->native(false)
                         ->helperText('En leasing, el propietario es la compañía de leasing y el tenedor quien lo usa. Si se deja vacío, el tenedor es el mismo propietario.'),
                 ]),
-            \Filament\Schemas\Components\Section::make('Observaciones (opcional)')
+            Section::make('Observaciones (opcional)')
                 ->collapsed()
                 ->schema([Textarea::make('observaciones')->rows(2)->hiddenLabel()]),
         ]);

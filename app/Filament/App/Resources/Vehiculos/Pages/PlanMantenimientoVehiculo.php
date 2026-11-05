@@ -60,7 +60,7 @@ class PlanMantenimientoVehiculo extends Page
 
     public function getTitle(): string|Htmlable
     {
-        return 'Plan de mantenimiento · ' . $this->getRecord()->placa;
+        return 'Plan de mantenimiento · '.$this->getRecord()->placa;
     }
 
     public function getSubheading(): ?string
@@ -69,8 +69,8 @@ class PlanMantenimientoVehiculo extends Page
         $plantilla = PlanPreventivo::plantillaDe($v);
 
         return $v->plan_personalizado
-            ? 'Plan personalizado' . ($plantilla ? " (basado en «{$plantilla->nombre}»)" : '') . '. Los cambios de las plantillas no lo afectan.'
-            : 'Sigue la plantilla «' . ($plantilla?->nombre ?? 'ninguna') . '»' . ($v->plantilla_mantenimiento_id ? ' (asignada).' : ' (sugerida por sus datos).');
+            ? 'Plan personalizado'.($plantilla ? " (basado en «{$plantilla->nombre}»)" : '').'. Los cambios de las plantillas no lo afectan.'
+            : 'Sigue la plantilla «'.($plantilla?->nombre ?? 'ninguna').'»'.($v->plantilla_mantenimiento_id ? ' (asignada).' : ' (sugerida por sus datos).');
     }
 
     private function llenar(): void
@@ -110,7 +110,7 @@ class PlanMantenimientoVehiculo extends Page
                             ->options(['plantilla' => 'Seguir una plantilla', 'personalizado' => 'Personalizar para este vehículo']),
                         Select::make('plantilla_mantenimiento_id')->label('Plantilla')
                             ->options(fn () => PlantillaMantenimiento::query()->activas()->orderByDesc('por_defecto')->orderBy('nombre')->pluck('nombre', 'id'))
-                            ->helperText(fn () => 'Sugerida por sus datos: ' . (PlanPreventivo::plantillaSugerida($this->getRecord())?->nombre ?? 'ninguna') . '.')
+                            ->helperText(fn () => 'Sugerida por sus datos: '.(PlanPreventivo::plantillaSugerida($this->getRecord())?->nombre ?? 'ninguna').'.')
                             ->visible(fn (Get $get) => $get('modo') === 'plantilla'),
                         Repeater::make('rutinas')
                             ->label('Rutinas del vehículo')
@@ -143,12 +143,12 @@ class PlanMantenimientoVehiculo extends Page
             ->components([
                 Section::make('Punto de partida')
                     ->description('Cuándo y a cuántos km se hizo cada rutina por última vez. Desde ahí se calcula el próximo y se programa el año. '
-                        . 'Kilometraje actual: ' . ($kmActual ? number_format($kmActual, 0, ',', '.') . ' km' : 'sin reporte') . ' · '
-                        . PlanPreventivo::kmDiarios($v) . ' km/día.')
+                        .'Kilometraje actual: '.($kmActual ? number_format($kmActual, 0, ',', '.').' km' : 'sin reporte').' · '
+                        .PlanPreventivo::kmDiarios($v).' km/día.')
                     ->schema(PlanPreventivo::para($v)->map(fn ($f) => Grid::make(['default' => 1, 'md' => 4])->schema([
                         Text::make($f['rutina']->nombre)->weight('bold')->columnSpan(['md' => 1]),
                         Text::make($f['ultimo']
-                            ? 'Último: ' . $f['ultimo']->fecha->format('d/m/Y') . ($f['ultimo']->kilometraje !== null ? ' · ' . number_format($f['ultimo']->kilometraje, 0, ',', '.') . ' km' : '') . ($f['ultimo']->registro_inicial ? ' (punto de partida)' : '')
+                            ? 'Último: '.$f['ultimo']->fecha->format('d/m/Y').($f['ultimo']->kilometraje !== null ? ' · '.number_format($f['ultimo']->kilometraje, 0, ',', '.').' km' : '').($f['ultimo']->registro_inicial ? ' (punto de partida)' : '')
                             : 'Sin registro')->color('gray'),
                         DatePicker::make("puntos.{$f['rutina']->id}.fecha")->hiddenLabel()->placeholder('Fecha')->maxDate(today()),
                         TextInput::make("puntos.{$f['rutina']->id}.kilometraje")->hiddenLabel()->placeholder('Km')->numeric()->minValue(0),
@@ -169,7 +169,7 @@ class PlanMantenimientoVehiculo extends Page
                 PlanDeVehiculo::personalizar($v, array_values($datos['rutinas'] ?? []));
             }
         } catch (ValidationException $e) {
-            throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $k) => ['plan.' . $k => $m])->all());
+            throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $k) => ['plan.'.$k => $m])->all());
         }
 
         Notification::make()->success()->title('Plan guardado')->send();
@@ -183,7 +183,7 @@ class PlanMantenimientoVehiculo extends Page
         try {
             $n = PlanDeVehiculo::puntoDePartida($this->vehiculo(), $this->partidaForm->getState()['puntos'] ?? [], auth()->user());
         } catch (ValidationException $e) {
-            throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $k) => ['partida.' . $k => $m])->all());
+            throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $k) => ['partida.'.$k => $m])->all());
         }
 
         Notification::make()->success()->title($n ? 'Punto de partida registrado' : 'No escribió fechas ni kilómetros')->send();
@@ -200,7 +200,7 @@ class PlanMantenimientoVehiculo extends Page
             ->mapWithKeys(fn ($f) => [$f['rutina']->id => ['fecha' => today()->toDateString(), 'kilometraje' => $km]])->all();
 
         $n = $puntos ? PlanDeVehiculo::puntoDePartida($v, $puntos, auth()->user()) : 0;
-        Notification::make()->success()->title($n ? count($puntos) . ' rutina(s) arrancan hoy' : 'Todas las rutinas ya tienen registro')->send();
+        Notification::make()->success()->title($n ? count($puntos).' rutina(s) arrancan hoy' : 'Todas las rutinas ya tienen registro')->send();
         $this->llenar();
     }
 

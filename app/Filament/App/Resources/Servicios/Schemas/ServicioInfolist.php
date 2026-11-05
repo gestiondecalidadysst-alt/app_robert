@@ -27,7 +27,7 @@ final class ServicioInfolist
 
             Callout::make('Avisos de jornada y disponibilidad')->warning()->columnSpanFull()
                 ->icon('heroicon-o-exclamation-triangle')
-                ->description(fn (Servicio $record) => new HtmlString(collect(self::avisos($record))->map(fn ($m) => '• ' . e($m))->implode('<br>')))
+                ->description(fn (Servicio $record) => new HtmlString(collect(self::avisos($record))->map(fn ($m) => '• '.e($m))->implode('<br>')))
                 ->visible(fn (Servicio $record) => ! $record->cancelado() && self::avisos($record) !== []),
 
             Section::make()
@@ -51,27 +51,27 @@ final class ServicioInfolist
                         ->state(fn (Servicio $record) => $record->minutosConduccion() ? Jornada::horas($record->minutosConduccion()) : 'Sin estimar'),
                     TextEntry::make('pasajeros')->placeholder('—'),
                     TextEntry::make('created_at')->label('Planificado')
-                        ->formatStateUsing(fn (Servicio $record) => $record->created_at->timezone('America/Bogota')->format('d/m/Y h:i a') . ' · ' . self::antelacion($record))
+                        ->formatStateUsing(fn (Servicio $record) => $record->created_at->timezone('America/Bogota')->format('d/m/Y h:i a').' · '.self::antelacion($record))
                         ->helperText(fn (Servicio $record) => $record->usuario?->name),
                     TextEntry::make('leido_at')->label('Plan leído por el conductor')->placeholder('Aún no')
-                        ->formatStateUsing(fn (Servicio $record) => $record->leido_at->timezone('America/Bogota')->format('d/m/Y h:i a') . ' · ' . $record->leidoPor?->nombre_completo),
+                        ->formatStateUsing(fn (Servicio $record) => $record->leido_at->timezone('America/Bogota')->format('d/m/Y h:i a').' · '.$record->leidoPor?->nombre_completo),
                     TextEntry::make('observaciones')->placeholder('—')->columnSpanFull(),
                 ]),
 
-            Section::make(fn (Servicio $record) => $record->ruta ? 'Rutograma: ' . $record->ruta->nombre : 'Rutograma')
+            Section::make(fn (Servicio $record) => $record->ruta ? 'Rutograma: '.$record->ruta->nombre : 'Rutograma')
                 ->icon('heroicon-o-map')
                 ->columnSpanFull()
                 ->columns(['default' => 2, 'md' => 4])
                 ->collapsible()
                 ->schema([
                     TextEntry::make('sin_ruta')->hiddenLabel()->columnSpanFull()
-                        ->state(new HtmlString('Este servicio no tiene rutograma. Cree uno para este origen y destino en <a href="' . RutaResource::getUrl('create') . '" style="color:rgb(194 65 12);font-weight:600">Operación → Rutogramas</a> y edite el plan.'))
+                        ->state(new HtmlString('Este servicio no tiene rutograma. Cree uno para este origen y destino en <a href="'.RutaResource::getUrl('create').'" style="color:rgb(194 65 12);font-weight:600">Operación → Rutogramas</a> y edite el plan.'))
                         ->visible(fn (Servicio $record) => ! $record->ruta),
                     TextEntry::make('ruta.distancia_km')->label('Distancia')->suffix(' km')->placeholder('—')->visible(fn (Servicio $record) => (bool) $record->ruta),
                     TextEntry::make('ruta.duracion_min')->label('Conducción')->formatStateUsing(fn ($state) => Ruta::duracionTexto($state))->placeholder('—')->visible(fn (Servicio $record) => (bool) $record->ruta),
                     TextEntry::make('ruta.velocidad_maxima')->label('Velocidad máxima')->suffix(' km/h')->placeholder('—')->visible(fn (Servicio $record) => (bool) $record->ruta),
                     TextEntry::make('puntos')->label('Puntos')->visible(fn (Servicio $record) => (bool) $record->ruta)
-                        ->state(fn (Servicio $record) => $record->ruta?->puntosDe(TipoPuntoRuta::Critico)->count() . ' críticos · ' . $record->ruta?->puntosDe(TipoPuntoRuta::Parada)->count() . ' paradas'),
+                        ->state(fn (Servicio $record) => $record->ruta?->puntosDe(TipoPuntoRuta::Critico)->count().' críticos · '.$record->ruta?->puntosDe(TipoPuntoRuta::Parada)->count().' paradas'),
                 ]),
 
             Section::make('Seguimiento del viaje')
@@ -98,7 +98,7 @@ final class ServicioInfolist
         return match (true) {
             $horas < 0 => 'después de la salida',
             $horas < $minimo => "con {$horas} h de antelación (menos de {$minimo} h)",
-            default => 'con ' . ($horas >= 48 ? round($horas / 24) . ' días' : "{$horas} h") . ' de antelación',
+            default => 'con '.($horas >= 48 ? round($horas / 24).' días' : "{$horas} h").' de antelación',
         };
     }
 }

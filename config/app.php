@@ -13,6 +13,11 @@ return [
     |
     */
 
+    /*
+    | Versión del código desplegado (Easypanel puede inyectarla en el build).
+    */
+    'version' => env('APP_VERSION'),
+
     'name' => env('APP_NAME', 'Laravel'),
 
     /*

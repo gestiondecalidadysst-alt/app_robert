@@ -9,7 +9,6 @@ use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
-use Illuminate\Database\Eloquent\Builder;
 
 /** Inicio: contratos con saldo, del más vencido al que vence después. */
 class PendientesPorCobrar extends TableWidget
@@ -51,9 +50,9 @@ class PendientesPorCobrar extends TableWidget
                         $dias = (int) today()->diffInDays($vence, false);
 
                         return match (true) {
-                            $dias < 0 => 'Vencido hace ' . abs($dias) . ' día' . (abs($dias) === 1 ? '' : 's'),
+                            $dias < 0 => 'Vencido hace '.abs($dias).' día'.(abs($dias) === 1 ? '' : 's'),
                             $dias === 0 => 'Vence hoy',
-                            default => "Vence en {$dias} día" . ($dias === 1 ? '' : 's'),
+                            default => "Vence en {$dias} día".($dias === 1 ? '' : 's'),
                         };
                     })
                     ->color(function (Contrato $record) {

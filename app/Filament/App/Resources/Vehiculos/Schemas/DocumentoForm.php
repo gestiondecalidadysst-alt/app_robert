@@ -63,7 +63,7 @@ final class DocumentoForm
             FileUpload::make('archivo_path')
                 ->label('Archivo (PDF o imagen)')
                 ->disk(DocumentoVehiculo::DISCO)
-                ->directory(fn () => 'documentos-vehiculo/' . (filament()->getTenant()?->getKey() ?? 'sin-empresa'))
+                ->directory(fn () => 'documentos-vehiculo/'.(filament()->getTenant()?->getKey() ?? 'sin-empresa'))
                 ->visibility('private')
                 ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
                 ->maxSize(5120)

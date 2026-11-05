@@ -10,7 +10,7 @@ class ServiciosPorVehiculo extends Grafica
 
     public function getHeading(): ?string
     {
-        return 'Días de servicio por vehículo · ' . $this->indicadores()->etiquetaPeriodo();
+        return 'Días de servicio por vehículo · '.$this->indicadores()->etiquetaPeriodo();
     }
 
     protected function getType(): string

@@ -34,7 +34,7 @@ class ExtractosDeHoy extends TableWidget
                 TextColumn::make('numero')->label('FUEC')->formatStateUsing(fn (Fuec $record) => $record->numero_formateado)->size('sm')->visibleFrom('lg'),
                 TextColumn::make('placa')->label('Vehículo')->state(fn (Fuec $record) => $record->placa)->badge()->color('primary'),
                 TextColumn::make('conductores')->label('Conductor')->state(fn (Fuec $record) => $record->conductores->map->nombre_completo->implode(', '))->limit(30),
-                TextColumn::make('ruta')->label('Ruta')->state(fn (Fuec $record) => ($record->origen?->nombre ?? '') . ' → ' . ($record->destino?->nombre ?? ''))
+                TextColumn::make('ruta')->label('Ruta')->state(fn (Fuec $record) => ($record->origen?->nombre ?? '').' → '.($record->destino?->nombre ?? ''))
                     ->description(fn (Fuec $record) => $record->horario()->franjaTexto()),
                 TextColumn::make('cliente')->label('Cliente')->state(fn (Fuec $record) => $record->contrato?->cliente?->nombre)->limit(28)->visibleFrom('md'),
                 TextColumn::make('preop')->label('Preoperacional')->badge()

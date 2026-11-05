@@ -12,7 +12,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use UnitEnum;
 
 /**
@@ -37,7 +37,7 @@ class MantenimientoPreventivo extends Page implements HasTable
 
     protected static ?string $slug = 'plan-preventivo';
 
-    /** @var array<int, \Illuminate\Support\Collection> */
+    /** @var array<int, Collection> */
     private array $planes = [];
 
     public static function canAccess(): bool
@@ -48,10 +48,10 @@ class MantenimientoPreventivo extends Page implements HasTable
     public function getSubheading(): ?string
     {
         return 'Kilometraje tomado del último preoperacional, inspección o mantenimiento. Amarillo: faltan menos de '
-            . number_format(PlanPreventivo::AVISO_KM, 0, ',', '.') . ' km o ' . PlanPreventivo::AVISO_DIAS . ' días.';
+            .number_format(PlanPreventivo::AVISO_KM, 0, ',', '.').' km o '.PlanPreventivo::AVISO_DIAS.' días.';
     }
 
-    private function plan(Vehiculo $v): \Illuminate\Support\Collection
+    private function plan(Vehiculo $v): Collection
     {
         return $this->planes[$v->id] ??= PlanPreventivo::para($v);
     }

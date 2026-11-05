@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\ProgramasMantenimiento;
 
+use App\Actions\Mantenimiento\ProgramaAnual;
 use App\Enums\EstadoActividad;
 use App\Enums\EstadoPrograma;
 use App\Filament\App\Resources\ProgramasMantenimiento\Pages\ListarProgramas;
@@ -61,10 +62,10 @@ class ProgramaMantenimientoResource extends Resource
                 TextColumn::make('ejecutadas_count')->label('Ejecutadas'),
                 TextColumn::make('cumplimiento')->label('Cumplimiento a la fecha')
                     ->state(function (ProgramaMantenimiento $r) {
-                        $ind = \App\Actions\Mantenimiento\ProgramaAnual::indicadores($r);
+                        $ind = ProgramaAnual::indicadores($r);
                         $exigibles = $ind->sum('exigibles');
 
-                        return $exigibles ? round($ind->sum('ejecutadas') * 100 / $exigibles, 1) . ' %' : '—';
+                        return $exigibles ? round($ind->sum('ejecutadas') * 100 / $exigibles, 1).' %' : '—';
                     }),
                 TextColumn::make('elaboradoPor.name')->label('Elaboró')->placeholder('—'),
                 TextColumn::make('aprobadoPor.name')->label('Aprobó')->placeholder('—')

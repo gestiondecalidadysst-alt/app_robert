@@ -4,9 +4,10 @@ namespace App\Filament\App\Resources\Vencimientos;
 
 use App\Enums\EstadoDocumento;
 use App\Enums\TipoDocumentoVehiculo;
-use App\Filament\App\Resources\Vencimientos\Pages\ListarVencimientos;
 use App\Filament\App\Resources\Vehiculos\Schemas\DocumentoForm;
 use App\Filament\App\Resources\Vehiculos\VehiculoResource;
+use App\Filament\App\Resources\Vencimientos\Pages\ListarVencimientos;
+use App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource;
 use App\Models\DocumentoVehiculo;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -48,8 +49,8 @@ class VencimientoResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         $total = self::consultaBase()->vencidos()->count()
-            + (\App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::canViewAny()
-                ? \App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::consultaBase()->vencidos()->count() : 0);
+            + (VencimientoConductorResource::canViewAny()
+                ? VencimientoConductorResource::consultaBase()->vencidos()->count() : 0);
 
         return $total > 0 ? (string) $total : null;
     }
@@ -57,7 +58,7 @@ class VencimientoResource extends Resource
     /** Queda marcado también en la pestaña de conductores. */
     public static function getNavigationItemActiveRoutePattern(): string|array
     {
-        return [parent::getNavigationItemActiveRoutePattern(), \App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::getNavigationItemActiveRoutePattern()];
+        return [parent::getNavigationItemActiveRoutePattern(), VencimientoConductorResource::getNavigationItemActiveRoutePattern()];
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -70,18 +71,18 @@ class VencimientoResource extends Resource
         return 'Documentos vencidos de vehículos y conductores';
     }
 
-    /** @return list<\Filament\Actions\Action> */
+    /** @return list<Action> */
     public static function pestanas(string $actual): array
     {
-        $c = \App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource::class;
+        $c = VencimientoConductorResource::class;
         $cuenta = fn (bool $puede, $consulta) => $puede && ($n = $consulta->vencidos()->count()) ? $n : null;
 
         return [
-            \Filament\Actions\Action::make('pestana_vehiculos')->label('Vehículos')->icon('heroicon-o-truck')
+            Action::make('pestana_vehiculos')->label('Vehículos')->icon('heroicon-o-truck')
                 ->color($actual === 'vehiculos' ? 'primary' : 'gray')->outlined($actual !== 'vehiculos')
                 ->badge($cuenta(static::canViewAny(), static::consultaBase()))->badgeColor('danger')
                 ->visible(static::canViewAny())->url(static::getUrl()),
-            \Filament\Actions\Action::make('pestana_conductores')->label('Conductores')->icon('heroicon-o-users')
+            Action::make('pestana_conductores')->label('Conductores')->icon('heroicon-o-users')
                 ->color($actual === 'conductores' ? 'primary' : 'gray')->outlined($actual !== 'conductores')
                 ->badge($cuenta($c::canViewAny(), $c::consultaBase()))->badgeColor('danger')
                 ->visible($c::canViewAny())->url($c::getUrl()),
@@ -113,7 +114,7 @@ class VencimientoResource extends Resource
                 TextColumn::make('vehiculo.placa')
                     ->label('Placa')
                     ->searchable()
-                    ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">' . e($state) . '</span>'))
+                    ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">'.e($state).'</span>'))
                     ->description(fn (DocumentoVehiculo $r) => $r->vehiculo?->numero_interno ? "Interno {$r->vehiculo->numero_interno}" : null),
                 TextColumn::make('tipo')->label('Documento')->badge()->color('gray'),
                 TextColumn::make('numero')->label('Número')->placeholder('—')->visibleFrom('lg'),
@@ -122,7 +123,7 @@ class VencimientoResource extends Resource
                 TextColumn::make('dias')
                     ->label('Días')
                     ->state(fn (DocumentoVehiculo $r) => $r->diasParaVencer())
-                    ->formatStateUsing(fn (int $state) => $state < 0 ? 'Hace ' . abs($state) : ($state === 0 ? 'Hoy' : "En {$state}"))
+                    ->formatStateUsing(fn (int $state) => $state < 0 ? 'Hace '.abs($state) : ($state === 0 ? 'Hoy' : "En {$state}"))
                     ->color(fn (DocumentoVehiculo $r) => $r->estado()->getColor()),
                 TextColumn::make('estado')->label('Estado')->badge()->state(fn (DocumentoVehiculo $r) => $r->estado()),
             ])

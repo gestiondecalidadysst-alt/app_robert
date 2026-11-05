@@ -6,6 +6,7 @@ use App\Filament\App\Resources\Roles\Pages\CrearRol;
 use App\Filament\App\Resources\Roles\Pages\EditarRol;
 use App\Filament\App\Resources\Roles\Pages\ListarRoles;
 use App\Models\Rol;
+use App\Support\Modulos;
 use App\Support\Permisos;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -53,7 +54,7 @@ class RolResource extends Resource
     /** Nombre del campo del formulario que agrupa los permisos de un recurso. */
     public static function campoPermisos(string $grupo): string
     {
-        return 'permisos_' . Str::slug($grupo, '_');
+        return 'permisos_'.Str::slug($grupo, '_');
     }
 
     public static function form(Schema $schema): Schema
@@ -61,7 +62,7 @@ class RolResource extends Resource
         $secciones = [];
         foreach (Permisos::agrupados() as $grupo => $opciones) {
             // Los permisos de módulos no contratados no se muestran, pero se conservan al guardar.
-            $bloqueado = \App\Support\Modulos::permisoBloqueado((string) array_key_first($opciones));
+            $bloqueado = Modulos::permisoBloqueado((string) array_key_first($opciones));
             $secciones[] = Section::make(Str::after($grupo, ' · '))
                 ->description(Str::before($grupo, ' · '))
                 ->compact()
@@ -109,7 +110,7 @@ class RolResource extends Resource
                 TextColumn::make('users_count')->label('Usuarios')->badge(),
                 TextColumn::make('permissions_count')
                     ->label('Permisos')
-                    ->formatStateUsing(fn (int $state) => $state . ' de ' . count(Permisos::todos())),
+                    ->formatStateUsing(fn (int $state) => $state.' de '.count(Permisos::todos())),
             ])
             ->recordActions([
                 EditAction::make(),

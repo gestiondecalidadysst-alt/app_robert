@@ -4,16 +4,22 @@ namespace App\Filament\App\Resources\Vehiculos;
 
 use App\Enums\EstadoVehiculo;
 use App\Enums\TipoDocumentoVehiculo;
+use App\Filament\App\Carga\AccionesRndc;
 use App\Filament\App\Resources\Vehiculos\Acciones\CambiarEstadoAction;
 use App\Filament\App\Resources\Vehiculos\Pages\CrearVehiculo;
 use App\Filament\App\Resources\Vehiculos\Pages\EditarVehiculo;
 use App\Filament\App\Resources\Vehiculos\Pages\ListarVehiculos;
+use App\Filament\App\Resources\Vehiculos\Pages\PlanMantenimientoVehiculo;
 use App\Filament\App\Resources\Vehiculos\Pages\VerVehiculo;
 use App\Filament\App\Resources\Vehiculos\RelationManagers\ConductoresRelationManager;
 use App\Filament\App\Resources\Vehiculos\RelationManagers\DocumentosRelationManager;
+use App\Filament\App\Resources\Vehiculos\RelationManagers\MantenimientosRelationManager;
 use App\Filament\App\Resources\Vehiculos\RelationManagers\NovedadesRelationManager;
+use App\Filament\App\Resources\Vehiculos\RelationManagers\PlanesAccionRelationManager;
 use App\Filament\App\Resources\Vehiculos\Schemas\VehiculoForm;
 use App\Filament\App\Resources\Vehiculos\Schemas\VehiculoInfolist;
+use App\Filament\App\Transito\ComparendosRelationManager;
+use App\Filament\App\Transito\ConsultasRelationManager;
 use App\Models\ClaseVehiculo;
 use App\Models\DocumentoVehiculo;
 use App\Models\Propietario;
@@ -79,7 +85,7 @@ class VehiculoResource extends Resource
                 TextColumn::make('placa')
                     ->searchable()
                     ->sortable()
-                    ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">' . e($state) . '</span>'))
+                    ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">'.e($state).'</span>'))
                     ->description(fn (Vehiculo $record) => $record->numero_interno ? "Interno {$record->numero_interno}" : null),
                 TextColumn::make('numero_interno')->label('Interno')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('descripcion')
@@ -93,7 +99,7 @@ class VehiculoResource extends Resource
                     ->toggleable()
                     ->visibleFrom('lg'),
                 TextColumn::make('estado')->badge()->sortable(),
-                \App\Filament\App\Carga\AccionesRndc::columnaEstado()->toggleable(),
+                AccionesRndc::columnaEstado()->toggleable(),
                 TextColumn::make('documentos_estado')
                     ->label('Documentos')
                     ->badge()
@@ -146,7 +152,7 @@ class VehiculoResource extends Resource
         return $query->where(fn (Builder $q) => $q
             ->whereHas('documentos', fn (Builder $d) => $d->vigentes()->whereDate('fecha_vencimiento', '<', today()))
             ->orWhereRaw(
-                "(select count(distinct tipo) from {$tabla} where {$tabla}.vehiculo_id = {$vehiculos}.id and {$tabla}.deleted_at is null and {$tabla}.tipo in (" . implode(',', array_fill(0, count($tipos), '?')) . ')) < ?',
+                "(select count(distinct tipo) from {$tabla} where {$tabla}.vehiculo_id = {$vehiculos}.id and {$tabla}.deleted_at is null and {$tabla}.tipo in (".implode(',', array_fill(0, count($tipos), '?')).')) < ?',
                 [...$tipos, count($tipos)],
             ));
     }
@@ -157,10 +163,10 @@ class VehiculoResource extends Resource
             DocumentosRelationManager::class,
             ConductoresRelationManager::class,
             NovedadesRelationManager::class,
-            \App\Filament\App\Resources\Vehiculos\RelationManagers\MantenimientosRelationManager::class,
-            \App\Filament\App\Resources\Vehiculos\RelationManagers\PlanesAccionRelationManager::class,
-            \App\Filament\App\Transito\ComparendosRelationManager::class,
-            \App\Filament\App\Transito\ConsultasRelationManager::class,
+            MantenimientosRelationManager::class,
+            PlanesAccionRelationManager::class,
+            ComparendosRelationManager::class,
+            ConsultasRelationManager::class,
         ];
     }
 
@@ -171,7 +177,7 @@ class VehiculoResource extends Resource
             'create' => CrearVehiculo::route('/crear'),
             'view' => VerVehiculo::route('/{record}'),
             'edit' => EditarVehiculo::route('/{record}/editar'),
-            'plan-mantenimiento' => \App\Filament\App\Resources\Vehiculos\Pages\PlanMantenimientoVehiculo::route('/{record}/plan-mantenimiento'),
+            'plan-mantenimiento' => PlanMantenimientoVehiculo::route('/{record}/plan-mantenimiento'),
         ];
     }
 }

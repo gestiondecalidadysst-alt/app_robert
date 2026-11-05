@@ -10,6 +10,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /** Historial de consultas de tránsito de un conductor o vehículo, con lo que costó cada una. */
 class ConsultasRelationManager extends RelationManager
@@ -42,17 +43,19 @@ class ConsultasRelationManager extends RelationManager
                 TextColumn::make('origen')->badge()->color('gray'),
                 TextColumn::make('estado')->label('Resultado')->badge()
                     ->formatStateUsing(fn ($state, ConsultaTransito $r) => $r->etiquetaEstado())
-                    ->color(fn ($state) => match ($state) { 'ok' => 'success', 'sin_datos' => 'gray', default => 'danger' })
-                    ->description(fn (ConsultaTransito $r) => $r->error ? \Illuminate\Support\Str::limit($r->error, 80) : null),
+                    ->color(fn ($state) => match ($state) {
+                        'ok' => 'success', 'sin_datos' => 'gray', default => 'danger'
+                    })
+                    ->description(fn (ConsultaTransito $r) => $r->error ? Str::limit($r->error, 80) : null),
                 IconColumn::make('cobrada')->boolean(),
-                TextColumn::make('precio')->label('Valor')->formatStateUsing(fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.'))->alignEnd(),
+                TextColumn::make('precio')->label('Valor')->formatStateUsing(fn ($state) => '$ '.number_format((float) $state, 0, ',', '.'))->alignEnd(),
                 TextColumn::make('usuario.name')->label('Usuario')->visibleFrom('md')
                     ->placeholder(fn (ConsultaTransito $record) => $record->origen === 'automatica' ? 'Automática' : '—'),
             ])
             ->recordActions([
                 Action::make('ver')->label('Ver resultado')->icon('heroicon-o-eye')->color('gray')
                     ->visible(fn (ConsultaTransito $record) => $record->tieneConstancia())
-                    ->modalHeading(fn (ConsultaTransito $record) => $record->tipo->getLabel() . ' · ' . $record->created_at->timezone(config('app.timezone'))->format('d/m/Y h:i a'))
+                    ->modalHeading(fn (ConsultaTransito $record) => $record->tipo->getLabel().' · '.$record->created_at->timezone(config('app.timezone'))->format('d/m/Y h:i a'))
                     ->modalContent(fn (ConsultaTransito $record) => view('filament.app.transito.detalle-consulta', ['c' => $record]))
                     ->modalSubmitAction(false)->modalCancelActionLabel('Cerrar')
                     ->extraModalFooterActions(fn (ConsultaTransito $record) => [

@@ -4,7 +4,6 @@ namespace App\Filament\App\Gerencia\Widgets;
 
 use App\Filament\App\Gerencia\UsaIndicadores;
 use App\Filament\App\Pages\Planeador;
-use App\Filament\App\Resources\Contratos\ContratoResource;
 use App\Filament\App\Resources\Fuecs\FuecResource;
 use App\Filament\App\Resources\Servicios\ServicioResource;
 use Filament\Widgets\StatsOverviewWidget;
@@ -22,7 +21,7 @@ class ResumenOperacion extends StatsOverviewWidget
 
     protected function getHeading(): ?string
     {
-        return 'Operación · ' . $this->indicadores()->etiquetaPeriodo();
+        return 'Operación · '.$this->indicadores()->etiquetaPeriodo();
     }
 
     protected function getStats(): array
@@ -37,7 +36,7 @@ class ResumenOperacion extends StatsOverviewWidget
             Stat::make('Servicios', $o['servicios'])
                 ->description("{$o['servicios_con_extracto']} con extracto · {$o['servicios_sin_asignar']} sin vehículo o conductor")
                 ->icon('heroicon-o-calendar-days')->color($o['servicios_sin_asignar'] ? 'warning' : 'primary')->url(Planeador::getUrl()),
-            Stat::make('Uso de la flota', $o['uso_flota'] . ' %')
+            Stat::make('Uso de la flota', $o['uso_flota'].' %')
                 ->description("{$o['vehiculos_con_servicio']} de {$o['vehiculos_operando']} vehículos operando con servicio")
                 ->icon('heroicon-o-chart-pie')->color('info'),
             Stat::make('Salen en 48 h sin extracto', $o['proximos_sin_extracto'])

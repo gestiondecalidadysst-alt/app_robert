@@ -2,10 +2,10 @@
 
 namespace App\Filament\App\Resources\Conductores\Schemas;
 
+use App\Actions\Pesv\GuardarFirmaConductor;
 use App\Enums\EstadoDocumento;
 use App\Enums\TipoDocumentoConductor;
 use App\Models\AsignacionVehiculo;
-use App\Actions\Pesv\GuardarFirmaConductor;
 use App\Models\Conductor;
 use App\Support\Pdf\Imagenes;
 use Filament\Infolists\Components\ImageEntry;
@@ -32,7 +32,7 @@ final class ConductorInfolist
                 ->icon('heroicon-o-exclamation-triangle')
                 ->columnSpanFull()
                 ->description(fn (Conductor $record) => new HtmlString(
-                    collect($record->bloqueosOperacion())->map(fn (string $m) => '• ' . e($m))->implode('<br>')
+                    collect($record->bloqueosOperacion())->map(fn (string $m) => '• '.e($m))->implode('<br>')
                 ))
                 ->visible(fn (Conductor $record) => ! $record->puedeOperar()),
 
@@ -64,9 +64,9 @@ final class ConductorInfolist
                             TextEntry::make('nombre_completo')->label('Nombre')->weight('bold'),
                             TextEntry::make('documento')
                                 ->label('Identificación')
-                                ->formatStateUsing(fn (Conductor $record, string $state) => trim(($record->tipoIdentificacion?->codigo ?? '') . ' ' . $state)),
+                                ->formatStateUsing(fn (Conductor $record, string $state) => trim(($record->tipoIdentificacion?->codigo ?? '').' '.$state)),
                             TextEntry::make('estado')->badge()
-                                ->helperText(fn (Conductor $record) => $record->estado_desde ? 'Desde ' . $record->estado_desde->format('d/m/Y') : null),
+                                ->helperText(fn (Conductor $record) => $record->estado_desde ? 'Desde '.$record->estado_desde->format('d/m/Y') : null),
                             TextEntry::make('licencia')
                                 ->label('Licencia')
                                 ->state(fn (Conductor $record) => $record->licencia()?->categoriaLicencia?->codigo ?? 'Sin registrar')
@@ -76,7 +76,7 @@ final class ConductorInfolist
                             TextEntry::make('vehiculos')
                                 ->label('Vehículos asignados')
                                 ->state(fn (Conductor $record) => $record->asignacionesVigentes
-                                    ->map(fn (AsignacionVehiculo $a) => '<span class="ruta-placa">' . e($a->vehiculo?->placa) . '</span>' . ($a->principal ? ' <small>principal</small>' : ''))
+                                    ->map(fn (AsignacionVehiculo $a) => '<span class="ruta-placa">'.e($a->vehiculo?->placa).'</span>'.($a->principal ? ' <small>principal</small>' : ''))
                                     ->implode(' '))
                                 ->html()
                                 ->placeholder('Ninguno'),
@@ -89,7 +89,7 @@ final class ConductorInfolist
                 ->columns(['default' => 2, 'md' => 5])
                 ->schema(collect(TipoDocumentoConductor::cases())->map(
                     fn (TipoDocumentoConductor $tipo) => TextEntry::make("documento_{$tipo->value}")
-                        ->label($tipo->corto() . ($tipo->obligatorio() ? '' : ' (opcional)'))
+                        ->label($tipo->corto().($tipo->obligatorio() ? '' : ' (opcional)'))
                         ->state(fn (Conductor $record) => $record->documentoVigente($tipo)?->fecha_vencimiento?->format('d/m/Y') ?? 'Sin registrar')
                         ->badge()
                         ->color(function (Conductor $record) use ($tipo) {
@@ -99,7 +99,7 @@ final class ConductorInfolist
                         })
                         ->helperText(fn (Conductor $record) => match ($record->estadoDocumento($tipo)) {
                             EstadoDocumento::Vencido => 'Vencido',
-                            EstadoDocumento::PorVencer => 'Vence en ' . $record->documentoVigente($tipo)->diasParaVencer() . ' días',
+                            EstadoDocumento::PorVencer => 'Vence en '.$record->documentoVigente($tipo)->diasParaVencer().' días',
                             default => null,
                         })
                 )->all()),
@@ -111,7 +111,7 @@ final class ConductorInfolist
                         ->columns(['default' => 2, 'md' => 4])
                         ->schema([
                             TextEntry::make('fecha_nacimiento')->label('Nacimiento')->date('d/m/Y')->placeholder('—')
-                                ->helperText(fn (Conductor $record) => $record->fecha_nacimiento ? $record->fecha_nacimiento->age . ' años' : null),
+                                ->helperText(fn (Conductor $record) => $record->fecha_nacimiento ? $record->fecha_nacimiento->age.' años' : null),
                             TextEntry::make('genero')->label('Género')->formatStateUsing(fn (?string $state) => Conductor::GENEROS[$state] ?? $state)->placeholder('—'),
                             TextEntry::make('grupo_sanguineo')->label('RH')->placeholder('—'),
                             TextEntry::make('nivelAcademico.nombre')->label('Nivel académico')->placeholder('—'),
@@ -148,7 +148,7 @@ final class ConductorInfolist
                                 ->imageHeight(80)
                                 ->extraImgAttributes(['style' => 'background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:4px'])
                                 ->placeholder('Sin firma. Regístrela en Editar → Firma, o el conductor la registra al entrar al portal.')
-                                ->helperText(fn (Conductor $record) => $record->firma_actualizada_at ? 'Desde el ' . $record->firma_actualizada_at->format('d/m/Y h:i a') : null),
+                                ->helperText(fn (Conductor $record) => $record->firma_actualizada_at ? 'Desde el '.$record->firma_actualizada_at->format('d/m/Y h:i a') : null),
                             TextEntry::make('portal')
                                 ->label('Portal del conductor')
                                 ->state(fn (Conductor $record) => match (true) {
@@ -160,8 +160,8 @@ final class ConductorInfolist
                                 ->badge()
                                 ->color(fn (string $state) => $state === 'Activo' ? 'success' : ($state === 'Sin acceso' ? 'gray' : 'warning'))
                                 ->helperText(fn (Conductor $record) => $record->usuario
-                                    ? 'Ingresa en ' . route('conductor.ingresar') . ' con su documento ' . $record->documento . '.'
-                                        . ($record->usuario->ultimo_acceso_at ? ' Último ingreso: ' . $record->usuario->ultimo_acceso_at->format('d/m/Y h:i a') . '.' : '')
+                                    ? 'Ingresa en '.route('conductor.ingresar').' con su documento '.$record->documento.'.'
+                                        .($record->usuario->ultimo_acceso_at ? ' Último ingreso: '.$record->usuario->ultimo_acceso_at->format('d/m/Y h:i a').'.' : '')
                                     : 'Use «Acceso al portal» para crearle usuario y clave.'),
                         ]),
                 ]),

@@ -11,12 +11,12 @@ use App\Models\Contrato;
 use App\Models\Fuec;
 use App\Models\PagoContrato;
 use App\Support\Pdf\PdfRecibo;
-use Filament\Actions\ActionGroup;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\On;
@@ -63,7 +63,7 @@ class VerContrato extends ViewRecord
                     ->schema([TextInput::make('email')->label('Correo del cliente')->email()->required()->default(fn () => EnviarRecibo::contacto($contrato)['email'])])
                     ->action(function (array $data, Action $action) use ($contrato): void {
                         $canales = ErroresDeNegocio::intentar($action, fn () => app(EnviarRecibo::class)->estadoCuenta($contrato->fresh(), $data['email']));
-                        Notification::make()->success()->title('Enviado por ' . implode(' y ', $canales))->send();
+                        Notification::make()->success()->title('Enviado por '.implode(' y ', $canales))->send();
                     }),
             ])
                 ->label(fn () => $contrato->pagado() ? 'Paz y salvo' : 'Estado de cuenta')

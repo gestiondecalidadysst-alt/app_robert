@@ -18,8 +18,8 @@ class ListarVehiculos extends ListRecords
 
         return collect(EstadoVehiculo::cases())
             ->filter(fn (EstadoVehiculo $e) => $e->enFlota())
-            ->map(fn (EstadoVehiculo $e) => ($conteo[$e->value] ?? 0) . ' ' . mb_strtolower($e->getLabel()))
-            ->prepend($conteo->except(EstadoVehiculo::Desvinculado->value)->sum() . ' en flota')
+            ->map(fn (EstadoVehiculo $e) => ($conteo[$e->value] ?? 0).' '.mb_strtolower($e->getLabel()))
+            ->prepend($conteo->except(EstadoVehiculo::Desvinculado->value)->sum().' en flota')
             ->implode(' · ');
     }
 

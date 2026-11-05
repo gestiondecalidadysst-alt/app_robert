@@ -17,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -53,10 +54,10 @@ class ActividadesRelationManager extends RelationManager
             ->defaultSort(fn (Builder $query) => $query->orderBy('fecha_programada')->orderBy('vehiculo_id'))
             ->columns([
                 TextColumn::make('fecha_programada')->label('Fecha')->date('d/m/Y')->sortable()
-                    ->description(fn (ActividadMantenimiento $r) => $r->reprogramada() ? 'Original: ' . $r->fecha_original->format('d/m/Y') : null),
+                    ->description(fn (ActividadMantenimiento $r) => $r->reprogramada() ? 'Original: '.$r->fecha_original->format('d/m/Y') : null),
                 TextColumn::make('vehiculo.placa')->label('Vehículo')->weight('bold')->searchable(),
                 TextColumn::make('rutina_nombre')->label('Rutina')->wrap()->searchable()
-                    ->description(fn (ActividadMantenimiento $r) => $r->frecuencia . ($r->incorporada ? ' · incorporada' : '')),
+                    ->description(fn (ActividadMantenimiento $r) => $r->frecuencia.($r->incorporada ? ' · incorporada' : '')),
                 TextColumn::make('km_programado')->label('Km prog.')->numeric(thousandsSeparator: '.')->placeholder('—'),
                 TextColumn::make('situacion')->label('Estado')->badge()
                     ->state(fn (ActividadMantenimiento $r) => self::ETIQUETAS[$r->situacion()])
@@ -64,8 +65,8 @@ class ActividadesRelationManager extends RelationManager
                 TextColumn::make('fecha_ejecucion')->label('Ejecutada')->date('d/m/Y')->placeholder('—')
                     ->description(fn (ActividadMantenimiento $r) => match (true) {
                         $r->desviacionDias() === null => $r->motivo,
-                        $r->desviacionDias() > 0 => $r->desviacionDias() . ' días tarde',
-                        $r->desviacionDias() < 0 => abs($r->desviacionDias()) . ' días antes',
+                        $r->desviacionDias() > 0 => $r->desviacionDias().' días tarde',
+                        $r->desviacionDias() < 0 => abs($r->desviacionDias()).' días antes',
                         default => 'A tiempo',
                     }),
             ])
@@ -82,7 +83,7 @@ class ActividadesRelationManager extends RelationManager
                 SelectFilter::make('vehiculo_id')->label('Vehículo')->searchable()
                     ->options(fn () => Vehiculo::query()->whereIn('id', $this->getOwnerRecord()->actividades()->select('vehiculo_id'))->orderBy('placa')->pluck('placa', 'id')),
                 SelectFilter::make('mes')->label('Mes')
-                    ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => ucfirst(\Illuminate\Support\Carbon::create(null, $m, 1)->translatedFormat('F'))]))
+                    ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => ucfirst(Carbon::create(null, $m, 1)->translatedFormat('F'))]))
                     ->query(fn (Builder $query, array $data) => filled($data['value'] ?? null) ? $query->whereMonth('fecha_programada', $data['value']) : $query),
             ])
             ->recordActions([

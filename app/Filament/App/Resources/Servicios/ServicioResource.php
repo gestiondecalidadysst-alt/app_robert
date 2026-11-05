@@ -21,6 +21,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use UnitEnum;
 
 /**
@@ -66,10 +67,10 @@ class ServicioResource extends Resource
             ->emptyStateDescription('Planifique un servicio o expida un FUEC: todo extracto aparece aquí y en el planeador.')
             ->columns([
                 TextColumn::make('fecha_inicio')->label('Fecha')->weight('bold')
-                    ->formatStateUsing(fn (Servicio $record) => $record->fecha_inicio->format('d/m/Y') . ($record->fecha_fin->gt($record->fecha_inicio) ? ' – ' . $record->fecha_fin->format('d/m/Y') : ''))
+                    ->formatStateUsing(fn (Servicio $record) => $record->fecha_inicio->format('d/m/Y').($record->fecha_fin->gt($record->fecha_inicio) ? ' – '.$record->fecha_fin->format('d/m/Y') : ''))
                     ->description(fn (Servicio $record) => $record->franja),
                 TextColumn::make('ruta_texto')->label('Origen → destino')
-                    ->description(fn (Servicio $record) => $record->ruta?->nombre ? 'Rutograma: ' . $record->ruta->nombre : 'Sin rutograma'),
+                    ->description(fn (Servicio $record) => $record->ruta?->nombre ? 'Rutograma: '.$record->ruta->nombre : 'Sin rutograma'),
                 TextColumn::make('vehiculo.placa')->label('Vehículo')->placeholder('Sin asignar')->badge()->color('gray'),
                 TextColumn::make('conductores.nombres')->label('Conductores')->placeholder('Sin asignar')->visibleFrom('md')
                     ->formatStateUsing(fn (Servicio $record) => $record->conductores->map->nombre_completo->implode(', ')),
@@ -91,8 +92,8 @@ class ServicioResource extends Resource
                         ->when($data['desde'] ?? null, fn ($q, $d) => $q->whereDate('fecha_fin', '>=', $d))
                         ->when($data['hasta'] ?? null, fn ($q, $d) => $q->whereDate('fecha_inicio', '<=', $d)))
                     ->indicateUsing(fn (array $data) => array_filter([
-                        ($data['desde'] ?? null) ? 'Desde ' . \Illuminate\Support\Carbon::parse($data['desde'])->format('d/m/Y') : null,
-                        ($data['hasta'] ?? null) ? 'Hasta ' . \Illuminate\Support\Carbon::parse($data['hasta'])->format('d/m/Y') : null,
+                        ($data['desde'] ?? null) ? 'Desde '.Carbon::parse($data['desde'])->format('d/m/Y') : null,
+                        ($data['hasta'] ?? null) ? 'Hasta '.Carbon::parse($data['hasta'])->format('d/m/Y') : null,
                     ])),
             ])
             ->recordActions([ViewAction::make()]);

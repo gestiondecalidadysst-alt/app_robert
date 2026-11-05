@@ -209,4 +209,18 @@ class ManifiestoRemesasTest extends ConfiguracionTestCase
 
         $this->assertStringContainsString('otro manifiesto', $metodo->invoke(null, $vacio));
     }
+
+    public function test_si_la_asociacion_falla_el_manifiesto_no_se_expide(): void
+    {
+        $this->prepararEmpresa();
+        $remesa = $this->remesa('Harina');
+
+        // Remesa anulada: el selector la ofrece pero la asociación debe rechazarla,
+        // y entonces el manifiesto no puede quedar expedido vacío.
+        $remesa->update(['anulado_at' => now()]);
+
+        $this->llenarAsistente(['remesas_ids' => [$remesa->id]]);
+
+        $this->assertSame(0, ManifiestoCarga::query()->count());
+    }
 }

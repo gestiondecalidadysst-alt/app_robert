@@ -94,7 +94,7 @@ class PlanAccionResource extends Resource
                 TextColumn::make('numero')->label('No.')->weight('bold'),
                 TextColumn::make('vehiculo.placa')->label('Vehículo')->weight('bold')->searchable(),
                 TextColumn::make('titulo')->label('Hallazgo')->wrap()->limit(70)->searchable()
-                    ->description(fn (PlanAccion $r) => $r->origen->getLabel() . ($r->reincidencias ? " · {$r->reincidencias} reincidencia(s)" : '')),
+                    ->description(fn (PlanAccion $r) => $r->origen->getLabel().($r->reincidencias ? " · {$r->reincidencias} reincidencia(s)" : '')),
                 TextColumn::make('prioridad')->badge(),
                 TextColumn::make('estado')->badge(),
                 TextColumn::make('fecha_limite')->label('Límite')->date('d/m/Y')->placeholder('—')
@@ -133,7 +133,7 @@ class PlanAccionResource extends Resource
                     TextEntry::make('observacion_cierre')
                         ->label(fn (PlanAccion $r) => $r->estado === EstadoPlan::Rechazado ? 'Motivo del rechazo' : 'Cierre')
                         ->visible(fn (PlanAccion $r) => filled($r->observacion_cierre))
-                        ->helperText(fn (PlanAccion $r) => $r->cerrado_at ? 'Cerrado el ' . $r->cerrado_at->format('d/m/Y h:i a') . ($r->cerradoPor ? ' por ' . $r->cerradoPor->name : '') : null)
+                        ->helperText(fn (PlanAccion $r) => $r->cerrado_at ? 'Cerrado el '.$r->cerrado_at->format('d/m/Y h:i a').($r->cerradoPor ? ' por '.$r->cerradoPor->name : '') : null)
                         ->columnSpanFull(),
                 ]),
             Section::make('Hallazgos')

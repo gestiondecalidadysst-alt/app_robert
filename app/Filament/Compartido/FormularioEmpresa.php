@@ -72,7 +72,7 @@ final class FormularioEmpresa
                             ->image()
                             ->disk('local')
                             ->visibility('private')
-                            ->directory(fn () => 'firmas-representante/' . (filament()->getTenant()?->getKey() ?? 'plataforma'))
+                            ->directory(fn () => 'firmas-representante/'.(filament()->getTenant()?->getKey() ?? 'plataforma'))
                             ->acceptedFileTypes(['image/png', 'image/jpeg'])
                             ->maxSize(512)
                             ->helperText('PNG con fondo transparente o blanco. Es privada: solo se estampa en los contratos emitidos.'),

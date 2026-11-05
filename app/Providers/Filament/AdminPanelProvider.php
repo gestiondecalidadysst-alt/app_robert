@@ -2,13 +2,13 @@
 
 namespace App\Providers\Filament;
 
-use App\Providers\Filament\Concerns\EstiloRuta;
+use App\Filament\Admin\Pages\Inicio;
 use App\Http\Middleware\AutenticarPanel;
+use App\Providers\Filament\Concerns\EstiloRuta;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
-use App\Filament\Admin\Pages\Inicio;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;

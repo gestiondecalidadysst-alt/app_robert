@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\VencimientosConductores\Pages;
 
+use App\Filament\App\Resources\Vencimientos\VencimientoResource;
 use App\Filament\App\Resources\VencimientosConductores\VencimientoConductorResource;
 use Filament\Resources\Pages\ListRecords;
 
@@ -16,7 +17,6 @@ class ListarVencimientosConductores extends ListRecords
     /** Pestañas Vehículos | Conductores (un solo «Vencimientos» en el menú). */
     protected function getHeaderActions(): array
     {
-        return \App\Filament\App\Resources\Vencimientos\VencimientoResource::pestanas('conductores');
+        return VencimientoResource::pestanas('conductores');
     }
-
 }

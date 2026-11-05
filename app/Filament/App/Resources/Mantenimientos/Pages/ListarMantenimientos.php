@@ -25,7 +25,7 @@ class ListarMantenimientos extends ListRecords
     {
         $mes = Mantenimiento::query()->reales()->whereDate('fecha', '>=', today()->startOfMonth());
 
-        return 'Este mes: ' . (clone $mes)->count() . ' mantenimientos · $ ' . number_format((float) (clone $mes)->sum('valor'), 0, ',', '.');
+        return 'Este mes: '.(clone $mes)->count().' mantenimientos · $ '.number_format((float) (clone $mes)->sum('valor'), 0, ',', '.');
     }
 
     protected function getHeaderActions(): array
@@ -59,7 +59,7 @@ class ListarMantenimientos extends ListRecords
                     ]);
 
                     return response()->streamDownload(fn () => print ($pdf),
-                        'Mantenimientos-' . ($vehiculo?->placa ?? 'flota') . "-{$desde->format('Ymd')}-{$hasta->format('Ymd')}.pdf",
+                        'Mantenimientos-'.($vehiculo?->placa ?? 'flota')."-{$desde->format('Ymd')}-{$hasta->format('Ymd')}.pdf",
                         ['Content-Type' => 'application/pdf']);
                 }),
             CreateAction::make()->label('Registrar mantenimiento')->icon('heroicon-o-plus'),

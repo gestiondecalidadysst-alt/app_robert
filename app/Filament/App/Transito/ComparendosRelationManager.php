@@ -6,6 +6,7 @@ use App\Actions\Transito\ConsultarTransito;
 use App\Enums\TipoConsultaTransito;
 use App\Models\ComparendoTransito;
 use App\Models\Conductor;
+use App\Models\ConsultaTransito;
 use App\Models\Empresa;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -14,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -53,18 +55,18 @@ class ComparendosRelationManager extends RelationManager
     private function resumen(): string
     {
         $r = $this->getOwnerRecord()->transito_resumen ?? [];
-        $f = fn (?string $iso) => $iso ? \Illuminate\Support\Carbon::parse($iso)->timezone(config('app.timezone'))->format('d/m/Y') : null;
+        $f = fn (?string $iso) => $iso ? Carbon::parse($iso)->timezone(config('app.timezone'))->format('d/m/Y') : null;
         $partes = [];
         if ($c = $r['comparendos'] ?? null) {
-            $partes[] = ($c['pendientes'] ? "{$c['pendientes']} pendiente(s) por $ " . number_format((float) $c['deuda'], 0, ',', '.') : 'Sin comparendos pendientes')
-                . ($c['acuerdos'] ? " · {$c['acuerdos']} en acuerdo de pago" : '') . ' (consultado ' . $f($c['consultado_at']) . ')';
+            $partes[] = ($c['pendientes'] ? "{$c['pendientes']} pendiente(s) por $ ".number_format((float) $c['deuda'], 0, ',', '.') : 'Sin comparendos pendientes')
+                .($c['acuerdos'] ? " · {$c['acuerdos']} en acuerdo de pago" : '').' (consultado '.$f($c['consultado_at']).')';
         }
         if ($l = $r['licencia'] ?? null) {
-            $partes[] = 'Licencia: ' . ($l['suspendida'] ? 'SUSPENDIDA' : ($l['estado'] ?? '—')) . (($l['categorias'] ?? []) ? ' · ' . collect($l['categorias'])->map(fn ($c) => is_array($c) ? trim(($c['categoria'] ?? '') . ' ' . ($c['estado'] ?? '')) : $c)->implode(', ') : '') . ' (consultado ' . $f($l['consultado_at']) . ')';
+            $partes[] = 'Licencia: '.($l['suspendida'] ? 'SUSPENDIDA' : ($l['estado'] ?? '—')).(($l['categorias'] ?? []) ? ' · '.collect($l['categorias'])->map(fn ($c) => is_array($c) ? trim(($c['categoria'] ?? '').' '.($c['estado'] ?? '')) : $c)->implode(', ') : '').' (consultado '.$f($l['consultado_at']).')';
         }
         if ($u = $r['runt'] ?? null) {
-            $partes[] = 'RUNT: SOAT vence ' . ($u['soat_vence'] ?? '—') . ' · Técnico-mecánica vence ' . ($u['rtm_vence'] ?? '—')
-                . (($u['diferencias'] ?? []) ? ' · ' . implode(' ', $u['diferencias']) : '') . ' (consultado ' . $f($u['consultado_at']) . ')';
+            $partes[] = 'RUNT: SOAT vence '.($u['soat_vence'] ?? '—').' · Técnico-mecánica vence '.($u['rtm_vence'] ?? '—')
+                .(($u['diferencias'] ?? []) ? ' · '.implode(' ', $u['diferencias']) : '').' (consultado '.$f($u['consultado_at']).')';
         }
 
         return $partes ? implode("\n", $partes) : 'Aún no se ha consultado. Cada consulta tiene costo: hágala solo cuando la necesite.';
@@ -87,9 +89,11 @@ class ComparendosRelationManager extends RelationManager
                 TextColumn::make('infraccion')->label('Infracción')->wrap()->limit(90)->description(fn (ComparendoTransito $r) => $r->codigo),
                 TextColumn::make('placa')->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('organismo')->wrap()->limit(40)->visibleFrom('lg'),
-                TextColumn::make('valor')->formatStateUsing(fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.'))->alignEnd(),
+                TextColumn::make('valor')->formatStateUsing(fn ($state) => '$ '.number_format((float) $state, 0, ',', '.'))->alignEnd(),
                 TextColumn::make('estado')->badge()->formatStateUsing(fn ($state, ComparendoTransito $r) => $r->etiquetaEstado())
-                    ->color(fn ($state, ComparendoTransito $r) => $r->ya_no_aparece_at ? 'gray' : match ($state) { 'pendiente' => 'danger', 'acuerdo' => 'warning', 'pagada' => 'success', default => 'gray' }),
+                    ->color(fn ($state, ComparendoTransito $r) => $r->ya_no_aparece_at ? 'gray' : match ($state) {
+                        'pendiente' => 'danger', 'acuerdo' => 'warning', 'pagada' => 'success', default => 'gray'
+                    }),
             ])
             ->filters([
                 TernaryFilter::make('vigentes')->label('Mostrar')->placeholder('Todos')->trueLabel('Solo los de la última consulta')->falseLabel('Solo los que ya no aparecen')
@@ -121,7 +125,7 @@ class ComparendosRelationManager extends RelationManager
             ]);
     }
 
-    private function botonConstancia(\App\Models\ConsultaTransito $consulta): Action
+    private function botonConstancia(ConsultaTransito $consulta): Action
     {
         return Action::make('constancia')->label('Descargar constancia')->button()->url($consulta->urlPdf(), shouldOpenInNewTab: true);
     }
@@ -133,35 +137,35 @@ class ComparendosRelationManager extends RelationManager
 
         return match ($tipo) {
             TipoConsultaTransito::ConductorComparendos, TipoConsultaTransito::VehiculoMultas => ($c = $r['comparendos'] ?? null) && $c['total']
-                ? "{$c['total']} registro(s): {$c['pendientes']} pendiente(s), {$c['acuerdos']} en acuerdo de pago. Deuda: $ " . number_format((float) $c['deuda'], 0, ',', '.') . '.'
+                ? "{$c['total']} registro(s): {$c['pendientes']} pendiente(s), {$c['acuerdos']} en acuerdo de pago. Deuda: $ ".number_format((float) $c['deuda'], 0, ',', '.').'.'
                 : 'Sin comparendos ni multas: está a paz y salvo.',
             TipoConsultaTransito::ConductorLicencia => ($l = $r['licencia'] ?? null)
-                ? 'Licencia: ' . ($l['suspendida'] ? 'SUSPENDIDA' : ($l['estado'] ?? '—')) . (($l['categorias'] ?? []) ? ' · ' . collect($l['categorias'])->map(fn ($c) => trim(($c['categoria'] ?? '') . ' ' . ($c['estado'] ?? '') . (($c['vence'] ?? null) ? ' vence ' . $c['vence'] : '')))->implode(', ') : '') . '.'
+                ? 'Licencia: '.($l['suspendida'] ? 'SUSPENDIDA' : ($l['estado'] ?? '—')).(($l['categorias'] ?? []) ? ' · '.collect($l['categorias'])->map(fn ($c) => trim(($c['categoria'] ?? '').' '.($c['estado'] ?? '').(($c['vence'] ?? null) ? ' vence '.$c['vence'] : '')))->implode(', ') : '').'.'
                 : 'Sin datos de licencia.',
             TipoConsultaTransito::VehiculoRunt => ($u = $r['runt'] ?? null)
-                ? 'SOAT vence ' . ($u['soat_vence'] ?? '—') . ' · Técnico-mecánica vence ' . ($u['rtm_vence'] ?? '—') . (($u['diferencias'] ?? []) ? ' · ' . implode(' ', $u['diferencias']) : '')
+                ? 'SOAT vence '.($u['soat_vence'] ?? '—').' · Técnico-mecánica vence '.($u['rtm_vence'] ?? '—').(($u['diferencias'] ?? []) ? ' · '.implode(' ', $u['diferencias']) : '')
                 : 'Sin datos del RUNT.',
         };
     }
 
-    private function ultimaConstancia(): ?\App\Models\ConsultaTransito
+    private function ultimaConstancia(): ?ConsultaTransito
     {
         return $this->getOwnerRecord()->consultasTransito()->whereIn('estado', ['ok', 'sin_datos'])->latest('id')->first();
     }
 
     private function accionConsultar(TipoConsultaTransito $tipo): Action
     {
-        return Action::make('consultar_' . $tipo->value)
-            ->label('Consultar ' . mb_strtolower($tipo->corto()))
+        return Action::make('consultar_'.$tipo->value)
+            ->label('Consultar '.mb_strtolower($tipo->corto()))
             ->icon('heroicon-o-magnifying-glass')
             ->requiresConfirmation()
             ->modalHeading($tipo->getLabel())
             ->modalDescription(function () use ($tipo) {
                 $c = ConsultarTransito::cotizar($this->getOwnerRecord(), $tipo);
-                $p = fn ($v) => '$ ' . number_format((float) $v, 0, ',', '.');
+                $p = fn ($v) => '$ '.number_format((float) $v, 0, ',', '.');
 
-                return 'Esta consulta cuesta ' . ($c['precio'] !== null ? $p($c['precio']) : '(sin precio)') . ' si trae datos. '
-                    . 'Gastado este mes: ' . $p($c['gastado']) . ($c['tope'] !== null ? ' de ' . $p($c['tope']) . ' (tope).' : '.');
+                return 'Esta consulta cuesta '.($c['precio'] !== null ? $p($c['precio']) : '(sin precio)').' si trae datos. '
+                    .'Gastado este mes: '.$p($c['gastado']).($c['tope'] !== null ? ' de '.$p($c['tope']).' (tope).' : '.');
             })
             ->modalSubmitActionLabel('Consultar')
             ->action(function () use ($tipo): void {
@@ -173,14 +177,14 @@ class ComparendosRelationManager extends RelationManager
                     return;
                 }
                 $this->getOwnerRecord()->refresh();
-                $cobro = $consulta->cobrada ? 'Se cobró $ ' . number_format((float) $consulta->precio, 0, ',', '.') . '.' : 'Sin costo (resultado reciente del proveedor).';
+                $cobro = $consulta->cobrada ? 'Se cobró $ '.number_format((float) $consulta->precio, 0, ',', '.').'.' : 'Sin costo (resultado reciente del proveedor).';
 
                 match ($consulta->estado) {
-                    'ok' => Notification::make()->success()->title('Consulta realizada')->body($this->resultado($tipo) . "\n" . $cobro)->persistent()
+                    'ok' => Notification::make()->success()->title('Consulta realizada')->body($this->resultado($tipo)."\n".$cobro)->persistent()
                         ->actions([$this->botonConstancia($consulta)])->send(),
-                    'sin_datos' => Notification::make()->info()->title('Sin información en el sistema de tránsito')->body($this->resultado($tipo) . "\nNo se cobró.")->persistent()
+                    'sin_datos' => Notification::make()->info()->title('Sin información en el sistema de tránsito')->body($this->resultado($tipo)."\nNo se cobró.")->persistent()
                         ->actions([$this->botonConstancia($consulta)])->send(),
-                    default => Notification::make()->danger()->title('La consulta falló')->body(($consulta->error ?: 'Intente más tarde.') . ' No se cobró.')->persistent()->send(),
+                    default => Notification::make()->danger()->title('La consulta falló')->body(($consulta->error ?: 'Intente más tarde.').' No se cobró.')->persistent()->send(),
                 };
             });
     }

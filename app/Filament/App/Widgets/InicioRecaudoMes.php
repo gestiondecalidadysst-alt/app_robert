@@ -27,7 +27,7 @@ class InicioRecaudoMes extends ChartWidget
 
     public function getHeading(): ?string
     {
-        return 'Recaudo por día · ' . ucfirst(today()->translatedFormat('F Y'));
+        return 'Recaudo por día · '.ucfirst(today()->translatedFormat('F Y'));
     }
 
     protected function getType(): string

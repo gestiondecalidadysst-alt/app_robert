@@ -49,7 +49,7 @@ class CalendarioMantenimiento extends Page
 
     public function cambiarMes(int $delta): void
     {
-        $this->mes = Carbon::createFromFormat('Y-m-d', $this->mes . '-01')->addMonthsNoOverflow($delta)->format('Y-m');
+        $this->mes = Carbon::createFromFormat('Y-m-d', $this->mes.'-01')->addMonthsNoOverflow($delta)->format('Y-m');
     }
 
     public function hoy(): void
@@ -59,7 +59,7 @@ class CalendarioMantenimiento extends Page
 
     protected function getViewData(): array
     {
-        $inicio = Carbon::createFromFormat('Y-m-d', $this->mes . '-01')->startOfDay();
+        $inicio = Carbon::createFromFormat('Y-m-d', $this->mes.'-01')->startOfDay();
         $programa = ProgramaAnual::programaVigente(Filament::getTenant()->id, (int) $inicio->year);
 
         /** @var Collection<string, Collection<int, ActividadMantenimiento>> $porDia */

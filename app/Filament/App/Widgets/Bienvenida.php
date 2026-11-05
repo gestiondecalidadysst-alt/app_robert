@@ -2,16 +2,18 @@
 
 namespace App\Filament\App\Widgets;
 
+use App\Filament\App\Pages\Planeador;
+use App\Filament\App\Pages\TableroGerencia;
 use App\Filament\App\Resources\Conductores\ConductorResource;
 use App\Filament\App\Resources\Contratos\ContratoResource;
 use App\Filament\App\Resources\Fuecs\FuecResource;
 use App\Filament\App\Resources\Oficinas\OficinaResource;
-use App\Filament\App\Resources\Roles\RolResource;
 use App\Filament\App\Resources\Propietarios\PropietarioResource;
+use App\Filament\App\Resources\Roles\RolResource;
 use App\Filament\App\Resources\Usuarios\UsuarioResource;
+use App\Filament\App\Resources\ValoresAdministracion\ValorAdministracionResource;
 use App\Filament\App\Resources\Vehiculos\VehiculoResource;
 use App\Filament\App\Resources\Vencimientos\VencimientoResource;
-use App\Filament\App\Resources\ValoresAdministracion\ValorAdministracionResource;
 use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
 
@@ -29,8 +31,8 @@ class Bienvenida extends Widget
     protected function getViewData(): array
     {
         $accesos = collect([
-            ['Tablero de gerencia', 'Flota, operación, cartera, seguridad vial y mantenimiento', \App\Filament\App\Pages\TableroGerencia::getUrl(), 'ver_gerencia'],
-            ['Planeador', 'Servicios de la semana por vehículo y conductor', \App\Filament\App\Pages\Planeador::getUrl(), 'ver_servicios'],
+            ['Tablero de gerencia', 'Flota, operación, cartera, seguridad vial y mantenimiento', TableroGerencia::getUrl(), 'ver_gerencia'],
+            ['Planeador', 'Servicios de la semana por vehículo y conductor', Planeador::getUrl(), 'ver_servicios'],
             ['Expedir FUEC', 'Extracto del contrato con validación', FuecResource::getUrl('create'), 'crear_fuecs'],
             ['Contratos', 'Clientes, contratos y pagos', ContratoResource::getUrl(), 'ver_contratos'],
             ['Vehículos', 'Flota, hoja de vida y estado', VehiculoResource::getUrl(), 'ver_vehiculos'],

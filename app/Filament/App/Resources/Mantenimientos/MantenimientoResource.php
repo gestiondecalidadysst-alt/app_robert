@@ -8,6 +8,7 @@ use App\Enums\TipoMantenimiento;
 use App\Filament\App\Resources\Mantenimientos\Pages\ListarMantenimientos;
 use App\Filament\App\Resources\Mantenimientos\Pages\RegistrarMantenimiento;
 use App\Filament\App\Resources\Mantenimientos\Pages\VerMantenimiento;
+use App\Filament\App\Resources\PlanesAccion\PlanAccionResource;
 use App\Filament\Compartido\ErroresDeNegocio;
 use App\Models\Evidencia;
 use App\Models\Mantenimiento;
@@ -71,13 +72,13 @@ class MantenimientoResource extends Resource
                 ->schema([
                     Select::make('vehiculo_id')->label('Vehículo')->required()->searchable()->live()
                         ->options(fn () => Vehiculo::query()->enFlota()->orderBy('placa')->get()
-                            ->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa . ($v->numero_interno ? " · int. {$v->numero_interno}" : '')])),
+                            ->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa.($v->numero_interno ? " · int. {$v->numero_interno}" : '')])),
                     DatePicker::make('fecha')->required()->default(today())->maxDate(today()),
                     TextInput::make('kilometraje')->numeric()->minValue(0)->maxValue(9999999)
                         ->helperText(function (Get $get) {
                             $km = $get('vehiculo_id') ? Vehiculo::query()->find($get('vehiculo_id'))?->kilometrajeActual() : null;
 
-                            return $km ? 'Último reportado: ' . number_format($km, 0, ',', '.') . ' km.' : 'Obligatorio si cumple rutinas preventivas.';
+                            return $km ? 'Último reportado: '.number_format($km, 0, ',', '.').' km.' : 'Obligatorio si cumple rutinas preventivas.';
                         }),
                     ToggleButtons::make('tipo')->options(TipoMantenimiento::class)->inline()->required()->live(),
                     Select::make('accion')->label('Acción')->options(AccionMantenimiento::class)->required(),
@@ -98,7 +99,7 @@ class MantenimientoResource extends Resource
                     Textarea::make('repuestos')->label('Repuestos (nombre y referencia)')->rows(2),
                     CheckboxList::make('rutinas')->label('Rutinas preventivas que cumple')
                         ->options(fn (Get $get) => $get('vehiculo_id') && ($vehiculo = Vehiculo::query()->find($get('vehiculo_id')))
-                            ? PlanPreventivo::para($vehiculo)->mapWithKeys(fn (array $f) => [$f['rutina']->id => $f['rutina']->nombre . ' · ' . PlanPreventivo::ETIQUETAS[$f['estado']]])->all()
+                            ? PlanPreventivo::para($vehiculo)->mapWithKeys(fn (array $f) => [$f['rutina']->id => $f['rutina']->nombre.' · '.PlanPreventivo::ETIQUETAS[$f['estado']]])->all()
                             : [])
                         ->visible(fn (Get $get) => filled($get('vehiculo_id')))
                         ->helperText('Desde este mantenimiento se calcula el próximo.')
@@ -137,7 +138,7 @@ class MantenimientoResource extends Resource
                 TextColumn::make('valor')->money('COP', locale: 'es_CO')->placeholder('—')->toggleable(),
                 TextColumn::make('evidencias_count')->label('Evidencias')->badge()->color(fn (int $state) => $state ? 'success' : 'gray'),
                 TextColumn::make('registro')->label('Registró')
-                    ->state(fn (Mantenimiento $r) => $r->conductor ? 'Conductor · ' . $r->conductor->nombre_completo : ($r->usuario?->name ?? '—'))
+                    ->state(fn (Mantenimiento $r) => $r->conductor ? 'Conductor · '.$r->conductor->nombre_completo : ($r->usuario?->name ?? '—'))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('anulado_at')->label('Anulado')->date('d/m/Y')->placeholder('—')->color('danger')->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -177,12 +178,12 @@ class MantenimientoResource extends Resource
                     TextEntry::make('factura_numero')->label('Factura')->placeholder('—'),
                     TextEntry::make('taller')->placeholder('—'),
                     TextEntry::make('responsable')->label('Responsable')
-                        ->state(fn (Mantenimiento $r) => trim(($r->responsable_nombre ?? '') . ($r->responsable_documento ? ' · ' . $r->responsable_documento : '')) ?: null)
+                        ->state(fn (Mantenimiento $r) => trim(($r->responsable_nombre ?? '').($r->responsable_documento ? ' · '.$r->responsable_documento : '')) ?: null)
                         ->placeholder('—'),
                     TextEntry::make('plan.numero')->label('Plan de acción')->placeholder('—')
-                        ->url(fn (Mantenimiento $r) => $r->plan ? \App\Filament\App\Resources\PlanesAccion\PlanAccionResource::getUrl('view', ['record' => $r->plan]) : null),
+                        ->url(fn (Mantenimiento $r) => $r->plan ? PlanAccionResource::getUrl('view', ['record' => $r->plan]) : null),
                     TextEntry::make('registro')->label('Registró')
-                        ->state(fn (Mantenimiento $r) => $r->conductor ? 'Conductor · ' . $r->conductor->nombre_completo . ' (portal)' : ($r->usuario?->name ?? '—'))
+                        ->state(fn (Mantenimiento $r) => $r->conductor ? 'Conductor · '.$r->conductor->nombre_completo.' (portal)' : ($r->usuario?->name ?? '—'))
                         ->helperText(fn (Mantenimiento $r) => $r->created_at->format('d/m/Y h:i a')),
                     TextEntry::make('rutinas.nombre')->label('Rutinas cumplidas')->badge()->placeholder('—')->columnSpan(['md' => 2]),
                     TextEntry::make('actividad')->label('Actividad realizada')->columnSpanFull(),
@@ -190,7 +191,7 @@ class MantenimientoResource extends Resource
                     TextEntry::make('repuestos')->placeholder('—')->columnSpanFull(),
                     TextEntry::make('motivo_anulacion')->label('Anulado')->color('danger')->columnSpanFull()
                         ->visible(fn (Mantenimiento $r) => $r->anulado())
-                        ->state(fn (Mantenimiento $r) => $r->anulado_at?->format('d/m/Y') . ' · ' . $r->motivo_anulacion),
+                        ->state(fn (Mantenimiento $r) => $r->anulado_at?->format('d/m/Y').' · '.$r->motivo_anulacion),
                 ]),
             Section::make('Evidencias')
                 ->columnSpanFull()

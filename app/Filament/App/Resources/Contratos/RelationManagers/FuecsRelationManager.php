@@ -37,10 +37,10 @@ class FuecsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('consecutivo')->label('No.')->formatStateUsing(fn (int $state) => str_pad((string) $state, 4, '0', STR_PAD_LEFT)),
                 TextColumn::make('placa')->label('Vehículo')
-                    ->formatStateUsing(fn (?string $state) => new HtmlString('<span class="ruta-placa">' . e($state) . '</span>')),
+                    ->formatStateUsing(fn (?string $state) => new HtmlString('<span class="ruta-placa">'.e($state).'</span>')),
                 TextColumn::make('conductor')->label('Conductor')->state(fn (Fuec $r) => $r->datos['conductores'][0]['nombre'] ?? '—')->visibleFrom('md'),
                 TextColumn::make('fecha_inicio')->label('Vigencia')
-                    ->formatStateUsing(fn (Fuec $r) => $r->fecha_inicio->format('d/m/Y') . ' – ' . $r->fecha_fin->format('d/m/Y')),
+                    ->formatStateUsing(fn (Fuec $r) => $r->fecha_inicio->format('d/m/Y').' – '.$r->fecha_fin->format('d/m/Y')),
                 TextColumn::make('estado')->badge()->state(fn (Fuec $r) => $r->estado()),
             ])
             ->headerActions([

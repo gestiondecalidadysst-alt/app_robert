@@ -107,7 +107,7 @@ final class ConductorForm
     {
         return [
             Text::make(fn (?Conductor $record) => $record?->tieneFirma()
-                ? 'Firma registrada el ' . $record->firma_actualizada_at?->format('d/m/Y h:i a') . '. Dibuje o suba una nueva solo si quiere reemplazarla (los preoperacionales anteriores conservan la firma que tenían).'
+                ? 'Firma registrada el '.$record->firma_actualizada_at?->format('d/m/Y h:i a').'. Dibuje o suba una nueva solo si quiere reemplazarla (los preoperacionales anteriores conservan la firma que tenían).'
                 : 'Pídale al conductor que firme aquí con el dedo o el mouse, o suba su firma escaneada. Se pondrá en cada preoperacional que registre con su usuario. Si no está presente, la registra él mismo al entrar al portal del conductor.')
                 ->color('gray')
                 ->columnSpanFull(),

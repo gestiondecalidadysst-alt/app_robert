@@ -1,7 +1,11 @@
 <?php
+
 namespace App\Filament\App\Resources\RemesasCarga\Pages;
+
 use App\Filament\App\Resources\RemesasCarga\RemesaCargaResource;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+
 class ListarRemesas extends ListRecords
 {
     protected static string $resource = RemesaCargaResource::class;
@@ -10,6 +14,6 @@ class ListarRemesas extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [\Filament\Actions\CreateAction::make()->label('Nueva remesa')];
+        return [CreateAction::make()->label('Nueva remesa')];
     }
 }

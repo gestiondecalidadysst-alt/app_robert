@@ -83,7 +83,7 @@ final class FuecForm
                         ->afterStateUpdated(fn (Set $set, ?string $state) => self::sugerirConductores($set, $state))
                         ->helperText('Al elegirlo se proponen sus conductores asignados. ⚠ = hoy no puede operar.'),
                     ...collect(self::CAMPOS_CONDUCTOR)->map(fn (string $campo, int $i) => Select::make($campo)
-                        ->label('Conductor ' . ($i + 1))
+                        ->label('Conductor '.($i + 1))
                         ->options(fn () => self::opcionesConductores())
                         ->searchable()
                         ->required($i === 0)
@@ -106,7 +106,7 @@ final class FuecForm
                 ->icon(fn (Get $get) => self::errores($get) === [] ? 'heroicon-o-check-circle' : 'heroicon-o-exclamation-triangle')
                 ->description(fn (Get $get) => self::errores($get) === []
                     ? 'El contrato, el vehículo y los conductores cumplen para toda la vigencia y no tienen otro servicio a la misma hora.'
-                    : new HtmlString(collect(self::errores($get))->flatten()->map(fn ($m) => '• ' . e($m))->implode('<br>')))
+                    : new HtmlString(collect(self::errores($get))->flatten()->map(fn ($m) => '• '.e($m))->implode('<br>')))
                 ->visible(fn (Get $get) => filled($get('contrato_id')) && filled($get('vehiculo_id'))),
         ]);
     }
@@ -181,14 +181,14 @@ final class FuecForm
     public static function opcionesVehiculos(): array
     {
         return Vehiculo::query()->enFlota()->with(['marca', 'linea', 'documentos'])->orderBy('placa')->get()
-            ->mapWithKeys(fn (Vehiculo $v) => [$v->id => ($v->puedeOperar() ? '' : '⚠ ') . trim("{$v->placa} · {$v->descripcion}") . ($v->numero_interno ? " · int. {$v->numero_interno}" : '')])
+            ->mapWithKeys(fn (Vehiculo $v) => [$v->id => ($v->puedeOperar() ? '' : '⚠ ').trim("{$v->placa} · {$v->descripcion}").($v->numero_interno ? " · int. {$v->numero_interno}" : '')])
             ->all();
     }
 
     public static function opcionesConductores(): array
     {
         return Conductor::query()->vinculados()->with(['documentos.categoriaLicencia'])->orderBy('nombres')->get()
-            ->mapWithKeys(fn (Conductor $c) => [$c->id => ($c->puedeOperar() ? '' : '⚠ ') . "{$c->nombre_completo} · {$c->documento}"])
+            ->mapWithKeys(fn (Conductor $c) => [$c->id => ($c->puedeOperar() ? '' : '⚠ ')."{$c->nombre_completo} · {$c->documento}"])
             ->all();
     }
 

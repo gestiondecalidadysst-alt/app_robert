@@ -6,6 +6,7 @@ use App\Actions\Mantenimiento\RegistrarMantenimiento as AccionRegistrar;
 use App\Filament\App\Resources\Mantenimientos\MantenimientoResource;
 use App\Models\PlanAccion;
 use App\Models\Vehiculo;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -34,7 +35,7 @@ class RegistrarMantenimiento extends CreateRecord
             'plan_accion_id' => $plan?->id,
             'tipo' => $plan ? ($plan->origen->value === 'preventivo' ? 'preventivo' : 'correctivo') : (request()->integer('rutina') ? 'preventivo' : null),
             'rutinas' => $plan?->rutina_mantenimiento_id ? [$plan->rutina_mantenimiento_id] : (request()->integer('rutina') ? [request()->integer('rutina')] : null),
-            'problema' => $plan ? collect($plan->hallazgos ?? [])->map(fn ($h) => $h['descripcion'] . (($h['observacion'] ?? null) ? ': ' . $h['observacion'] : ''))->implode("\n") : null,
+            'problema' => $plan ? collect($plan->hallazgos ?? [])->map(fn ($h) => $h['descripcion'].(($h['observacion'] ?? null) ? ': '.$h['observacion'] : ''))->implode("\n") : null,
         ], fn ($v) => $v !== null));
     }
 
@@ -49,7 +50,7 @@ class RegistrarMantenimiento extends CreateRecord
                 auth()->user(),
             );
         } catch (ValidationException $e) {
-            throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $campo) => ['data.' . $campo => $m])->all());
+            throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($m, $campo) => ['data.'.$campo => $m])->all());
         }
     }
 
@@ -58,7 +59,7 @@ class RegistrarMantenimiento extends CreateRecord
         return static::getResource()::getUrl('view', ['record' => $this->getRecord()]);
     }
 
-    protected function getCreateFormAction(): \Filament\Actions\Action
+    protected function getCreateFormAction(): Action
     {
         return parent::getCreateFormAction()->label('Registrar');
     }

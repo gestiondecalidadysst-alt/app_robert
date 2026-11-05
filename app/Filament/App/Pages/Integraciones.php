@@ -2,15 +2,19 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Enums\ModuloEmpresa;
 use App\Enums\TipoConsultaTransito;
 use App\Models\Empresa;
+use App\Models\PagoContrato;
+use App\Models\WebhookEntrega;
 use App\Services\Mensajeria\Mensajero;
 use App\Services\Mensajeria\OnurixSms;
 use App\Support\Webhooks;
-use Filament\Forms\Components\CheckboxList;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -98,7 +102,7 @@ class Integraciones extends Page
     public function form(Schema $schema): Schema
     {
         $e = $this->empresa();
-        $oculto = fn (?string $valor) => filled($valor) ? 'Guardado: ••••' . mb_substr($valor, -4) . '. Déjelo vacío para conservarlo.' : 'Sin configurar.';
+        $oculto = fn (?string $valor) => filled($valor) ? 'Guardado: ••••'.mb_substr($valor, -4).'. Déjelo vacío para conservarlo.' : 'Sin configurar.';
 
         return $schema
             ->statePath('data')
@@ -116,7 +120,7 @@ class Integraciones extends Page
                             ->helperText($oculto($e->onurix_clave)),
                         TextInput::make('sms_limite_mensual')->label('Límite de SMS al mes')->numeric()->minValue(1)
                             ->helperText('Opcional. Al llegar al límite, los mensajes se envían solo por correo.'),
-                        Text::make('SMS enviados este mes: ' . Mensajero::smsDelMes($e))->color('gray'),
+                        Text::make('SMS enviados este mes: '.Mensajero::smsDelMes($e))->color('gray'),
                     ]),
                 Section::make('Avisos por webhook (n8n)')
                     ->description('El sistema envía un POST JSON a esta URL en cada evento elegido (por ejemplo, un nodo Webhook de n8n para reenviar por WhatsApp, correo o Telegram). Cada aviso va firmado con HMAC-SHA256 en la cabecera X-Ruta-Firma.')
@@ -126,13 +130,13 @@ class Integraciones extends Page
                         Toggle::make('webhook_activo')->label('Enviar avisos')->inline(false)->columnSpanFull(),
                         TextInput::make('webhook_url')->label('URL del webhook')->url()->maxLength(500)->autocomplete(false)
                             ->placeholder('https://n8n.su-dominio.com/webhook/ruta')
-                            ->helperText(fn () => filled($e->webhook_url) ? 'Guardada: ' . self::ocultarUrl($e->webhook_url) . '. Déjela vacía para conservarla.' : 'Sin configurar.'),
+                            ->helperText(fn () => filled($e->webhook_url) ? 'Guardada: '.self::ocultarUrl($e->webhook_url).'. Déjela vacía para conservarla.' : 'Sin configurar.'),
                         TextInput::make('webhook_secreto')->label('Secreto para la firma')->password()->revealable()->maxLength(200)->autocomplete('new-password')
                             ->helperText(fn () => filled($e->webhook_secreto) ? 'Guardado. Déjelo vacío para conservarlo.' : 'Opcional pero recomendado: n8n puede verificar que el aviso viene de Ruta.'),
                         CheckboxList::make('webhook_eventos')->label('Eventos')->options(Webhooks::EVENTOS)->columns(2)->columnSpanFull(),
                     ]),
                 Section::make('Mantenimiento')
-                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Mantenimiento))
+                    ->visible($e->tieneModulo(ModuloEmpresa::Mantenimiento))
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->columns(['default' => 1, 'md' => 2])
                     ->schema([
@@ -141,7 +145,7 @@ class Integraciones extends Page
                         TextInput::make('mantenimiento_dias_aviso')->label('Avisar actividades con (días) de anticipación')->numeric()->minValue(1)->maxValue(60)->required(),
                     ]),
                 Section::make('Planeador de servicios (jornada y fatiga)')
-                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros))
+                    ->visible($e->tieneModulo(ModuloEmpresa::Pasajeros))
                     ->description('Política de la empresa para el control de jornada del PESV (paso 8, prevención de la fatiga). Superarla solo genera avisos en el planeador; no impide planificar ni expedir.')
                     ->icon('heroicon-o-clock')
                     ->columns(['default' => 1, 'md' => 4])
@@ -154,7 +158,7 @@ class Integraciones extends Page
                             ->helperText('Para el indicador de planificación.'),
                     ]),
                 Section::make('Recibos de caja')
-                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros))
+                    ->visible($e->tieneModulo(ModuloEmpresa::Pasajeros))
                     ->description('Cada pago de un contrato genera un recibo con número consecutivo para entregar al cliente.')
                     ->icon('heroicon-o-receipt-percent')
                     ->columns(['default' => 1, 'md' => 2])
@@ -163,15 +167,15 @@ class Integraciones extends Page
                             ->helperText('Aparece antes del número: RC-0001. Puede dejarlo vacío.'),
                         TextInput::make('recibo_numero_inicial')->label('Empezar en el número')->numeric()->minValue(1)->required()
                             ->helperText(function () use ($e) {
-                                $ultimo = (int) \App\Models\PagoContrato::query()->deEmpresa($e)->max('numero');
+                                $ultimo = (int) PagoContrato::query()->deEmpresa($e)->max('numero');
 
-                                return 'Para continuar su talonario actual. ' . ($ultimo ? "Último recibo emitido: {$ultimo}." : 'Aún no hay recibos.') . ' Nunca se repite un número.';
+                                return 'Para continuar su talonario actual. '.($ultimo ? "Último recibo emitido: {$ultimo}." : 'Aún no hay recibos.').' Nunca se repite un número.';
                             }),
                     ]),
                 self::seccionRndc($e, $oculto),
                 self::seccionTransito($e),
                 Section::make('Firma electrónica de contratos')
-                    ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Pasajeros))
+                    ->visible($e->tieneModulo(ModuloEmpresa::Pasajeros))
                     ->icon('heroicon-o-pencil-square')
                     ->columns(['default' => 1, 'md' => 3])
                     ->schema([
@@ -190,14 +194,14 @@ class Integraciones extends Page
         return Section::make('RNDC – Registro Nacional de Despachos de Carga')
             ->description('Usuario delegado del RNDC de la empresa (lo crea el representante legal en el RNDC). Mientras no se active la conexión, los registros se hacen en la web del RNDC con la ficha en PDF y aquí se anota el número de radicado.')
             ->icon('heroicon-o-cloud-arrow-up')
-            ->visible($e->tieneModulo(\App\Enums\ModuloEmpresa::Carga))
+            ->visible($e->tieneModulo(ModuloEmpresa::Carga))
             ->columns(['default' => 1, 'md' => 3])
             ->schema([
-                \Filament\Forms\Components\Select::make('carga_rol')->label('La empresa es')->required()
+                Select::make('carga_rol')->label('La empresa es')->required()
                     ->options(['transportadora' => 'Empresa de transporte habilitada', 'generador' => 'Generador de carga', 'ambos' => 'Ambos']),
                 TextInput::make('rndc_usuario')->label('Usuario del RNDC')->maxLength(60)->autocomplete(false)->helperText($oculto($e->rndc_usuario)),
                 TextInput::make('rndc_clave')->label('Clave del RNDC')->password()->maxLength(100)->autocomplete('new-password')->helperText($oculto($e->rndc_clave)),
-                \Filament\Forms\Components\Select::make('rndc_ambiente')->label('Ambiente')->required()
+                Select::make('rndc_ambiente')->label('Ambiente')->required()
                     ->options(['pruebas' => 'Pruebas', 'produccion' => 'Producción'])
                     ->helperText('Use pruebas hasta confirmar con el Ministerio que todo se registra bien.'),
                 Toggle::make('rndc_conectado')->label('Conexión por web service activa')->inline(false)
@@ -209,7 +213,7 @@ class Integraciones extends Page
     private static function seccionTransito(Empresa $e): Section
     {
         $tipos = collect(TipoConsultaTransito::cases());
-        $precios = $tipos->map(fn (TipoConsultaTransito $t) => $t->getLabel() . ': ' . (($v = $e->precioTransito($t)) !== null ? '$ ' . number_format($v, 0, ',', '.') : 'sin precio'))->implode(' · ');
+        $precios = $tipos->map(fn (TipoConsultaTransito $t) => $t->getLabel().': '.(($v = $e->precioTransito($t)) !== null ? '$ '.number_format($v, 0, ',', '.') : 'sin precio'))->implode(' · ');
         $gasto = $e->gastoTransitoDelMes();
 
         return Section::make('Consultas de tránsito (comparendos y RUNT)')
@@ -218,8 +222,8 @@ class Integraciones extends Page
             ->visible($e->transito_habilitado)
             ->columns(['default' => 1, 'md' => 3])
             ->schema([
-                Text::make('Precio por consulta — ' . $precios)->columnSpanFull(),
-                Text::make('Gastado este mes: $ ' . number_format($gasto, 0, ',', '.') . ($e->transito_tope_mensual ? ' de $ ' . number_format((float) $e->transito_tope_mensual, 0, ',', '.') . ' (tope)' : ' (sin tope)'))->color('gray')->columnSpanFull(),
+                Text::make('Precio por consulta — '.$precios)->columnSpanFull(),
+                Text::make('Gastado este mes: $ '.number_format($gasto, 0, ',', '.').($e->transito_tope_mensual ? ' de $ '.number_format((float) $e->transito_tope_mensual, 0, ',', '.').' (tope)' : ' (sin tope)'))->color('gray')->columnSpanFull(),
                 CheckboxList::make('transito_tipos')->label('Consultas que usa la empresa')->options($tipos->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()])->all())->columns(2)->columnSpanFull()
                     ->helperText('Las que no marque no aparecen en conductores ni vehículos.'),
                 TextInput::make('transito_tope_mensual')->label('Tope de gasto al mes')->numeric()->minValue(0)->prefix('$')
@@ -241,13 +245,13 @@ class Integraciones extends Page
     {
         $p = parse_url($url);
 
-        return ($p['scheme'] ?? 'https') . '://' . ($p['host'] ?? '') . (isset($p['path']) ? '/…' . substr($p['path'], -6) : '');
+        return ($p['scheme'] ?? 'https').'://'.($p['host'] ?? '').(isset($p['path']) ? '/…'.substr($p['path'], -6) : '');
     }
 
     /** Últimos avisos por webhook (para la vista). */
     public function getEntregas()
     {
-        return \App\Models\WebhookEntrega::query()->latest('id')->limit(10)->get();
+        return WebhookEntrega::query()->latest('id')->limit(10)->get();
     }
 
     public function guardar(): void
@@ -276,7 +280,7 @@ class Integraciones extends Page
             'jornada_descanso_horas' => (int) $datos['jornada_descanso_horas'],
             'planeacion_antelacion_horas' => (int) $datos['planeacion_antelacion_horas'],
         ]);
-        if ($empresa->tieneModulo(\App\Enums\ModuloEmpresa::Carga)) {
+        if ($empresa->tieneModulo(ModuloEmpresa::Carga)) {
             $empresa->fill([
                 'carga_rol' => $datos['carga_rol'] ?? 'transportadora',
                 'rndc_ambiente' => $datos['rndc_ambiente'] ?? 'pruebas',
@@ -362,7 +366,7 @@ class Integraciones extends Page
                 ->action(function (): void {
                     $entrega = Webhooks::emitir($this->empresa(), 'prueba', ['mensaje' => 'Prueba de conexión desde Ruta', 'usuario' => auth()->user()->name]);
                     Notification::make()->success()->title('Aviso de prueba en cola')
-                        ->body('Revise el resultado en «Últimos avisos enviados» en unos segundos' . ($entrega ? " (entrega #{$entrega->id})." : '.'))->send();
+                        ->body('Revise el resultado en «Últimos avisos enviados» en unos segundos'.($entrega ? " (entrega #{$entrega->id})." : '.'))->send();
                 }),
             Action::make('ip')
                 ->label('Ver IP del servidor')
@@ -388,7 +392,7 @@ class Integraciones extends Page
 
                     $saldo === null
                         ? Notification::make()->danger()->title('No se pudo consultar el saldo')->body('Revise las credenciales.')->send()
-                        : Notification::make()->success()->title('Saldo en Onurix: ' . number_format($saldo, 0, ',', '.'))->send();
+                        : Notification::make()->success()->title('Saldo en Onurix: '.number_format($saldo, 0, ',', '.'))->send();
                 }),
             Action::make('prueba')
                 ->label('Enviar SMS de prueba')
@@ -398,7 +402,7 @@ class Integraciones extends Page
                 ->action(function (array $data): void {
                     $e = $this->empresa();
                     $envio = Mensajero::sms($e, 'prueba', $data['celular'],
-                        ($e->nombre_comercial ?: $e->razon_social) . ': mensaje de prueba de Ruta. La configuracion de SMS funciona.', ahora: true);
+                        ($e->nombre_comercial ?: $e->razon_social).': mensaje de prueba de Ruta. La configuracion de SMS funciona.', ahora: true);
 
                     $envio->estado === 'enviado'
                         ? Notification::make()->success()->title('SMS enviado')->send()

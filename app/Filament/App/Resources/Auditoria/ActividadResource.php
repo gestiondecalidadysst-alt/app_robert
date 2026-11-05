@@ -6,6 +6,7 @@ use App\Filament\App\Resources\Auditoria\Pages\ListarAuditoria;
 use App\Models\Actividad;
 use BackedEnum;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -14,7 +15,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use UnitEnum;
@@ -124,10 +124,10 @@ class ActividadResource extends Resource
         foreach (array_unique([...array_keys($anteriores), ...array_keys($nuevos)]) as $campo) {
             $antes = e(is_scalar($anteriores[$campo] ?? null) ? (string) $anteriores[$campo] : json_encode($anteriores[$campo] ?? null));
             $despues = e(is_scalar($nuevos[$campo] ?? null) ? (string) $nuevos[$campo] : json_encode($nuevos[$campo] ?? null));
-            $filas .= "<tr><td style=\"padding:4px 12px 4px 0;font-weight:600\">" . e($campo) . "</td><td style=\"padding:4px 12px;color:#b42318\">{$antes}</td><td style=\"padding:4px 0;color:#0f6b45\">{$despues}</td></tr>";
+            $filas .= '<tr><td style="padding:4px 12px 4px 0;font-weight:600">'.e($campo)."</td><td style=\"padding:4px 12px;color:#b42318\">{$antes}</td><td style=\"padding:4px 0;color:#0f6b45\">{$despues}</td></tr>";
         }
 
-        return new HtmlString('<table style="font-size:13px"><thead><tr><th style="text-align:left">Campo</th><th style="text-align:left;padding:0 12px">Antes</th><th style="text-align:left">Después</th></tr></thead><tbody>' . $filas . '</tbody></table>');
+        return new HtmlString('<table style="font-size:13px"><thead><tr><th style="text-align:left">Campo</th><th style="text-align:left;padding:0 12px">Antes</th><th style="text-align:left">Después</th></tr></thead><tbody>'.$filas.'</tbody></table>');
     }
 
     public static function getPages(): array

@@ -2,8 +2,8 @@
 
 namespace App\Filament\App\Resources\Conductores\RelationManagers;
 
-use App\Filament\Compartido\ErroresDeNegocio;
 use App\Actions\Conductores\AsignarVehiculo;
+use App\Filament\Compartido\ErroresDeNegocio;
 use App\Models\AsignacionVehiculo;
 use Closure;
 use Filament\Actions\Action;
@@ -25,7 +25,7 @@ final class AsignacionColumnas
         $principal = $mostrar === 'vehiculo'
             ? TextColumn::make('vehiculo.placa')
                 ->label('Vehículo')
-                ->formatStateUsing(fn (?string $state) => new HtmlString('<span class="ruta-placa">' . e($state) . '</span>'))
+                ->formatStateUsing(fn (?string $state) => new HtmlString('<span class="ruta-placa">'.e($state).'</span>'))
                 ->description(fn (AsignacionVehiculo $r) => $r->vehiculo?->descripcion)
             : TextColumn::make('conductor.nombres')
                 ->label('Conductor')

@@ -89,7 +89,7 @@ class TerceroCargaResource extends Resource
             ->emptyStateDescription('El RNDC exige registrarlos antes de expedir remesas y manifiestos.')
             ->columns([
                 TextColumn::make('nombre_completo')->label('Nombre')->weight('bold')->searchable(['nombre', 'primer_apellido', 'documento'])
-                    ->description(fn (TerceroCarga $r) => trim(($r->tipoIdentificacion?->codigo ?? '') . ' ' . $r->documento) . ($r->esJuridica() ? ' · sede ' . $r->sede_codigo . ' ' . $r->sede_nombre : '')),
+                    ->description(fn (TerceroCarga $r) => trim(($r->tipoIdentificacion?->codigo ?? '').' '.$r->documento).($r->esJuridica() ? ' · sede '.$r->sede_codigo.' '.$r->sede_nombre : '')),
                 TextColumn::make('roles')->label('Rol')->badge()->color('gray')->formatStateUsing(fn ($state) => CatalogoRndc::ROLES_TERCERO[$state] ?? $state),
                 TextColumn::make('municipio.nombre_completo')->label('Ciudad')->visibleFrom('lg'),
                 TextColumn::make('celular')->label('Contacto')->state(fn (TerceroCarga $r) => $r->celular ?: $r->telefono)->visibleFrom('md'),

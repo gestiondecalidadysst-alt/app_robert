@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources\Inspecciones\Pages;
 use App\Enums\EstadoVehiculo;
 use App\Enums\TipoInspeccion;
 use App\Filament\App\Resources\Inspecciones\InspeccionResource;
+use App\Filament\App\Resources\Vehiculos\VehiculoResource;
 use App\Models\AsignacionVehiculo;
 use App\Models\Fuec;
 use App\Models\Inspeccion;
@@ -66,7 +67,7 @@ class PendientesHoy extends Page implements HasTable
             ->paginated([25, 50, 100])
             ->columns([
                 TextColumn::make('placa')->weight('bold')->searchable()
-                    ->url(fn (Vehiculo $r) => \App\Filament\App\Resources\Vehiculos\VehiculoResource::getUrl('view', ['record' => $r])),
+                    ->url(fn (Vehiculo $r) => VehiculoResource::getUrl('view', ['record' => $r])),
                 TextColumn::make('numero_interno')->label('No. interno')->placeholder('—'),
                 TextColumn::make('con_fuec')->label('Servicio hoy')
                     ->formatStateUsing(fn ($state) => $state ? 'Con FUEC vigente' : 'Sin FUEC')

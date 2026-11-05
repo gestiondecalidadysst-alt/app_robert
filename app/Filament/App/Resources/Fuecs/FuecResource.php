@@ -13,13 +13,13 @@ use App\Models\Vehiculo;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
@@ -50,7 +50,7 @@ class FuecResource extends Resource
 
     public static function getRecordTitle(?Model $record): string
     {
-        return $record ? "FUEC {$record->datos['vehiculo']['placa']} · " . str_pad((string) $record->consecutivo, 4, '0', STR_PAD_LEFT) : 'FUEC';
+        return $record ? "FUEC {$record->datos['vehiculo']['placa']} · ".str_pad((string) $record->consecutivo, 4, '0', STR_PAD_LEFT) : 'FUEC';
     }
 
     public static function form(Schema $schema): Schema
@@ -71,20 +71,20 @@ class FuecResource extends Resource
             ->recordUrl(fn (Fuec $record) => static::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('numero')->label('FUEC No.')->fontFamily('mono')->searchable()
-                    ->description(fn (Fuec $record) => 'Expedido ' . $record->created_at?->timezone('America/Bogota')->format('d/m/Y')),
+                    ->description(fn (Fuec $record) => 'Expedido '.$record->created_at?->timezone('America/Bogota')->format('d/m/Y')),
                 TextColumn::make('placa')->label('Vehículo')
-                    ->formatStateUsing(fn (?string $state) => new HtmlString('<span class="ruta-placa">' . e($state) . '</span>'))
-                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('vehiculo', fn ($q) => $q->where('placa', 'like', '%' . strtoupper($search) . '%'))),
+                    ->formatStateUsing(fn (?string $state) => new HtmlString('<span class="ruta-placa">'.e($state).'</span>'))
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('vehiculo', fn ($q) => $q->where('placa', 'like', '%'.strtoupper($search).'%'))),
                 TextColumn::make('conductor')->label('Conductor')
                     ->state(fn (Fuec $record) => $record->datos['conductores'][0]['nombre'] ?? '—')
-                    ->description(fn (Fuec $record) => count($record->datos['conductores'] ?? []) > 1 ? '+' . (count($record->datos['conductores']) - 1) . ' más' : null)
+                    ->description(fn (Fuec $record) => count($record->datos['conductores'] ?? []) > 1 ? '+'.(count($record->datos['conductores']) - 1).' más' : null)
                     ->visibleFrom('lg'),
                 TextColumn::make('contrato.numero')->label('Contrato')
                     ->formatStateUsing(fn (Fuec $record) => $record->datos['contrato']['numero'])
                     ->description(fn (Fuec $record) => $record->datos['contrato']['contratante'])
                     ->visibleFrom('md'),
                 TextColumn::make('fecha_inicio')->label('Vigencia')->sortable()
-                    ->formatStateUsing(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y') . ' – ' . $record->fecha_fin->format('d/m/Y')),
+                    ->formatStateUsing(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y').' – '.$record->fecha_fin->format('d/m/Y')),
                 TextColumn::make('estado')->badge()->state(fn (Fuec $record) => $record->estado()),
             ])
             ->filters([

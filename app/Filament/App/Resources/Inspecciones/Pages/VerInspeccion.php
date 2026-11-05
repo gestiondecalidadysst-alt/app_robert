@@ -14,7 +14,7 @@ class VerInspeccion extends ViewRecord
     {
         $r = $this->getRecord();
 
-        return $r->tipo->corto() . ' · ' . $r->placa . ' · ' . $r->fecha->format('d/m/Y');
+        return $r->tipo->corto().' · '.$r->placa.' · '.$r->fecha->format('d/m/Y');
     }
 
     protected function getHeaderActions(): array

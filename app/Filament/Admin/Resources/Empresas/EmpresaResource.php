@@ -2,17 +2,23 @@
 
 namespace App\Filament\Admin\Resources\Empresas;
 
+use App\Enums\ModuloEmpresa;
+use App\Enums\TipoConsultaTransito;
 use App\Filament\Admin\Resources\Empresas\Pages\CrearEmpresa;
 use App\Filament\Admin\Resources\Empresas\Pages\EditarEmpresa;
 use App\Filament\Admin\Resources\Empresas\Pages\ListarEmpresas;
 use App\Filament\Compartido\FormularioEmpresa;
 use App\Models\Empresa;
+use App\Models\ProveedorTransito;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -68,19 +74,19 @@ class EmpresaResource extends Resource
                 ->icon('heroicon-o-squares-2x2')
                 ->description('Lo que la empresa ve. Mi empresa, configuración, vehículos, propietarios y conductores van siempre. Lo que se desmarca desaparece del menú y deja de funcionar, pero sus datos se conservan.')
                 ->schema([
-                    \Filament\Forms\Components\CheckboxList::make('modulos')
+                    CheckboxList::make('modulos')
                         ->hiddenLabel()
-                        ->options(\App\Enums\ModuloEmpresa::class)
-                        ->descriptions(collect(\App\Enums\ModuloEmpresa::cases())->mapWithKeys(fn ($m) => [$m->value => $m->getDescription()])->all())
-                        ->disableOptionWhen(fn (string $value) => ! \App\Enums\ModuloEmpresa::from($value)->disponible())
-                        ->default(\App\Enums\ModuloEmpresa::porDefecto())
+                        ->options(ModuloEmpresa::class)
+                        ->descriptions(collect(ModuloEmpresa::cases())->mapWithKeys(fn ($m) => [$m->value => $m->getDescription()])->all())
+                        ->disableOptionWhen(fn (string $value) => ! ModuloEmpresa::from($value)->disponible())
+                        ->default(ModuloEmpresa::porDefecto())
                         ->columns(['default' => 1, 'md' => 2])
                         ->live()
                         ->bulkToggleable(),
-                    \Filament\Schemas\Components\Grid::make(['default' => 1, 'md' => 2])
+                    Grid::make(['default' => 1, 'md' => 2])
                         ->visible(fn ($get) => in_array('carga', (array) $get('modulos'), true))
                         ->schema([
-                            \Filament\Forms\Components\Select::make('carga_cobro_modo')->label('Cobro del módulo de carga')
+                            Select::make('carga_cobro_modo')->label('Cobro del módulo de carga')
                                 ->options(['fijo' => 'Valor fijo mensual', 'por_manifiesto' => 'Por manifiesto expedido']),
                             TextInput::make('carga_cobro_valor')->label('Valor')->numeric()->minValue(0)->prefix('$')
                                 ->helperText('Lo que la plataforma cobra a esta empresa por el módulo de carga.'),
@@ -95,9 +101,9 @@ class EmpresaResource extends Resource
                 ->columns(['default' => 1, 'md' => 5])
                 ->schema([
                     Toggle::make('transito_habilitado')->label('Módulo habilitado')->inline(false),
-                    ...collect(\App\Enums\TipoConsultaTransito::cases())->map(fn (\App\Enums\TipoConsultaTransito $t) => TextInput::make("transito_precios.{$t->value}")
-                        ->label('Precio especial · ' . $t->getLabel())->numeric()->minValue(0)->prefix('$')
-                        ->placeholder(fn () => ($general = \App\Models\ProveedorTransito::actual()->precioDe($t)) !== null ? number_format($general, 0, ',', '.') . ' (general)' : 'Sin precio general'))->all(),
+                    ...collect(TipoConsultaTransito::cases())->map(fn (TipoConsultaTransito $t) => TextInput::make("transito_precios.{$t->value}")
+                        ->label('Precio especial · '.$t->getLabel())->numeric()->minValue(0)->prefix('$')
+                        ->placeholder(fn () => ($general = ProveedorTransito::actual()->precioDe($t)) !== null ? number_format($general, 0, ',', '.').' (general)' : 'Sin precio general'))->all(),
                 ]),
 
             Section::make('Estado')
@@ -122,11 +128,11 @@ class EmpresaResource extends Resource
                     ->searchable(['razon_social', 'nombre_comercial', 'nit'])
                     ->sortable()
                     ->weight('bold')
-                    ->description(fn (Empresa $record) => 'NIT ' . $record->nit_formateado),
+                    ->description(fn (Empresa $record) => 'NIT '.$record->nit_formateado),
                 TextColumn::make('municipio.nombre_completo')->label('Municipio'),
                 TextColumn::make('usuarios_count')->label('Usuarios')->badge(),
                 TextColumn::make('modulos')->label('Módulos')->badge()->color('gray')
-                    ->formatStateUsing(fn ($state) => \App\Enums\ModuloEmpresa::tryFrom($state)?->getLabel() ?? $state)->wrap()->visibleFrom('lg'),
+                    ->formatStateUsing(fn ($state) => ModuloEmpresa::tryFrom($state)?->getLabel() ?? $state)->wrap()->visibleFrom('lg'),
                 TextColumn::make('slug')->label('Dirección')->prefix('/app/')->color('gray')->toggleable(),
                 IconColumn::make('activa')->boolean(),
                 TextColumn::make('created_at')->label('Alta')->date('d/m/Y')->sortable()->toggleable(isToggledHiddenByDefault: true),

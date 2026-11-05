@@ -24,7 +24,7 @@ class VerPrograma extends ViewRecord
 
     public function getTitle(): string|Htmlable
     {
-        return 'Programa de mantenimiento ' . $this->getRecord()->anio . ' · v' . $this->getRecord()->version;
+        return 'Programa de mantenimiento '.$this->getRecord()->anio.' · v'.$this->getRecord()->version;
     }
 
     public function getSubheading(): ?string
@@ -48,9 +48,9 @@ class VerPrograma extends ViewRecord
                 ->color('success')
                 ->visible(fn () => $programa->estado === EstadoPrograma::Borrador && auth()->user()?->can('aprobar', $programa))
                 ->requiresConfirmation()
-                ->modalDescription(fn () => 'Elaboró: ' . ($programa->elaboradoPor?->name ?? '—') . '. Quedará aprobado por ' . auth()->user()->name
-                    . ' y sus fechas serán la línea base para medir el cumplimiento.'
-                    . (ProgramaMantenimiento::query()->where('anio', $programa->anio)->where('estado', 'aprobado')->exists() ? ' La versión aprobada anterior quedará reemplazada (lo ya ejecutado pasa a esta).' : ''))
+                ->modalDescription(fn () => 'Elaboró: '.($programa->elaboradoPor?->name ?? '—').'. Quedará aprobado por '.auth()->user()->name
+                    .' y sus fechas serán la línea base para medir el cumplimiento.'
+                    .(ProgramaMantenimiento::query()->where('anio', $programa->anio)->where('estado', 'aprobado')->exists() ? ' La versión aprobada anterior quedará reemplazada (lo ya ejecutado pasa a esta).' : ''))
                 ->action(function (Action $action) use ($programa): void {
                     ErroresDeNegocio::intentar($action, fn () => ProgramaAnual::aprobar($programa, auth()->user()));
                     Notification::make()->success()->title('Programa aprobado')->send();
@@ -97,7 +97,7 @@ class VerPrograma extends ViewRecord
                         $vehiculo = filled($data['vehiculo_id'] ?? null) ? Vehiculo::query()->find($data['vehiculo_id']) : null;
 
                         return response()->streamDownload(fn () => print (PdfProgramaMantenimiento::generar($programa, $vehiculo)),
-                            "Programa-mantenimiento-{$programa->anio}-v{$programa->version}" . ($vehiculo ? "-{$vehiculo->placa}" : '') . '.pdf',
+                            "Programa-mantenimiento-{$programa->anio}-v{$programa->version}".($vehiculo ? "-{$vehiculo->placa}" : '').'.pdf',
                             ['Content-Type' => 'application/pdf']);
                     }),
                 Action::make('excel')

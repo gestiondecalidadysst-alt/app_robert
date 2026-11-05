@@ -14,7 +14,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use OpenSpout\Common\Entity\Row;
@@ -57,7 +56,7 @@ class ConsumoConsultas extends Page implements HasTable
 
     private function inicioMes(): Carbon
     {
-        return Carbon::createFromFormat('Y-m-d', $this->mes . '-01')->startOfMonth();
+        return Carbon::createFromFormat('Y-m-d', $this->mes.'-01')->startOfMonth();
     }
 
     /** @return Collection<int, array> una fila por empresa con consultas en el mes */
@@ -99,11 +98,11 @@ class ConsumoConsultas extends Page implements HasTable
 
     public function excel()
     {
-        $ruta = tempnam(sys_get_temp_dir(), 'cons') . '.xlsx';
+        $ruta = tempnam(sys_get_temp_dir(), 'cons').'.xlsx';
         $w = new Writer;
         $w->openToFile($ruta);
         $w->getCurrentSheet()->setName('Resumen por empresa');
-        $w->addRow(Row::fromValues(['Consumo de consultas de tránsito · ' . $this->mes]));
+        $w->addRow(Row::fromValues(['Consumo de consultas de tránsito · '.$this->mes]));
         $w->addRow(Row::fromValues(['Empresa', ...array_map(fn ($t) => $t->getLabel(), TipoConsultaTransito::cases()), 'Consultas', 'Cobradas', 'Valor a cobrar', 'Costo proveedor', 'Margen']));
         foreach ($this->resumen() as $r) {
             $w->addRow(Row::fromValues([$r['empresa'], ...array_values($r['por_tipo']), $r['consultas'], $r['cobradas'], $r['cobrar'], $r['costo'], $r['cobrar'] - $r['costo']]));
@@ -134,10 +133,12 @@ class ConsumoConsultas extends Page implements HasTable
                 TextColumn::make('origen')->badge()->color('gray'),
                 TextColumn::make('estado')->label('Resultado')->badge()
                     ->formatStateUsing(fn (string $state, ConsultaTransito $record) => $record->etiquetaEstado())
-                    ->color(fn (string $state) => match ($state) { 'ok' => 'success', 'sin_datos' => 'gray', default => 'danger' }),
+                    ->color(fn (string $state) => match ($state) {
+                        'ok' => 'success', 'sin_datos' => 'gray', default => 'danger'
+                    }),
                 IconColumn::make('cobrada')->boolean(),
-                TextColumn::make('precio')->label('Cobro')->formatStateUsing(fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.'))->alignEnd(),
-                TextColumn::make('costo')->formatStateUsing(fn ($state) => '$ ' . number_format((float) $state, 0, ',', '.'))->alignEnd()->visibleFrom('lg'),
+                TextColumn::make('precio')->label('Cobro')->formatStateUsing(fn ($state) => '$ '.number_format((float) $state, 0, ',', '.'))->alignEnd(),
+                TextColumn::make('costo')->formatStateUsing(fn ($state) => '$ '.number_format((float) $state, 0, ',', '.'))->alignEnd()->visibleFrom('lg'),
             ])
             ->filters([
                 SelectFilter::make('empresa_id')->label('Empresa')->options(fn () => Empresa::query()->orderBy('razon_social')->pluck('razon_social', 'id')),

@@ -24,7 +24,7 @@ class ResumenSeguridadVial extends StatsOverviewWidget
     protected function getStats(): array
     {
         $s = $this->seccion('pesv');
-        $pct = fn ($v) => $v === null ? '—' : $v . ' %';
+        $pct = fn ($v) => $v === null ? '—' : $v.' %';
 
         return [
             Stat::make('Preoperacional cumplido', $pct($s['preop_cumplimiento']))

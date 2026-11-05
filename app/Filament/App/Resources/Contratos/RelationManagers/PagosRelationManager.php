@@ -25,6 +25,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Pagos del contrato con su recibo de caja: registrar (con envío opcional al cliente), descargar el
@@ -52,7 +53,7 @@ class PagosRelationManager extends RelationManager
 
     public static function pesos($valor): string
     {
-        return '$ ' . number_format((float) $valor, 0, ',', '.');
+        return '$ '.number_format((float) $valor, 0, ',', '.');
     }
 
     /** Campos de envío al cliente (correo y celular), con los datos del cliente sugeridos. */
@@ -99,7 +100,7 @@ class PagosRelationManager extends RelationManager
             ->headerActions([
                 CreateAction::make()
                     ->label('Registrar pago')
-                    ->modalHeading(fn () => 'Registrar pago · saldo ' . self::pesos($this->getOwnerRecord()->saldo()))
+                    ->modalHeading(fn () => 'Registrar pago · saldo '.self::pesos($this->getOwnerRecord()->saldo()))
                     ->modalDescription('Al guardar se genera el recibo de caja con su número consecutivo.')
                     ->createAnother(false)
                     ->modalSubmitActionLabel('Registrar y generar recibo')
@@ -109,7 +110,7 @@ class PagosRelationManager extends RelationManager
                             DatePicker::make('fecha')->default(now())->maxDate(now())->required(),
                             TextInput::make('valor')->numeric()->prefix('$')->minValue(1)->required()
                                 ->default(fn () => $this->getOwnerRecord()->saldo())
-                                ->helperText(fn () => 'Con ' . self::pesos($this->getOwnerRecord()->saldo()) . ' queda pagado en su totalidad; con menos, es un abono.'),
+                                ->helperText(fn () => 'Con '.self::pesos($this->getOwnerRecord()->saldo()).' queda pagado en su totalidad; con menos, es un abono.'),
                             Select::make('metodo')->label('Método')->options(MetodoPago::class)->default(MetodoPago::Transferencia->value)->required(),
                             TextInput::make('referencia')->maxLength(255)->placeholder('No. de transferencia, voucher…'),
                         ]),
@@ -150,7 +151,7 @@ class PagosRelationManager extends RelationManager
                         ->schema(fn () => $this->camposEnvio())
                         ->action(function (PagoContrato $record, array $data, Action $action): void {
                             $canales = ErroresDeNegocio::intentar($action, fn () => app(EnviarRecibo::class)->recibo($record, $data['email'] ?? null, $data['celular'] ?? null));
-                            Notification::make()->success()->title('Recibo enviado')->body('Por ' . implode(' y ', $canales) . '.')->send();
+                            Notification::make()->success()->title('Recibo enviado')->body('Por '.implode(' y ', $canales).'.')->send();
                         }),
                     Action::make('anular')
                         ->label('Anular')
@@ -176,7 +177,7 @@ class PagosRelationManager extends RelationManager
         $aviso = Notification::make()->success()
             ->title("Pago registrado · recibo {$pago->numero_recibo}")
             ->body($pago->tipo() === PagoContrato::ABONO
-                ? 'Abono de ' . self::pesos($pago->valor) . '. Saldo pendiente: ' . self::pesos($pago->saldo_despues) . '.'
+                ? 'Abono de '.self::pesos($pago->valor).'. Saldo pendiente: '.self::pesos($pago->saldo_despues).'.'
                 : 'El contrato quedó pagado en su totalidad.')
             ->persistent()
             ->actions([
@@ -186,9 +187,9 @@ class PagosRelationManager extends RelationManager
         if (! empty($data['enviar'])) {
             try {
                 $canales = app(EnviarRecibo::class)->recibo($pago, $data['email'] ?? null, $data['celular'] ?? null);
-                $aviso->body($aviso->getBody() . ' Enviado por ' . implode(' y ', $canales) . '.');
-            } catch (\Illuminate\Validation\ValidationException $e) {
-                $aviso->warning()->body($aviso->getBody() . ' No se envió al cliente: ' . collect($e->errors())->flatten()->first());
+                $aviso->body($aviso->getBody().' Enviado por '.implode(' y ', $canales).'.');
+            } catch (ValidationException $e) {
+                $aviso->warning()->body($aviso->getBody().' No se envió al cliente: '.collect($e->errors())->flatten()->first());
             }
         }
 

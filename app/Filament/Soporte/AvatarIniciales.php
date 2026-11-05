@@ -26,11 +26,11 @@ class AvatarIniciales implements AvatarProvider
             ->join('');
 
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">'
-            . '<rect width="64" height="64" rx="32" fill="#2A3E51"/>'
-            . '<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700" fill="#FFFFFF">'
-            . e($iniciales ?: '?')
-            . '</text></svg>';
+            .'<rect width="64" height="64" rx="32" fill="#2A3E51"/>'
+            .'<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700" fill="#FFFFFF">'
+            .e($iniciales ?: '?')
+            .'</text></svg>';
 
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 }

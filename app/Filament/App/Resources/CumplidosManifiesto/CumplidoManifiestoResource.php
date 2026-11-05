@@ -16,6 +16,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -49,7 +50,7 @@ class CumplidoManifiestoResource extends Resource
             ->whereNull('anulado_at')
             ->where(fn ($q) => $q->whereDoesntHave('cumplido')->orWhere('id', $record?->manifiesto_id))
             ->with(['origen', 'destino'])->orderBy('id', 'desc')->limit(100)->get()
-            ->mapWithKeys(fn (ManifiestoCarga $m) => [$m->id => $m->numeroFormateado() . ' · ' . ($m->origen?->nombre ?? '—') . ' → ' . ($m->destino?->nombre ?? '—')]);
+            ->mapWithKeys(fn (ManifiestoCarga $m) => [$m->id => $m->numeroFormateado().' · '.($m->origen?->nombre ?? '—').' → '.($m->destino?->nombre ?? '—')]);
 
         return $schema->columns(['default' => 1, 'md' => 3])->components([
             Section::make('Manifiesto que se cumple')
@@ -65,7 +66,7 @@ class CumplidoManifiestoResource extends Resource
                 ]),
             Section::make('Resumen del pago')
                 ->columnSpan(1)
-                ->schema([\Filament\Schemas\Components\Text::make(static::resumenPago())->columnSpanFull()]),
+                ->schema([Text::make(static::resumenPago())->columnSpanFull()]),
             Section::make('Suspensión')
                 ->columnSpanFull()
                 ->columns(['default' => 1, 'md' => 2])
@@ -103,8 +104,8 @@ class CumplidoManifiestoResource extends Resource
     private static function resumenPago(): string
     {
         return 'Al guardar, se recalcula el valor neto a pagar al titular con esta fórmula: '
-            . 'flete pactado ± adicionales − descuentos − anticipo del manifiesto − sobreanticipo − retefuente − reteica. '
-            . 'Verifique los ajustes antes de enviar al RNDC.';
+            .'flete pactado ± adicionales − descuentos − anticipo del manifiesto − sobreanticipo − retefuente − reteica. '
+            .'Verifique los ajustes antes de enviar al RNDC.';
     }
 
     public static function table(Table $table): Table

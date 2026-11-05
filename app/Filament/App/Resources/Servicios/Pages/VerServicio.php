@@ -25,7 +25,7 @@ class VerServicio extends ViewRecord
         /** @var Servicio $s */
         $s = $this->getRecord();
 
-        return 'Servicio ' . $s->fecha_inicio->format('d/m/Y') . ' · ' . $s->ruta_texto;
+        return 'Servicio '.$s->fecha_inicio->format('d/m/Y').' · '.$s->ruta_texto;
     }
 
     protected function resolveRecord(int|string $key): Model

@@ -11,7 +11,7 @@ class RecaudoPeriodo extends Grafica
 
     public function getHeading(): ?string
     {
-        return 'Recaudo de contratos · ' . $this->indicadores()->etiquetaPeriodo();
+        return 'Recaudo de contratos · '.$this->indicadores()->etiquetaPeriodo();
     }
 
     protected function getType(): string

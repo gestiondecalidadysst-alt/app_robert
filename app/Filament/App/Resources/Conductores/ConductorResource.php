@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\Conductores;
 
 use App\Enums\EstadoConductor;
 use App\Enums\TipoDocumentoConductor;
+use App\Filament\App\Carga\AccionesRndc;
 use App\Filament\App\Resources\Conductores\Acciones\CambiarEstadoConductorAction;
 use App\Filament\App\Resources\Conductores\Pages\CrearConductor;
 use App\Filament\App\Resources\Conductores\Pages\EditarConductor;
@@ -14,6 +15,8 @@ use App\Filament\App\Resources\Conductores\RelationManagers\NovedadesRelationMan
 use App\Filament\App\Resources\Conductores\RelationManagers\VehiculosRelationManager;
 use App\Filament\App\Resources\Conductores\Schemas\ConductorForm;
 use App\Filament\App\Resources\Conductores\Schemas\ConductorInfolist;
+use App\Filament\App\Transito\ComparendosRelationManager;
+use App\Filament\App\Transito\ConsultasRelationManager;
 use App\Models\Conductor;
 use App\Models\DocumentoConductor;
 use App\Models\Oficina;
@@ -30,6 +33,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
@@ -56,7 +60,7 @@ class ConductorResource extends Resource
 
     protected static ?string $tenantRelationshipName = 'conductores';
 
-    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): string
+    public static function getRecordTitle(?Model $record): string
     {
         return $record?->nombre_completo ?? 'Conductor';
     }
@@ -84,7 +88,7 @@ class ConductorResource extends Resource
                 TextColumn::make('nombres')
                     ->label('Conductor')
                     ->formatStateUsing(fn (Conductor $record) => $record->nombre_completo)
-                    ->description(fn (Conductor $record) => trim(($record->tipoIdentificacion?->codigo ?? '') . ' ' . $record->documento))
+                    ->description(fn (Conductor $record) => trim(($record->tipoIdentificacion?->codigo ?? '').' '.$record->documento))
                     ->searchable(['nombres', 'apellidos', 'documento'])
                     ->sortable()
                     ->weight('bold'),
@@ -94,18 +98,18 @@ class ConductorResource extends Resource
                     ->state(fn (Conductor $record) => $record->licencia()?->categoriaLicencia?->codigo)
                     ->badge()
                     ->color(fn (Conductor $record) => $record->licencia()?->categoriaLicencia?->esServicioPublico() ? 'gray' : 'danger')
-                    ->description(fn (Conductor $record) => $record->licencia() ? 'Vence ' . $record->licencia()->fecha_vencimiento->format('d/m/Y') : null)
+                    ->description(fn (Conductor $record) => $record->licencia() ? 'Vence '.$record->licencia()->fecha_vencimiento->format('d/m/Y') : null)
                     ->placeholder('Sin registrar'),
                 TextColumn::make('vehiculos')
                     ->label('Vehículos')
                     ->state(fn (Conductor $record) => $record->asignacionesVigentes
-                        ->map(fn ($a) => '<span class="ruta-placa">' . e($a->vehiculo?->placa) . '</span>')
+                        ->map(fn ($a) => '<span class="ruta-placa">'.e($a->vehiculo?->placa).'</span>')
                         ->implode(' '))
                     ->html()
                     ->placeholder('—')
                     ->visibleFrom('lg'),
                 TextColumn::make('estado')->badge()->sortable(),
-                \App\Filament\App\Carga\AccionesRndc::columnaEstado()->toggleable(),
+                AccionesRndc::columnaEstado()->toggleable(),
                 TextColumn::make('documentos_estado')
                     ->label('Documentos')
                     ->badge()
@@ -164,7 +168,7 @@ class ConductorResource extends Resource
         return $query->where(fn (Builder $q) => $q
             ->whereHas('documentos', fn (Builder $d) => $d->vigentes()->whereIn('tipo', $tipos)->whereDate('fecha_vencimiento', '<', today()))
             ->orWhereRaw(
-                "(select count(distinct tipo) from {$tabla} where {$tabla}.conductor_id = {$conductores}.id and {$tabla}.deleted_at is null and {$tabla}.tipo in (" . implode(',', array_fill(0, count($tipos), '?')) . ')) < ?',
+                "(select count(distinct tipo) from {$tabla} where {$tabla}.conductor_id = {$conductores}.id and {$tabla}.deleted_at is null and {$tabla}.tipo in (".implode(',', array_fill(0, count($tipos), '?')).')) < ?',
                 [...$tipos, count($tipos)],
             ));
     }
@@ -175,8 +179,8 @@ class ConductorResource extends Resource
             DocumentosRelationManager::class,
             VehiculosRelationManager::class,
             NovedadesRelationManager::class,
-            \App\Filament\App\Transito\ComparendosRelationManager::class,
-            \App\Filament\App\Transito\ConsultasRelationManager::class,
+            ComparendosRelationManager::class,
+            ConsultasRelationManager::class,
         ];
     }
 

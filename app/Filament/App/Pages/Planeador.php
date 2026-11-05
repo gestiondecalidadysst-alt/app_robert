@@ -2,7 +2,6 @@
 
 namespace App\Filament\App\Pages;
 
-use App\Enums\EstadoServicio;
 use App\Filament\App\Resources\Rutas\RutaResource;
 use App\Filament\App\Resources\Servicios\ServicioResource;
 use App\Models\Conductor;
@@ -104,7 +103,7 @@ class Planeador extends Page
                     'titulo' => $c->nombre_completo,
                     'detalle' => $c->documento,
                     'alerta' => ! $c->puedeOperar(),
-                    'clave' => 'c' . $c->id,
+                    'clave' => 'c'.$c->id,
                     'nuevo' => ['conductor' => $c->id],
                     'servicios' => $servicios->filter(fn (Servicio $s) => $s->conductores->contains('id', $c->id)),
                     'minutos' => $minutos[$c->id] ?? [],
@@ -114,9 +113,9 @@ class Planeador extends Page
             $filas = Vehiculo::query()->enFlota()->with(['documentos', 'marca', 'linea'])->orderBy('placa')->get()
                 ->map(fn (Vehiculo $v) => [
                     'titulo' => $v->placa,
-                    'detalle' => trim(($v->numero_interno ? "Int. {$v->numero_interno} · " : '') . $v->descripcion),
+                    'detalle' => trim(($v->numero_interno ? "Int. {$v->numero_interno} · " : '').$v->descripcion),
                     'alerta' => ! $v->puedeOperar(),
-                    'clave' => 'v' . $v->id,
+                    'clave' => 'v'.$v->id,
                     'nuevo' => ['vehiculo' => $v->id],
                     'servicios' => $servicios->where('vehiculo_id', $v->id),
                     'minutos' => null,
@@ -141,8 +140,8 @@ class Planeador extends Page
                 'Servicios' => $servicios->count(),
                 'Con extracto' => $servicios->whereNotNull('fuec_id')->count(),
                 'Sin vehículo o conductor' => $servicios->filter(fn (Servicio $s) => ! $s->vehiculo_id || $s->conductores->isEmpty())->count(),
-                "Planificados con {$antelacion} h o más" => $servicios->count() ? round(100 * $servicios->filter(fn (Servicio $s) => $s->planificadoConAntelacion($antelacion))->count() / $servicios->count()) . ' %' : '—',
-                'Plan leído por el conductor' => $servicios->whereNotNull('fuec_id')->count() ? round(100 * $servicios->whereNotNull('fuec_id')->whereNotNull('leido_at')->count() / $servicios->whereNotNull('fuec_id')->count()) . ' %' : '—',
+                "Planificados con {$antelacion} h o más" => $servicios->count() ? round(100 * $servicios->filter(fn (Servicio $s) => $s->planificadoConAntelacion($antelacion))->count() / $servicios->count()).' %' : '—',
+                'Plan leído por el conductor' => $servicios->whereNotNull('fuec_id')->count() ? round(100 * $servicios->whereNotNull('fuec_id')->whereNotNull('leido_at')->count() / $servicios->whereNotNull('fuec_id')->count()).' %' : '—',
                 'Con avisos de jornada' => $avisos->count(),
             ],
             'proximos' => $proximos,

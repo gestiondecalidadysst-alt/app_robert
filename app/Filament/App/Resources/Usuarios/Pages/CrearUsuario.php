@@ -108,9 +108,9 @@ class CrearUsuario extends CreateRecord
 
         return Notification::make()
             ->success()
-            ->title('Acceso del conductor creado · clave temporal: ' . $this->claveConductor)
-            ->body('Entréguesela al conductor (se muestra una sola vez). Ingresa en ' . route('conductor.ingresar')
-                . ' con su documento ' . $this->getRecord()->documento . ' y debe cambiarla al entrar.')
+            ->title('Acceso del conductor creado · clave temporal: '.$this->claveConductor)
+            ->body('Entréguesela al conductor (se muestra una sola vez). Ingresa en '.route('conductor.ingresar')
+                .' con su documento '.$this->getRecord()->documento.' y debe cambiarla al entrar.')
             ->persistent();
     }
 

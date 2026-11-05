@@ -57,7 +57,7 @@ final class RemesaCargaForm
     private static function pasoPartes(): Step
     {
         $terceros = fn () => TerceroCarga::query()->where('activo', true)->orderBy('nombre')->get()
-            ->mapWithKeys(fn (TerceroCarga $t) => [$t->id => $t->nombre_completo . ' · ' . ($t->tipoIdentificacion?->codigo ?? '') . ' ' . $t->documento]);
+            ->mapWithKeys(fn (TerceroCarga $t) => [$t->id => $t->nombre_completo.' · '.($t->tipoIdentificacion?->codigo ?? '').' '.$t->documento]);
 
         return Step::make('Remitente y destinatario')
             ->icon('heroicon-o-users')

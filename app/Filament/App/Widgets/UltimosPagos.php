@@ -35,7 +35,7 @@ class UltimosPagos extends TableWidget
                 TextColumn::make('numero')->label('Recibo')->weight('bold')->formatStateUsing(fn (PagoContrato $record) => $record->numero_recibo),
                 TextColumn::make('fecha')->date('d/m/Y'),
                 TextColumn::make('contrato.cliente.nombre')->label('Cliente')->limit(30)
-                    ->description(fn (PagoContrato $record) => 'Contrato ' . $record->contrato?->numero_formateado),
+                    ->description(fn (PagoContrato $record) => 'Contrato '.$record->contrato?->numero_formateado),
                 TextColumn::make('tipo')->label('Tipo')->badge()
                     ->state(fn (PagoContrato $record) => $record->anulado() ? 'Anulado' : $record->tipoEtiqueta())
                     ->color(fn (string $state) => match ($state) {

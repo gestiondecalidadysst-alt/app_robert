@@ -6,6 +6,7 @@ use App\Actions\Operacion\CrearContrato;
 use App\Filament\App\Resources\Contratos\ContratoResource;
 use App\Models\Contrato;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -23,7 +24,7 @@ class EditarContrato extends EditRecord
 
         // El texto del contrato emitido está congelado: para cambiar datos hay que anular el documento.
         if ($this->getRecord()->documentoActivo()) {
-            \Filament\Notifications\Notification::make()
+            Notification::make()
                 ->warning()
                 ->title('El contrato ya fue emitido')
                 ->body('Para cambiar sus datos, anule el documento en la pestaña «Documento y firma» y emítalo de nuevo.')

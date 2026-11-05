@@ -93,7 +93,7 @@ class UsuarioResource extends Resource
                         ->required(fn (string $operation, Get $get) => $operation === 'create' && ! self::esRolConductor($get('rol_id')))
                         ->dehydrated(fn (?string $state) => filled($state))
                         ->helperText(fn (string $operation, Get $get) => match (true) {
-                            self::esRolConductor($get('rol_id')) => 'Clave temporal del portal: el conductor la cambia al entrar. Déjela vacía para que el sistema genere una' . ($operation === 'edit' ? ' solo si quiere restablecerla.' : '.'),
+                            self::esRolConductor($get('rol_id')) => 'Clave temporal del portal: el conductor la cambia al entrar. Déjela vacía para que el sistema genere una'.($operation === 'edit' ? ' solo si quiere restablecerla.' : '.'),
                             $operation === 'create' => 'Mínimo 8 caracteres. Si el usuario ya existía, conserva su contraseña actual.',
                             default => 'Déjela vacía para no cambiarla.',
                         }),
@@ -109,7 +109,7 @@ class UsuarioResource extends Resource
                         ->label('Conductor')
                         ->helperText('Elija el conductor ya registrado en Conductores. Sus datos se copian abajo.')
                         ->options(fn (string $operation) => Conductor::query()->vinculados()->orderBy('nombres')->get()
-                            ->mapWithKeys(fn (Conductor $c) => [$c->id => $c->nombre_completo . ' · ' . $c->documento . ($c->user_id && $operation === 'create' ? ' (ya tiene acceso)' : '')]))
+                            ->mapWithKeys(fn (Conductor $c) => [$c->id => $c->nombre_completo.' · '.$c->documento.($c->user_id && $operation === 'create' ? ' (ya tiene acceso)' : '')]))
                         ->searchable()
                         ->required(fn (Get $get) => self::esRolConductor($get('rol_id')))
                         ->disabledOn('edit')
@@ -184,7 +184,7 @@ class UsuarioResource extends Resource
             ->columns([
                 ImageColumn::make('avatar_path')->label('')->disk('public')->circular()->imageSize(36),
                 TextColumn::make('name')->label('Nombre')->searchable()->sortable()->weight('bold')
-                    ->description(fn (User $record) => $record->email ?: 'Portal del conductor · ' . $record->documento),
+                    ->description(fn (User $record) => $record->email ?: 'Portal del conductor · '.$record->documento),
                 TextColumn::make('documento')->label('Documento')->searchable()->toggleable()->visibleFrom('lg'),
                 TextColumn::make('roles.name')->label('Rol')->badge()->color('primary'),
                 TextColumn::make('oficina')

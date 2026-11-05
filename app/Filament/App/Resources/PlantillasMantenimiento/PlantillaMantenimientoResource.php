@@ -16,6 +16,7 @@ use App\Support\Mantenimiento\PlanPreventivo;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -104,7 +105,7 @@ class PlantillaMantenimientoResource extends Resource
                         ->columns(['default' => 2, 'md' => 6])
                         ->itemLabel(fn (array $state) => $state['nombre'] ?? null)
                         ->collapsible()
-                        ->mutateRelationshipDataBeforeCreateUsing(fn (array $data, $livewire) => [...$data, 'empresa_id' => \Filament\Facades\Filament::getTenant()->id])
+                        ->mutateRelationshipDataBeforeCreateUsing(fn (array $data, $livewire) => [...$data, 'empresa_id' => Filament::getTenant()->id])
                         ->schema([
                             TextInput::make('nombre')->required()->maxLength(255)->columnSpan(['default' => 2, 'md' => 3]),
                             TextInput::make('intervalo_km')->label('Cada (km)')->numeric()->minValue(100)->maxValue(1000000)
@@ -150,12 +151,12 @@ class PlantillaMantenimientoResource extends Resource
                     ->schema([
                         Select::make('vehiculos')->label('Vehículos')->multiple()->searchable()->required()
                             ->options(fn () => Vehiculo::query()->enFlota()->orderBy('placa')->get()
-                                ->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa . ($v->plan_personalizado ? ' (plan personalizado)' : '')])),
+                                ->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa.($v->plan_personalizado ? ' (plan personalizado)' : '')])),
                     ])
                     ->modalDescription('Los vehículos elegidos siguen esta plantilla. Si tenían un plan personalizado, se reemplaza (su historial se conserva).')
                     ->action(function (PlantillaMantenimiento $record, array $data): void {
                         Vehiculo::query()->whereKey($data['vehiculos'])->get()->each(fn (Vehiculo $v) => PlanDeVehiculo::seguirPlantilla($v, $record));
-                        Notification::make()->success()->title(count($data['vehiculos']) . ' vehículo(s) siguen la plantilla «' . $record->nombre . '»')->send();
+                        Notification::make()->success()->title(count($data['vehiculos']).' vehículo(s) siguen la plantilla «'.$record->nombre.'»')->send();
                     }),
                 Action::make('duplicar')
                     ->label('Duplicar')
@@ -164,7 +165,7 @@ class PlantillaMantenimientoResource extends Resource
                     ->visible(fn () => auth()->user()?->can('crear_rutinas_mantenimiento'))
                     ->action(function (PlantillaMantenimiento $record, $livewire): void {
                         $copia = $record->replicate(['por_defecto']);
-                        $copia->nombre = $record->nombre . ' (copia)';
+                        $copia->nombre = $record->nombre.' (copia)';
                         $copia->por_defecto = false;
                         $copia->save();
                         foreach ($record->rutinas as $r) {

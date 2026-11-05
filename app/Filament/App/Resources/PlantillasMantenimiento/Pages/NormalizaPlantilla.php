@@ -19,6 +19,7 @@ trait NormalizaPlantilla
             $data['marca_id'] = null;
             $data['linea_id'] = null;
         }
+
         return $data;
     }
 

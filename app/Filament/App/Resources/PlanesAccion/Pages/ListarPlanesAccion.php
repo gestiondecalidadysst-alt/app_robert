@@ -23,8 +23,8 @@ class ListarPlanesAccion extends ListRecords
     {
         $vencidos = PlanAccion::query()->pendientes()->whereDate('fecha_limite', '<', today())->count();
 
-        return 'Pendientes: ' . PlanAccion::query()->pendientes()->count() . ' · vencidos: ' . $vencidos
-            . ' · por verificar: ' . PlanAccion::query()->where('estado', EstadoPlan::PorVerificar->value)->count();
+        return 'Pendientes: '.PlanAccion::query()->pendientes()->count().' · vencidos: '.$vencidos
+            .' · por verificar: '.PlanAccion::query()->where('estado', EstadoPlan::PorVerificar->value)->count();
     }
 
     public function getTabs(): array

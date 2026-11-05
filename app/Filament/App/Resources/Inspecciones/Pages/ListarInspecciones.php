@@ -30,7 +30,7 @@ class ListarInspecciones extends ListRecords
         $vehiculos = $hoy->pluck('vehiculo_id')->unique()->count();
         $noAptos = $hoy->groupBy('vehiculo_id')->filter(fn ($i) => ! $i->sortByDesc('id')->first()->apta())->count();
 
-        return "Hoy: {$vehiculos} vehículos con preoperacional · {$noAptos} no aptos · " . PendientesHoy::cantidad() . ' sin preoperacional';
+        return "Hoy: {$vehiculos} vehículos con preoperacional · {$noAptos} no aptos · ".PendientesHoy::cantidad().' sin preoperacional';
     }
 
     public function getTabs(): array

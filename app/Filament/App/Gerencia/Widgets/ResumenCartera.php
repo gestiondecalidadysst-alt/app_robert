@@ -33,11 +33,11 @@ class ResumenCartera extends StatsOverviewWidget
                 ->description(collect($this->seccion('pagosPorTipo'))->map(fn ($t) => $t['n'])->pipe(fn ($n) => "Pagos: {$n['abono']} abonos · {$n['abono_final']} abonos finales · {$n['total']} totales"))
                 ->icon('heroicon-o-document-text')->color('primary')->url(ContratoResource::getUrl()),
             Stat::make('Recaudado en el periodo', $p($c['recaudado']))
-                ->description('Hoy: ' . $p($c['recaudo_hoy']))
+                ->description('Hoy: '.$p($c['recaudo_hoy']))
                 ->icon('heroicon-o-banknotes')->color('success')
                 ->chart($this->seccion('serie')['recaudo']),
             Stat::make('Cartera por cobrar (a hoy)', $p($c['cartera']))
-                ->description("{$c['contratos_con_saldo']} contratos con saldo · vencida " . $p($c['cartera_vencida']))
+                ->description("{$c['contratos_con_saldo']} contratos con saldo · vencida ".$p($c['cartera_vencida']))
                 ->icon('heroicon-o-scale')->color($c['cartera_vencida'] > 0 ? 'danger' : 'success')
                 ->url(ContratoResource::getUrl('index', ['filters' => ['con_saldo' => ['value' => 1]]])),
             Stat::make('Contratos que terminan en 15 días', $c['contratos_por_vencer'])

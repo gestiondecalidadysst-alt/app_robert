@@ -26,7 +26,7 @@ final class FuecInfolist
             Callout::make('FUEC anulado')
                 ->danger()
                 ->columnSpanFull()
-                ->description(fn (Fuec $record) => $record->anulado_at?->timezone('America/Bogota')->format('d/m/Y h:i a') . ': ' . $record->motivo_anulacion)
+                ->description(fn (Fuec $record) => $record->anulado_at?->timezone('America/Bogota')->format('d/m/Y h:i a').': '.$record->motivo_anulacion)
                 ->visible(fn (Fuec $record) => $record->anulado()),
 
             Section::make()
@@ -36,8 +36,8 @@ final class FuecInfolist
                     TextEntry::make('numero')->label('FUEC No.')->fontFamily('mono')->weight('bold')->copyable()->columnSpan(2),
                     TextEntry::make('estado')->badge()->state(fn (Fuec $record) => $record->estado()),
                     TextEntry::make('vigencia')->label('Vigencia')
-                        ->state(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y') . ' – ' . $record->fecha_fin->format('d/m/Y'))
-                        ->helperText(fn (Fuec $record) => 'Horario: ' . $record->horario()->franjaTexto()),
+                        ->state(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y').' – '.$record->fecha_fin->format('d/m/Y'))
+                        ->helperText(fn (Fuec $record) => 'Horario: '.$record->horario()->franjaTexto()),
                     TextEntry::make('contrato')->label('Contrato')
                         ->state(fn (Fuec $record) => "{$record->datos['contrato']['numero']} · {$record->datos['contrato']['contratante']}")
                         ->url(fn (Fuec $record) => ContratoResource::getUrl('view', ['record' => $record->contrato_id]))
@@ -58,11 +58,11 @@ final class FuecInfolist
                 ->columns(['default' => 2, 'md' => 6])
                 ->schema([
                     TextEntry::make('datos.vehiculo.placa')->label('Placa')
-                        ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">' . e($state) . '</span>'))
+                        ->formatStateUsing(fn (string $state) => new HtmlString('<span class="ruta-placa">'.e($state).'</span>'))
                         ->url(fn (Fuec $record) => VehiculoResource::getUrl('view', ['record' => $record->vehiculo_id])),
                     TextEntry::make('datos.vehiculo.modelo')->label('Modelo'),
                     TextEntry::make('marca')->label('Marca')
-                        ->state(fn (Fuec $record) => trim(($record->datos['vehiculo']['marca'] ?? '') . ' ' . ($record->datos['vehiculo']['linea'] ?? ''))),
+                        ->state(fn (Fuec $record) => trim(($record->datos['vehiculo']['marca'] ?? '').' '.($record->datos['vehiculo']['linea'] ?? ''))),
                     TextEntry::make('datos.vehiculo.clase')->label('Clase'),
                     TextEntry::make('datos.vehiculo.numero_interno')->label('Interno')->placeholder('—'),
                     TextEntry::make('datos.vehiculo.tarjeta_operacion')->label('Tarjeta de operación')->placeholder('—'),
