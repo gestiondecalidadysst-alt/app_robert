@@ -8,6 +8,7 @@ use App\Filament\App\Resources\ManifiestosCarga\Pages\EditarManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\ListarManifiestos;
 use App\Filament\App\Resources\ManifiestosCarga\Schemas\ManifiestoCargaForm;
 use App\Models\ManifiestoCarga;
+use App\Models\RemesaCarga;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -74,6 +75,28 @@ class ManifiestoCargaResource extends Resource
             ])
             ->recordActions([
                 AccionesRndc::grupo(),
+                Action::make('remesas')->label('Remesas')->icon('heroicon-o-paper-clip')
+                    ->color(fn (ManifiestoCarga $m) => $m->remesas()->count() === 0 ? 'danger' : 'gray')
+                    ->modalHeading('Remesas del manifiesto')
+                    ->modalSubmitActionLabel('Asociar')
+                    ->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado')
+                    ->fillForm(fn (ManifiestoCarga $m) => ['remesas_ids' => $m->remesas()->pluck('id')->all()])
+                    ->schema([
+                        Select::make('remesas_ids')->label('Remesas')->multiple()->required()->searchable()->native(false)
+                            ->options(fn (ManifiestoCarga $m) => RemesaCarga::query()
+                                ->where(fn ($query) => $query->whereNull('manifiesto_id')->orWhere('manifiesto_id', $m->id))
+                                ->whereNull('anulado_at')->orderBy('id', 'desc')->limit(200)->get()
+                                ->mapWithKeys(fn ($r) => [$r->id => $r->numeroFormateado().' · '.$r->producto_descripcion]))
+                            ->helperText('Solo aparecen las remesas que aún no están en otro manifiesto.'),
+                    ])
+                    ->action(function (ManifiestoCarga $m, array $data): void {
+                        $ids = array_values(array_filter(array_map('intval', $data['remesas_ids'] ?? [])));
+                        RemesaCarga::query()->where('manifiesto_id', $m->id)->whereNotIn('id', $ids)->update(['manifiesto_id' => null]);
+                        RemesaCarga::query()->whereIn('id', $ids)->update(['manifiesto_id' => $m->id]);
+
+                        Notification::make()->success()->title('Remesas asociadas')
+                            ->body('Vuelva a descargar el PDF: ya saldrá la mercancía.')->send();
+                    }),
                 Action::make('pdf')->label('Manifiesto (PDF)')->icon('heroicon-o-document-arrow-down')
                     ->url(fn (ManifiestoCarga $m) => $m->urlPdf(), shouldOpenInNewTab: true),
                 EditAction::make()->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado'),

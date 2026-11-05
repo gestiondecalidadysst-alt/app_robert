@@ -5,6 +5,7 @@ namespace Tests\Feature\Carga;
 use App\Enums\ModuloEmpresa;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\CrearManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\EditarManifiesto;
+use App\Filament\App\Resources\ManifiestosCarga\Pages\ListarManifiestos;
 use App\Models\Conductor;
 use App\Models\ManifiestoCarga;
 use App\Models\Municipio;
@@ -14,6 +15,7 @@ use App\Models\TerceroCarga;
 use App\Models\TipoIdentificacion;
 use App\Models\Vehiculo;
 use App\Support\Pdf\PdfManifiestoCarga;
+use Filament\Actions\Testing\TestAction;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
@@ -146,5 +148,24 @@ class ManifiestoRemesasTest extends ConfiguracionTestCase
 
         $this->assertSame([$segunda->id], $manifiesto->fresh()->remesas()->pluck('id')->all());
         $this->assertNull($primera->fresh()->manifiesto_id);
+    }
+
+    public function test_la_accion_remesas_repara_un_manifiesto_sin_remesa(): void
+    {
+        $this->prepararEmpresa();
+        $remesa = $this->remesa('Panela en bloque');
+
+        $this->llenarAsistente(['remesas_ids' => [$remesa->id]])->assertHasNoFormErrors();
+        $manifiesto = ManifiestoCarga::query()->latest('id')->first();
+
+        // Simula el daño del código anterior: manifiesto expedido sin remesa.
+        $remesa->update(['manifiesto_id' => null]);
+        $this->assertSame(0, $manifiesto->remesas()->count());
+
+        Livewire::test(ListarManifiestos::class)
+            ->callAction(TestAction::make('remesas')->table($manifiesto), ['remesas_ids' => [$remesa->id]])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame([$remesa->id], $manifiesto->fresh()->remesas()->pluck('id')->all());
     }
 }
