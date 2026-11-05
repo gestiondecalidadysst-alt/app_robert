@@ -7,6 +7,7 @@ use App\Filament\App\Resources\ManifiestosCarga\ManifiestoCargaResource;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\CrearManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\EditarManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\ListarManifiestos;
+use App\Filament\App\Resources\RemesasCarga\Pages\CrearRemesa;
 use App\Models\Conductor;
 use App\Models\ManifiestoCarga;
 use App\Models\Municipio;
@@ -222,5 +223,41 @@ class ManifiestoRemesasTest extends ConfiguracionTestCase
         $this->llenarAsistente(['remesas_ids' => [$remesa->id]]);
 
         $this->assertSame(0, ManifiestoCarga::query()->count());
+    }
+
+    public function test_la_remesa_se_guarda_en_la_base_de_datos_desde_su_formulario(): void
+    {
+        $this->prepararEmpresa();
+        $cc = TipoIdentificacion::where('codigo', 'CC')->value('id');
+        $remitente = TerceroCarga::create(['empresa_id' => $this->demo->id, 'tipo_identificacion_id' => $cc,
+            'documento' => '77001', 'nombre' => 'Remitente', 'primer_apellido' => 'Uno', 'celular' => '3001234567',
+            'direccion' => 'Calle 1', 'municipio_id' => Municipio::where('codigo_dane', '23001')->value('id')]);
+        $destinatario = TerceroCarga::create(['empresa_id' => $this->demo->id, 'tipo_identificacion_id' => $cc,
+            'documento' => '77002', 'nombre' => 'Destinatario', 'primer_apellido' => 'Dos', 'celular' => '3001234567',
+            'direccion' => 'Calle 2', 'municipio_id' => Municipio::where('codigo_dane', '11001')->value('id')]);
+
+        Livewire::test(CrearRemesa::class)
+            ->fillForm([
+                'fecha' => today()->toDateString(),
+                'operacion' => 'G',
+                'naturaleza' => 1,
+                'producto_descripcion' => 'Fertilizante granulado',
+                'producto_codigo' => '001504',
+                'empaque_codigo' => '6',
+                'cantidad' => 18000,
+                'unidad' => 1,
+                'remitente_id' => $remitente->id,
+                'destinatario_id' => $destinatario->id,
+                'dueno_poliza' => 'N',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('remesas_carga', [
+            'empresa_id' => $this->demo->id,
+            'producto_descripcion' => 'Fertilizante granulado',
+            'cantidad' => 18000,
+            'manifiesto_id' => null,
+        ]);
     }
 }
