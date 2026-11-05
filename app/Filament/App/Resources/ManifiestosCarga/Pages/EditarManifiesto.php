@@ -1,29 +1,20 @@
 <?php
+
 namespace App\Filament\App\Resources\ManifiestosCarga\Pages;
+
 use App\Filament\App\Resources\ManifiestosCarga\ManifiestoCargaResource;
-use App\Models\RemesaCarga;
+use App\Filament\App\Resources\ManifiestosCarga\Pages\Concerns\AsociaRemesas;
 use Filament\Resources\Pages\EditRecord;
+
 class EditarManifiesto extends EditRecord
 {
+    use AsociaRemesas;
+
     protected static string $resource = ManifiestoCargaResource::class;
 
-    /** En edición el wizard también cierra con el botón «Expedir manifiesto»; ocultamos los de la página. */
+    /** En edición el asistente también cierra con su propio botón; ocultamos los de la página. */
     protected function getFormActions(): array
     {
         return [];
-    }
-
-    /** Al guardar: asocia las remesas elegidas (y suelta las que se quitaron). */
-    protected function afterSave(): void
-    {
-        $ids = $this->data['remesas_ids'] ?? [];
-        $record = $this->getRecord();
-        RemesaCarga::query()->where('manifiesto_id', $record->id)->whereNotIn('id', $ids)->update(['manifiesto_id' => null]);
-        RemesaCarga::query()->whereIn('id', $ids)->update(['manifiesto_id' => $record->id]);
-    }
-
-    protected function afterCreate(): void
-    {
-        $this->afterSave();
     }
 }

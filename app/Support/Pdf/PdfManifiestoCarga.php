@@ -2,8 +2,10 @@
 
 namespace App\Support\Pdf;
 
+use App\Enums\TipoDocumentoVehiculo;
 use App\Models\Empresa;
 use App\Models\ManifiestoCarga;
+use App\Support\NumeroEnLetras;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
@@ -14,7 +16,14 @@ final class PdfManifiestoCarga
 {
     public static function pdf(ManifiestoCarga $manifiesto): string
     {
-        $manifiesto->loadMissing(['origen.departamento', 'destino.departamento', 'municipioIntermedio.departamento', 'municipioPago.departamento',
+        return Pdf::loadHTML(self::html($manifiesto))->setPaper('letter', 'landscape')
+            ->setOption(['isFontSubsettingEnabled' => true, 'isRemoteEnabled' => false])->output();
+    }
+
+    /** HTML del manifiesto (separado del PDF para poder verificarlo en pruebas). */
+    public static function html(ManifiestoCarga $manifiesto): string
+    {
+        $manifiesto->load(['origen.departamento', 'destino.departamento', 'municipioIntermedio.departamento', 'municipioPago.departamento',
             'vehiculo.marca', 'vehiculo.propietario.tipoIdentificacion', 'vehiculo.propietario.municipio',
             'remolque', 'remolque2', 'conductor.tipoIdentificacion', 'conductor.municipio',
             'conductor2.tipoIdentificacion', 'conductor2.municipio',
@@ -24,7 +33,7 @@ final class PdfManifiestoCarga
         $empresa = Empresa::query()->with('municipio')->findOrFail($manifiesto->empresa_id);
 
         // SOAT del vehículo (número y vencimiento de los documentos; NIT desde el campo propio del vehículo).
-        $soat = $manifiesto->vehiculo?->documentoVigente(\App\Enums\TipoDocumentoVehiculo::Soat);
+        $soat = $manifiesto->vehiculo?->documentoVigente(TipoDocumentoVehiculo::Soat);
         $soat?->loadMissing('aseguradora');
 
         $html = view('pdf.manifiesto-carga', [
@@ -40,23 +49,22 @@ final class PdfManifiestoCarga
             'reteica' => $manifiesto->reteica(),
             'retefopat' => $manifiesto->retefopat(),
             'valor_neto' => $manifiesto->valorNeto(),
-            'valor_en_letras' => \App\Support\NumeroEnLetras::pesos((int) $manifiesto->valor_flete),
+            'valor_en_letras' => NumeroEnLetras::pesos((int) $manifiesto->valor_flete),
         ])->render();
 
-        return Pdf::loadHTML($html)->setPaper('letter', 'landscape')
-            ->setOption(['isFontSubsettingEnabled' => true, 'isRemoteEnabled' => false])->output();
+        return $html;
     }
 
     /** Logo oficial puesto por el superadministrador en resources/images (null si aún no está). */
     private static function oficial(string $archivo): ?string
     {
-        $ruta = resource_path('images/' . $archivo);
+        $ruta = resource_path('images/'.$archivo);
 
         return is_file($ruta) ? Imagenes::deArchivo($ruta) : null;
     }
 
     public static function nombre(ManifiestoCarga $m): string
     {
-        return 'manifiesto-' . $m->numeroFormateado() . '.pdf';
+        return 'manifiesto-'.$m->numeroFormateado().'.pdf';
     }
 }

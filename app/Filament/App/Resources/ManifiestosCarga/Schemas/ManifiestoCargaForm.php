@@ -10,14 +10,16 @@ use App\Models\RemesaCarga;
 use App\Models\Remolque;
 use App\Models\TerceroCarga;
 use App\Models\Vehiculo;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -66,10 +68,10 @@ final class ManifiestoCargaForm
                     ->getOptionLabelFromRecordUsing(fn (Municipio $m) => $m->nombre_completo)
                     ->placeholder('Si pasa por un punto intermedio relevante.')
                     ->columnSpanFull(),
-                \Filament\Forms\Components\Textarea::make('via_utilizar')->label('Vía a utilizar (opcional)')->rows(2)->maxLength(300)
+                Textarea::make('via_utilizar')->label('Vía a utilizar (opcional)')->rows(2)->maxLength(300)
                     ->placeholder('Describa la ruta, por ejemplo: «Se cambia paso por Calarcá, Pereira, Cartago».')
                     ->columnSpanFull(),
-                \Filament\Forms\Components\Repeater::make('trayectos_vacio')
+                Repeater::make('trayectos_vacio')
                     ->label('Trayectos en vacío (opcional)')
                     ->helperText('Tramos que el vehículo recorre sin carga. El formato del Ministerio admite hasta dos.')
                     ->maxItems(2)
@@ -99,9 +101,9 @@ final class ManifiestoCargaForm
             ->schema([
                 Select::make('vehiculo_id')->label('Vehículo (camión o tractocamión)')->required()->searchable()->native(false)
                     ->options(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->orderBy('placa')
-                        ->get()->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa . ($v->marca?->nombre ? ' · ' . $v->marca->nombre : '')]))
+                        ->get()->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->placa.($v->marca?->nombre ? ' · '.$v->marca->nombre : '')]))
                     ->placeholder(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->exists() ? 'Seleccione el vehículo…' : 'No hay vehículos de carga: complete la pestaña «Carga (RNDC)» en un vehículo.')
-                    ->hint(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->exists() ? null : new \Illuminate\Support\HtmlString('<a href="/app/' . \Filament\Facades\Filament::getTenant()?->slug . '/vehiculos" target="_blank" style="color:#ea6a2c;font-weight:500">Ir a vehículos ↗</a>'))
+                    ->hint(fn () => Vehiculo::query()->whereNotNull('rndc_configuracion')->exists() ? null : new HtmlString('<a href="/app/'.Filament::getTenant()?->slug.'/vehiculos" target="_blank" style="color:#ea6a2c;font-weight:500">Ir a vehículos ↗</a>'))
                     ->helperText('Solo aparecen los vehículos a los que ya se les llenó la pestaña «Carga (RNDC)» (configuración, peso vacío, marca, línea, color, carrocería, combustible, tenedor y SOAT).'),
                 Select::make('remolque_id')->label('Remolque o semirremolque (si aplica)')->searchable()->native(false)
                     ->options(fn () => Remolque::query()->where('activo', true)->orderBy('placa')
@@ -111,18 +113,18 @@ final class ManifiestoCargaForm
                         ->get()->mapWithKeys(fn (Remolque $r) => [$r->id => $r->placa])),
                 Select::make('conductor_id')->label('Conductor principal')->required()->searchable()->native(false)
                     ->options(fn () => Conductor::query()->vinculados()->orderBy('nombres')->get()
-                        ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo . ' · CC ' . $c->documento])),
+                        ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo.' · CC '.$c->documento])),
                 Select::make('conductor_2_id')->label('Segundo conductor (viajes largos, opcional)')->searchable()->native(false)
                     ->options(fn () => Conductor::query()->vinculados()->orderBy('nombres')->get()
-                        ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo . ' · CC ' . $c->documento])),
+                        ->mapWithKeys(fn ($c) => [$c->id => $c->nombre_completo.' · CC '.$c->documento])),
                 Select::make('titular_propietario_id')->label('Titular: propietario o tenedor')->searchable()->native(false)
                     ->helperText('El titular del manifiesto puede ser el propietario o tenedor del vehículo, o un tercero. Elija solo uno de los dos.')
                     ->options(fn () => Propietario::query()->where('activo', true)->orderBy('nombres')->get()
-                        ->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo . ' · ' . $p->documento])),
+                        ->mapWithKeys(fn ($p) => [$p->id => $p->nombre_completo.' · '.$p->documento])),
                 Select::make('titular_tercero_id')->label('Titular: tercero (titular en comisión)')->searchable()->native(false)
                     ->helperText('Solo si el titular no es propietario ni tenedor del vehículo.')
                     ->options(fn () => TerceroCarga::query()->where('activo', true)->orderBy('nombre')->get()
-                        ->mapWithKeys(fn ($t) => [$t->id => $t->nombre_completo . ' · ' . $t->documento])),
+                        ->mapWithKeys(fn ($t) => [$t->id => $t->nombre_completo.' · '.$t->documento])),
             ])
             ->afterValidation(function (array $state): void {
                 if (blank($state['titular_propietario_id'] ?? null) && blank($state['titular_tercero_id'] ?? null)) {
@@ -144,11 +146,16 @@ final class ManifiestoCargaForm
                     ->options(fn ($record) => RemesaCarga::query()
                         ->where(fn ($q) => $q->whereNull('manifiesto_id')->orWhere('manifiesto_id', $record?->id))
                         ->whereNull('anulado_at')->orderBy('id', 'desc')->limit(200)->get()
-                        ->mapWithKeys(fn ($r) => [$r->id => $r->numeroFormateado() . ' · ' . $r->producto_descripcion
-                            . ($r->cantidad ? ' · ' . number_format($r->cantidad, 0, ',', '.') . ' ' . ($r->unidad === 2 ? 'gal' : 'kg') : '')]))
-                    ->default(fn ($record) => $record?->remesas->pluck('id')->all() ?? [])
-                    ->dehydrated(false)
-                    ->afterStateHydrated(fn ($component, $record) => $component->state($record?->remesas->pluck('id')->all() ?? []))
+                        ->mapWithKeys(fn ($r) => [$r->id => $r->numeroFormateado().' · '.$r->producto_descripcion
+                            .($r->cantidad ? ' · '.number_format($r->cantidad, 0, ',', '.').' '.($r->unidad === 2 ? 'gal' : 'kg') : '')]))
+                    // Se rellena desde las remesas ya asociadas, pero nunca pisa lo que el usuario acaba de marcar.
+                    ->afterStateHydrated(function ($component, $state, $record): void {
+                        if (filled($state)) {
+                            return;
+                        }
+
+                        $component->state($record?->remesas->pluck('id')->all() ?? []);
+                    })
                     ->helperText('Marque una o más remesas. Solo aparecen las que aún no están en otro manifiesto.')
                     ->columnSpanFull(),
             ])

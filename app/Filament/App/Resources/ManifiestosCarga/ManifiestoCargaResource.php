@@ -11,6 +11,7 @@ use App\Models\ManifiestoCarga;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -54,9 +55,11 @@ class ManifiestoCargaResource extends Resource
             ->columns([
                 TextColumn::make('numero')->label('No.')->formatStateUsing(fn (ManifiestoCarga $m) => $m->numeroFormateado())->weight('bold'),
                 TextColumn::make('fecha_expedicion')->label('Fecha')->date('d/m/Y'),
-                TextColumn::make('ruta')->label('Ruta')->state(fn (ManifiestoCarga $m) => ($m->origen?->nombre ?? '—') . ' → ' . ($m->destino?->nombre ?? '—')),
+                TextColumn::make('ruta')->label('Ruta')->state(fn (ManifiestoCarga $m) => ($m->origen?->nombre ?? '—').' → '.($m->destino?->nombre ?? '—')),
                 TextColumn::make('vehiculo.placa')->label('Vehículo')->description(fn (ManifiestoCarga $m) => $m->conductor?->nombre_completo),
-                TextColumn::make('remesas_count')->label('Remesas')->counts('remesas')->badge(),
+                TextColumn::make('remesas_count')->label('Remesas')->counts('remesas')->badge()
+                    ->color(fn ($state) => (int) $state === 0 ? 'danger' : 'success')
+                    ->tooltip(fn ($state) => (int) $state === 0 ? 'Este manifiesto no tiene remesa: edítelo y marque una.' : null),
                 TextColumn::make('valor_flete')->label('Flete')->numeric(thousandsSeparator: '.')->prefix('$ ')->alignEnd(),
                 AccionesRndc::columnaEstado(),
                 TextColumn::make('anulado_at')->label('Anulado')->dateTime('d/m/Y')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
@@ -76,7 +79,7 @@ class ManifiestoCargaResource extends Resource
                 EditAction::make()->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado'),
                 Action::make('anular')->label('Anular')->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
                     ->visible(fn (ManifiestoCarga $m) => auth()->user()?->can('anular_manifiestos_carga') && ! $m->anulado())
-                    ->schema([\Filament\Forms\Components\Select::make('motivo')->options(['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'])->required()])
+                    ->schema([Select::make('motivo')->options(['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'])->required()])
                     ->action(function (ManifiestoCarga $m, array $data): void {
                         $m->update(['anulado_at' => now(), 'motivo_anulacion' => $data['motivo']]);
                         Notification::make()->success()->title('Manifiesto anulado')->body('Reporte la anulación al RNDC (proceso 32) cuando esté disponible.')->send();
