@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\ManifiestosCarga;
 
 use App\Filament\App\Carga\AccionesRndc;
+use App\Filament\App\Carga\AnularConRndc;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\CrearManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\EditarManifiesto;
 use App\Filament\App\Resources\ManifiestosCarga\Pages\ListarManifiestos;
@@ -128,13 +129,7 @@ class ManifiestoCargaResource extends Resource
                 // modal la barra de pasos se corta y aparecen dos juegos de botones.
                 EditAction::make()->url(fn (ManifiestoCarga $m) => EditarManifiesto::getUrl(['record' => $m]))
                     ->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado'),
-                Action::make('anular')->label('Anular')->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
-                    ->visible(fn (ManifiestoCarga $m) => auth()->user()?->can('anular_manifiestos_carga') && ! $m->anulado())
-                    ->schema([Select::make('motivo')->options(['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'])->required()])
-                    ->action(function (ManifiestoCarga $m, array $data): void {
-                        $m->update(['anulado_at' => now(), 'motivo_anulacion' => $data['motivo']]);
-                        Notification::make()->success()->title('Manifiesto anulado')->body('Reporte la anulación al RNDC (proceso 32) cuando esté disponible.')->send();
-                    }),
+                AnularConRndc::manifiesto(),
             ]);
     }
 

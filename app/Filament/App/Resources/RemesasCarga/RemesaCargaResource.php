@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\RemesasCarga;
 
 use App\Filament\App\Carga\AccionesRndc;
+use App\Filament\App\Carga\AnularConRndc;
 use App\Filament\App\Resources\RemesasCarga\Pages\CrearRemesa;
 use App\Filament\App\Resources\RemesasCarga\Pages\EditarRemesa;
 use App\Filament\App\Resources\RemesasCarga\Pages\ListarRemesas;
@@ -105,13 +106,7 @@ class RemesaCargaResource extends Resource
                         );
                         Notification::make()->success()->title('Cumplido guardado')->body('Envíe al RNDC desde la bitácora cuando esté todo listo.')->send();
                     }),
-                Action::make('anular')->label('Anular')->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
-                    ->visible(fn (RemesaCarga $r) => auth()->user()?->can('anular_remesas_carga') && ! $r->anulado() && ! $r->manifiesto_id)
-                    ->schema([Textarea::make('motivo')->required()->maxLength(200)])
-                    ->action(function (RemesaCarga $r, array $data): void {
-                        $r->update(['anulado_at' => now(), 'motivo_anulacion' => $data['motivo']]);
-                        Notification::make()->success()->title('Remesa anulada')->body('Reporte la anulación al RNDC (proceso 9) cuando esté disponible.')->send();
-                    }),
+                AnularConRndc::remesa(),
             ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\PerteneceAEmpresa;
 use App\Models\Concerns\SeRegistraEnRndc;
+use App\Services\Rndc\AnulableRndc;
 use App\Services\Rndc\RegistrableRndc;
 use App\Support\Carga\CatalogoRndc as C;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Support\Str;
  * Remesa terrestre de carga (RNDC, proceso 3). Lleva el remitente, destinatario, mercancía y
  * horarios; se envía con todos sus datos (sin la información de carga previa, opcional).
  */
-class RemesaCarga extends Model implements RegistrableRndc
+class RemesaCarga extends Model implements AnulableRndc, RegistrableRndc
 {
     use PerteneceAEmpresa, SeRegistraEnRndc;
 
@@ -78,6 +79,71 @@ class RemesaCarga extends Model implements RegistrableRndc
     public function anulado(): bool
     {
         return $this->anulado_at !== null;
+    }
+
+    // ---- Anulación ante el RNDC (proceso 9) -------------------------------------------------
+
+    /** Motivos que admite el RNDC para anular. */
+    public const MOTIVOS_ANULACION = ['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'];
+
+    /** Causas de transbordo cuando la remesa se libera de un manifiesto. */
+    public const MOTIVOS_TRANSBORDO = ['A' => 'Accidente', 'V' => 'Varada', 'S' => 'Siniestro'];
+
+    public function procesoAnulacionRndc(): int
+    {
+        return 9;
+    }
+
+    public function variablesAnulacionRndc(Empresa $empresa, array $datos): array
+    {
+        // [A] anula la remesa; [L] solo la libera del manifiesto, para un transbordo.
+        $reversa = ($datos['reversa'] ?? 'A') === 'L' ? 'L' : 'A';
+
+        $variables = [
+            'NUMNITEMPRESATRANSPORTE' => C::digitos($empresa->nit),
+            'CONSECUTIVOREMESA' => str_pad((string) $this->numero, 4, '0', STR_PAD_LEFT),
+            'MOTIVOREVERSAREMESA' => $reversa,
+            'MOTIVOANULACIONREMESA' => ($datos['motivo'] ?? 'D') === 'S' ? 'S' : 'D',
+        ];
+
+        if ($reversa === 'L') {
+            $municipio = Municipio::find($datos['municipio_transbordo_id'] ?? null);
+            $variables['CODMUNICIPIOTRANSBORDO'] = $municipio ? C::municipio($municipio->codigo_dane) : '';
+            $variables['MOTIVOTRANSBORDOREMESA'] = in_array($datos['motivo_transbordo'] ?? null, ['A', 'V', 'S'], true)
+                ? $datos['motivo_transbordo'] : 'V';
+        }
+
+        return array_filter($variables, fn ($v) => $v !== '' && $v !== null);
+    }
+
+    public function pendientesAnulacionRndc(array $datos): array
+    {
+        $errores = [];
+        $reversa = $datos['reversa'] ?? 'A';
+
+        if ($this->estadoRndc() === 'pendiente') {
+            $errores[] = 'Esta remesa no está radicada en el RNDC: anúlela solo aquí.';
+        }
+
+        // El manual: solo se anulan remesas que no están en un manifiesto; las que sí
+        // están se liberan (transbordo).
+        if ($reversa === 'A' && $this->manifiesto_id) {
+            $errores[] = 'La remesa va en un manifiesto: el RNDC solo permite liberarla (transbordo). Anule antes el manifiesto.';
+        }
+
+        if ($reversa === 'L' && ! $this->manifiesto_id) {
+            $errores[] = 'Solo se libera una remesa que esté en un manifiesto.';
+        }
+
+        if ($reversa === 'L' && blank($datos['municipio_transbordo_id'] ?? null)) {
+            $errores[] = 'Indique el municipio donde se hace el transbordo.';
+        }
+
+        if ($this->cumplido()->exists()) {
+            $errores[] = 'La remesa ya tiene cumplido: el RNDC no permite anularla.';
+        }
+
+        return $errores;
     }
 
     public function numeroFormateado(): string

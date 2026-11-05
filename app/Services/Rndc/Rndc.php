@@ -100,6 +100,43 @@ final class Rndc
         ]);
     }
 
+    /**
+     * Anula (o libera, en un transbordo) un documento ya radicado en el RNDC.
+     *
+     * @param  array<string, mixed>  $datos
+     */
+    public function anular(AnulableRndc&Model $documento, array $datos, ?User $usuario = null, ?ClienteRndc $cliente = null): RegistroRndc
+    {
+        $empresa = Empresa::findOrFail($documento->empresa_id);
+
+        if (! self::conectado($empresa)) {
+            throw ValidationException::withMessages(['rndc' => 'La conexión con el RNDC no está activa (Configuración → Integraciones). Anule en la web del RNDC y anote aquí el radicado.']);
+        }
+
+        if ($errores = $documento->pendientesAnulacionRndc($datos)) {
+            throw ValidationException::withMessages(['rndc' => $errores]);
+        }
+
+        $proceso = $documento->procesoAnulacionRndc();
+        $variables = $documento->variablesAnulacionRndc($empresa, $datos);
+        $respuesta = ($cliente ?? new ClienteRndc($empresa))->enviar(1, $proceso, $variables);
+
+        return RegistroRndc::query()->create([
+            'empresa_id' => $empresa->id,
+            'registrable_type' => $documento->getMorphClass(),
+            'registrable_id' => $documento->getKey(),
+            'proceso' => $proceso,
+            'estado' => $respuesta->ok() ? 'registrado' : 'error',
+            'ingresoid' => $respuesta->ingresoid,
+            'ambiente' => $empresa->rndc_ambiente,
+            'variables' => $variables,
+            'respuesta' => mb_substr($respuesta->crudo, 0, 5000),
+            'errores' => $respuesta->errores ?: null,
+            'user_id' => $usuario?->id ?? auth()->id(),
+            'duracion_ms' => $respuesta->duracionMs,
+        ]);
+    }
+
     /** XML que se enviaría (sin la clave), para revisar o cargar en la herramienta de pruebas del RNDC. */
     public static function xml(RegistrableRndc&Model $registro): string
     {

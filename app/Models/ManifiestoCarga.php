@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\PerteneceAEmpresa;
 use App\Models\Concerns\SeRegistraEnRndc;
+use App\Services\Rndc\AnulableRndc;
 use App\Services\Rndc\RegistrableRndc;
 use App\Support\Carga\AsociadorDeRemesas;
 use App\Support\Carga\CatalogoRndc as C;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
  * Manifiesto electrónico de carga (RNDC, proceso 4). Consecutivo único por empresa, lleva una o más
  * remesas; el flete pactado se compara con el SICE-TAC (obligatorio por el Decreto 1017/2025).
  */
-class ManifiestoCarga extends Model implements RegistrableRndc
+class ManifiestoCarga extends Model implements AnulableRndc, RegistrableRndc
 {
     use PerteneceAEmpresa, SeRegistraEnRndc;
 
@@ -101,6 +102,49 @@ class ManifiestoCarga extends Model implements RegistrableRndc
     public function getRemesasIdsAttribute(): array
     {
         return $this->remesasElegidas ?? ($this->exists ? $this->remesas()->pluck('id')->all() : []);
+    }
+
+    // ---- Anulación ante el RNDC (proceso 32) ------------------------------------------------
+
+    /** Motivos que admite el RNDC para anular un manifiesto. */
+    public const MOTIVOS_ANULACION = ['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'];
+
+    public function procesoAnulacionRndc(): int
+    {
+        return 32;
+    }
+
+    public function variablesAnulacionRndc(Empresa $empresa, array $datos): array
+    {
+        return [
+            'NUMNITEMPRESATRANSPORTE' => C::digitos($empresa->nit),
+            'NUMMANIFIESTOCARGA' => str_pad((string) $this->numero, 4, '0', STR_PAD_LEFT),
+            'MOTIVOANULACIONMANIFIESTO' => ($datos['motivo'] ?? 'D') === 'S' ? 'S' : 'D',
+        ];
+    }
+
+    public function pendientesAnulacionRndc(array $datos): array
+    {
+        $errores = [];
+
+        if ($this->estadoRndc() === 'pendiente') {
+            $errores[] = 'Este manifiesto no está radicado en el RNDC: anúlelo solo aquí.';
+        }
+
+        // Manual: solo se anulan manifiestos no cumplidos y cuyas remesas tampoco lo estén.
+        if ($this->cumplido()->exists()) {
+            $errores[] = 'El manifiesto ya tiene cumplido: el RNDC no permite anularlo.';
+        }
+
+        $cumplidas = $this->remesas()->whereHas('cumplido')->count();
+
+        if ($cumplidas > 0) {
+            $errores[] = $cumplidas === 1
+                ? 'Una de sus remesas ya está cumplida: el RNDC no permite anular el manifiesto.'
+                : "{$cumplidas} de sus remesas ya están cumplidas: el RNDC no permite anular el manifiesto.";
+        }
+
+        return $errores;
     }
 
     public function origen(): BelongsTo
