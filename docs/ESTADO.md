@@ -31,7 +31,8 @@
 - [x] **Módulos por empresa** (fase 0 de carga): cada empresa ve solo lo contratado. Detalle en `nuevo/modulos/modulos-empresa.md`.
 - [x] **Carga, fase 1 – datos maestros del RNDC:** terceros, remolques, datos de carga del vehículo, registro por web service (listo, sin conectar), ficha PDF y bitácora. Detalle en `nuevo/modulos/carga.md`.
 - [x] **Carga, fase 2 – remesas y manifiestos:** expedición con consecutivos propios, PDF del manifiesto con QR verificable, anulación con motivos del RNDC. Detalle en `nuevo/modulos/carga.md`.
-- [ ] **Carga, fases 3 y 4:** cumplidos (tiempos logísticos) y anulaciones reportadas al RNDC. Pendiente: usuario del RNDC de la empresa y confirmar el formato del web service en la primera conexión.
+- [x] **Carga, fase 3 – cumplidos:** cumplir remesas y manifiestos con tiempos reales y ajustes al pago; validaciones del manual v2.3; neto a pagar al titular. Detalle en `nuevo/modulos/carga.md`.
+- [ ] **Carga, fase 4 (y 5):** anulaciones reportadas al RNDC (procesos 7-9, 32) y tiempos logísticos desde el celular. Pendiente: usuario del RNDC de la empresa y confirmar el formato del web service en la primera conexión.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 

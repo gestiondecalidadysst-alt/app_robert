@@ -232,3 +232,7 @@ Todas las tablas de negocio llevan `empresa_id` (multiempresa). Catálogos nacio
 ## Módulo de carga, fase 2 (`2026_11_05_200001_create_remesas_manifiestos.php`)
 - **`remesas_carga`:** consecutivo (único por empresa), fecha, operación, naturaleza, producto (código y descripción), cantidad y unidad, peso contenedor vacío; remitente y destinatario (terceros); póliza (tomador, número, vencimiento, aseguradora); horas y minutos pactados y reales de cargue; manifiesto asociado; código de verificación; anulación con motivo.
 - **`manifiestos_carga`:** consecutivo (único por empresa), tipo, fecha de expedición, origen y destino (municipios); vehículo, remolque y conductor; titular (propietario o tercero); valor del flete, SICE-TAC mínimo, retención fuente %, reteica x1000, anticipo; responsable de cargue y descargue; municipio y fecha de pago del saldo; observaciones; código de verificación; anulación con motivo del RNDC (D o S).
+
+## Módulo de carga, fase 3 (`2026_11_05_300001_create_cumplidos_carga.php`)
+- **`cumplidos_remesa`:** remesa (único), tipo (C o S), motivo de suspensión, cantidad entregada, llegada, entrada y salida de descargue, observaciones, usuario.
+- **`cumplidos_manifiesto`:** manifiesto (único), tipo, motivo y consecuencia de suspensión, fecha de entrega de documentos, valores adicionales (cargue, descargue, flete) con motivo, descuento al flete con motivo, sobreanticipo, observaciones, usuario.

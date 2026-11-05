@@ -257,6 +257,16 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         return $this->hasMany(ManifiestoCarga::class);
     }
 
+    public function cumplidosRemesa(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CumplidoRemesa::class);
+    }
+
+    public function cumplidosManifiesto(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CumplidoManifiesto::class);
+    }
+
     public function tieneModulo(\App\Enums\ModuloEmpresa $modulo): bool
     {
         return in_array($modulo->value, $this->modulos ?? \App\Enums\ModuloEmpresa::porDefecto(), true);

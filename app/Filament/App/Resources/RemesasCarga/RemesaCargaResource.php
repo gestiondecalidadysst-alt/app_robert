@@ -68,6 +68,38 @@ class RemesaCargaResource extends Resource
             ->recordActions([
                 AccionesRndc::grupo(),
                 EditAction::make()->visible(fn (RemesaCarga $r) => ! $r->manifiesto_id && ! $r->anulado()),
+                Action::make('cumplir')->label('Cumplir / Tiempos')->icon('heroicon-o-check-circle')->color('success')
+                    ->visible(fn (RemesaCarga $r) => auth()->user()?->can('crear_cumplidos_carga') && ! $r->anulado())
+                    ->fillForm(fn (RemesaCarga $r) => [
+                        'tipo' => $r->cumplido?->tipo ?? 'C',
+                        'motivo_suspension' => $r->cumplido?->motivo_suspension,
+                        'cantidad_entregada' => $r->cumplido?->cantidad_entregada ?? $r->cantidad,
+                        'llegada_descargue' => $r->cumplido?->llegada_descargue,
+                        'entrada_descargue' => $r->cumplido?->entrada_descargue,
+                        'salida_descargue' => $r->cumplido?->salida_descargue,
+                        'observaciones' => $r->cumplido?->observaciones,
+                    ])
+                    ->schema([
+                        \Filament\Forms\Components\Select::make('tipo')->options(\App\Models\CumplidoRemesa::TIPOS)->default('C')->required()->live(),
+                        \Filament\Forms\Components\Select::make('motivo_suspension')->options(\App\Models\CumplidoRemesa::MOTIVOS_SUSPENSION)
+                            ->visible(fn ($get) => $get('tipo') === 'S')->required(fn ($get) => $get('tipo') === 'S'),
+                        \Filament\Forms\Components\DateTimePicker::make('llegada_descargue')->label('Llegada al descargue')->seconds(false)
+                            ->required(fn ($get) => $get('tipo') !== 'S')->hidden(fn ($get) => $get('tipo') === 'S'),
+                        \Filament\Forms\Components\DateTimePicker::make('entrada_descargue')->label('Entrada al descargue')->seconds(false)
+                            ->required(fn ($get) => $get('tipo') !== 'S')->hidden(fn ($get) => $get('tipo') === 'S'),
+                        \Filament\Forms\Components\DateTimePicker::make('salida_descargue')->label('Salida del descargue')->seconds(false)
+                            ->required(fn ($get) => $get('tipo') !== 'S')->hidden(fn ($get) => $get('tipo') === 'S'),
+                        \Filament\Forms\Components\TextInput::make('cantidad_entregada')->numeric()->minValue(0)
+                            ->hidden(fn ($get) => $get('tipo') === 'S'),
+                        \Filament\Forms\Components\Textarea::make('observaciones')->rows(2)->maxLength(200),
+                    ])
+                    ->action(function (RemesaCarga $r, array $data): void {
+                        \App\Models\CumplidoRemesa::updateOrCreate(
+                            ['remesa_id' => $r->id],
+                            ['empresa_id' => $r->empresa_id, 'user_id' => auth()->id(), ...$data]
+                        );
+                        \Filament\Notifications\Notification::make()->success()->title('Cumplido guardado')->body('Envíe al RNDC desde la bitácora cuando esté todo listo.')->send();
+                    }),
                 Action::make('anular')->label('Anular')->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
                     ->visible(fn (RemesaCarga $r) => auth()->user()?->can('anular_remesas_carga') && ! $r->anulado() && ! $r->manifiesto_id)
                     ->schema([\Filament\Forms\Components\Textarea::make('motivo')->required()->maxLength(200)])

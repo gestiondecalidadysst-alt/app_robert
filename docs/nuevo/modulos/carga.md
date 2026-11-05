@@ -82,10 +82,34 @@ En `/admin`, Empresas → Módulos contratados, al marcar **Carga (RNDC)** se el
 
 **Pruebas:** `tests/Feature/Carga/RemesasManifiestosTest.php` (8).
 
+## Fase 3 – Cumplidos y tiempos reales
+**Estado:** construida el 2026-11-05.
+
+**Qué se registra:**
+- **Cumplido de remesa** (proceso 5): tiempos reales de descargue (llegada, entrada y salida), cantidad entregada; o suspensión con motivo (A/V/S). La acción **Cumplir / Tiempos** aparece en cada remesa.
+- **Cumplido de manifiesto** (proceso 6): fecha de entrega de documentos, tipo (C normal o S suspensión con motivo y consecuencia), y ajustes al pago:
+  - adicionales por cargue, descargue o flete, con motivo (C merma, R variación de ruta, O otro);
+  - descuento al flete, con motivo (F faltante, D deterioro, C merma, V viaje incompleto);
+  - sobreanticipo.
+- **Neto a pagar** al titular: se recalcula automáticamente (flete ± adicionales − descuento − anticipo − sobreanticipo − retefuente − reteica).
+
+**Reglas del manual:**
+- El cumplido del manifiesto exige que todas sus remesas estén cumplidas en el RNDC.
+- En suspensión no se reportan los tiempos (ni cantidad entregada).
+- Fecha de entrega de documentos no puede ser futura.
+- Sobreanticipo ≤ saldo neto.
+- Cantidad entregada ≤ cantidad cargada.
+
+**Pantallas:** Carga → **Cumplidos** (de manifiesto) y la acción **Cumplir / Tiempos** en cada remesa. El envío al RNDC va por el menú RNDC estándar (`crear_rndc`), la ficha PDF y el "Ver XML" también funcionan para los cumplidos.
+
+**Portal del conductor:** por ahora los tiempos los registra la oficina. Un paso siguiente es el botón del celular ("Llegué", "Entré", "Salí") en el portal; queda para después porque el portal actual maneja FUEC de pasajeros.
+
+**Pruebas:** `tests/Feature/Carga/CumplidosTest.php` (5).
+
 ## Siguientes fases
  (información de carga y de viaje, procesos 1 a 4), con PDF del manifiesto y control frente al SICE-TAC.
-3. Cumplidos (procesos 5 y 6) y tiempos logísticos.
-4. Anulaciones (7, 8, 9 y 32), contingencia y tablero.
+4. Anulaciones (7, 8, 9 y 32) reportadas al RNDC, contingencia y tablero del módulo.
+5. Tiempos logísticos desde el celular (portal del conductor para carga).
 
 ## Código
 - Modelos: `TerceroCarga`, `Remolque` y `RegistroRndc`. `Propietario`, `Conductor` y `Vehiculo` implementan `RegistrableRndc`, con el trait `SeRegistraEnRndc`.

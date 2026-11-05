@@ -57,6 +57,7 @@ class RemesaCarga extends Model implements RegistrableRndc
     public function remitente(): BelongsTo { return $this->belongsTo(TerceroCarga::class, 'remitente_id'); }
     public function destinatario(): BelongsTo { return $this->belongsTo(TerceroCarga::class, 'destinatario_id'); }
     public function manifiesto(): BelongsTo { return $this->belongsTo(ManifiestoCarga::class, 'manifiesto_id'); }
+    public function cumplido(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(CumplidoRemesa::class, 'remesa_id'); }
 
     public function anulado(): bool { return $this->anulado_at !== null; }
 

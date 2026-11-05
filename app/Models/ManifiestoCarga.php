@@ -60,6 +60,7 @@ class ManifiestoCarga extends Model implements RegistrableRndc
     public function titularPropietario(): BelongsTo { return $this->belongsTo(Propietario::class, 'titular_propietario_id')->withoutGlobalScopes(); }
     public function titularTercero(): BelongsTo { return $this->belongsTo(TerceroCarga::class, 'titular_tercero_id'); }
     public function remesas(): HasMany { return $this->hasMany(RemesaCarga::class, 'manifiesto_id'); }
+    public function cumplido(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(CumplidoManifiesto::class, 'manifiesto_id'); }
 
     /** El titular del manifiesto puede ser el propietario (persona natural o jurídica) o un tercero. */
     public function titular(): Propietario|TerceroCarga|null
