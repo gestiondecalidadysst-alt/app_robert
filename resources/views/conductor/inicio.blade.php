@@ -97,5 +97,18 @@
     @endforeach
 @endif
 
+@if ($manifiestosCarga)
+    <div class="tarjeta hoy">
+        <div class="fila">
+            <h2 style="margin:0">Carga</h2>
+            <span class="estado pend">{{ $manifiestosCarga }}</span>
+        </div>
+        <div class="dato">Reporte la llegada, la entrada y la salida en el cargue y el descargue. El Ministerio los exige en tiempo real.</div>
+        <div class="botones">
+            <a class="boton" href="{{ route('conductor.carga') }}">Reportar tiempos de carga</a>
+        </div>
+    </div>
+@endif
+
 <div class="pie"><a class="enlace" href="{{ route('conductor.clave') }}">Cambiar mi clave</a></div>
 @endsection

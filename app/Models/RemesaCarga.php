@@ -9,6 +9,7 @@ use App\Services\Rndc\RegistrableRndc;
 use App\Support\Carga\CatalogoRndc as C;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
@@ -74,6 +75,12 @@ class RemesaCarga extends Model implements AnulableRndc, RegistrableRndc
     public function cumplido(): HasOne
     {
         return $this->hasOne(CumplidoRemesa::class, 'remesa_id');
+    }
+
+    /** Llegada, entrada y salida en cargue y descargue (tiempos logísticos). */
+    public function tiemposLogisticos(): HasMany
+    {
+        return $this->hasMany(TiempoLogistico::class, 'remesa_id')->orderBy('ocurrido_at');
     }
 
     public function anulado(): bool

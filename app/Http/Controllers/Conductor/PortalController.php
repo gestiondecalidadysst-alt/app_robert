@@ -6,12 +6,14 @@ use App\Actions\Pesv\GuardarFirmaConductor;
 use App\Enums\ModuloEmpresa;
 use App\Http\Controllers\Controller;
 use App\Models\Fuec;
+use App\Models\ManifiestoCarga;
 use App\Support\Modulos;
 use App\Support\Pdf\PdfFuec;
 use App\Support\Pesv\ServiciosConductor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -32,7 +34,24 @@ class PortalController extends Controller
             'sinFirma' => $conductores->reject->tieneFirma()->filter(fn ($c) => Modulos::activo($c->empresa_id, ModuloEmpresa::SeguridadVial)),
             'tarjetas' => ServiciosConductor::fuecs($usuario)->map(fn (Fuec $f) => ServiciosConductor::tarjeta($f)),
             'vehiculos' => ServiciosConductor::vehiculosAsignados($usuario),
+            // Manifiestos de carga en curso: solo si la empresa tiene el módulo.
+            'manifiestosCarga' => self::manifiestosCarga($conductores),
         ]);
+    }
+
+    /** Cuántos manifiestos de carga vigentes tiene el conductor pendientes de tiempos. */
+    private static function manifiestosCarga(Collection $conductores): int
+    {
+        $ids = $conductores->filter(fn ($c) => Modulos::activo($c->empresa_id, ModuloEmpresa::Carga))->pluck('id');
+
+        if ($ids->isEmpty()) {
+            return 0;
+        }
+
+        return ManifiestoCarga::query()->withoutGlobalScopes()
+            ->whereNull('anulado_at')->whereDoesntHave('cumplido')
+            ->where(fn ($query) => $query->whereIn('conductor_id', $ids)->orWhereIn('conductor_2_id', $ids))
+            ->count();
     }
 
     public function formularioFirma(Request $request): View|RedirectResponse

@@ -4,12 +4,14 @@ namespace App\Filament\App\Resources\RemesasCarga;
 
 use App\Filament\App\Carga\AccionesRndc;
 use App\Filament\App\Carga\AnularConRndc;
+use App\Filament\App\Carga\TiemposDeRemesa;
 use App\Filament\App\Resources\RemesasCarga\Pages\CrearRemesa;
 use App\Filament\App\Resources\RemesasCarga\Pages\EditarRemesa;
 use App\Filament\App\Resources\RemesasCarga\Pages\ListarRemesas;
 use App\Filament\App\Resources\RemesasCarga\Schemas\RemesaCargaForm;
 use App\Models\CumplidoRemesa;
 use App\Models\RemesaCarga;
+use App\Support\Carga\TiemposLogisticos;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -54,7 +56,7 @@ class RemesaCargaResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->with(['remitente', 'destinatario', 'manifiesto', 'ultimoRegistroRndc']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['remitente', 'destinatario', 'manifiesto', 'ultimoRegistroRndc', 'tiemposLogisticos']))
             ->defaultSort('id', 'desc')
             ->emptyStateHeading('Expida su primera remesa')
             ->columns([
@@ -65,6 +67,7 @@ class RemesaCargaResource extends Resource
                 TextColumn::make('remitente.nombre_completo')->label('Remitente')->limit(28)->visibleFrom('md'),
                 TextColumn::make('destinatario.nombre_completo')->label('Destinatario')->limit(28)->visibleFrom('lg'),
                 TextColumn::make('manifiesto.numero')->label('Manifiesto')->formatStateUsing(fn ($state, RemesaCarga $r) => $r->manifiesto?->numeroFormateado())->placeholder('—')->visibleFrom('md'),
+                TiemposDeRemesa::columna(),
                 AccionesRndc::columnaEstado(),
             ])
             ->filters([
@@ -80,9 +83,10 @@ class RemesaCargaResource extends Resource
                         'tipo' => $r->cumplido?->tipo ?? 'C',
                         'motivo_suspension' => $r->cumplido?->motivo_suspension,
                         'cantidad_entregada' => $r->cumplido?->cantidad_entregada ?? $r->cantidad,
-                        'llegada_descargue' => $r->cumplido?->llegada_descargue,
-                        'entrada_descargue' => $r->cumplido?->entrada_descargue,
-                        'salida_descargue' => $r->cumplido?->salida_descargue,
+                        // Si el conductor ya marcó los tiempos, no se le vuelven a pedir.
+                        'llegada_descargue' => $r->cumplido?->llegada_descargue ?? TiemposLogisticos::registrados($r)['descargue.llegada']?->ocurrido_at,
+                        'entrada_descargue' => $r->cumplido?->entrada_descargue ?? TiemposLogisticos::registrados($r)['descargue.entrada']?->ocurrido_at,
+                        'salida_descargue' => $r->cumplido?->salida_descargue ?? TiemposLogisticos::registrados($r)['descargue.salida']?->ocurrido_at,
                         'observaciones' => $r->cumplido?->observaciones,
                     ])
                     ->schema([
@@ -106,6 +110,7 @@ class RemesaCargaResource extends Resource
                         );
                         Notification::make()->success()->title('Cumplido guardado')->body('Envíe al RNDC desde la bitácora cuando esté todo listo.')->send();
                     }),
+                TiemposDeRemesa::accion(),
                 AnularConRndc::remesa(),
             ]);
     }
