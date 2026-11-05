@@ -18,9 +18,11 @@ use App\Models\DocumentoVehiculo;
 use App\Models\EventoServicio;
 use App\Models\Fuec;
 use App\Models\Inspeccion;
+use App\Models\ManifiestoCarga;
 use App\Models\Mantenimiento;
 use App\Models\PagoContrato;
 use App\Models\PlanAccion;
+use App\Models\RemesaCarga;
 use App\Models\Servicio;
 use App\Models\Vehiculo;
 use App\Support\Operacion\Jornada;
@@ -193,6 +195,82 @@ final class Indicadores
     }
 
     // ── Seguridad vial ────────────────────────────────────────────────────
+
+    /**
+     * Carga (RNDC): lo expedido en el periodo, cómo va el reporte al Ministerio y
+     * los dos frentes que hoy generan sanciones: el saldo fuera de plazo y los
+     * tiempos logísticos sin reportar.
+     *
+     * @return array<string, mixed>
+     */
+    public function carga(): array
+    {
+        $manifiestos = ManifiestoCarga::query()->deEmpresa($this->empresaId)->whereNull('anulado_at')
+            ->whereBetween('fecha_expedicion', [$this->desde->toDateString(), $this->hasta->toDateString()])
+            ->with(['cumplido', 'ultimoRegistroRndc'])->get();
+
+        $remesas = RemesaCarga::query()->deEmpresa($this->empresaId)->whereNull('anulado_at')
+            ->whereBetween('fecha', [$this->desde->toDateString(), $this->hasta->toDateString()])
+            ->withCount('tiemposLogisticos')->with('ultimoRegistroRndc')->get();
+
+        // Estado del reporte al RNDC, contando manifiestos y remesas juntos: lo que
+        // importa es cuántos documentos están en regla ante el Ministerio.
+        $estados = ['registrado' => 0, 'contingencia' => 0, 'error' => 0, 'pendiente' => 0, 'desactualizado' => 0];
+        foreach ($manifiestos->concat($remesas) as $documento) {
+            $estado = $documento->estadoRndc();
+            $estados[$estado] = ($estados[$estado] ?? 0) + 1;
+        }
+
+        $cumplidos = $manifiestos->filter(fn (ManifiestoCarga $m) => $m->cumplido !== null);
+        $saldoVencido = $manifiestos->filter(fn (ManifiestoCarga $m) => $m->estadoPagoSaldo() === 'vencido');
+
+        // Seis momentos por remesa: llegada, entrada y salida en cargue y descargue.
+        $conTiempos = $remesas->filter(fn (RemesaCarga $r) => $r->tiempos_logisticos_count >= 6)->count();
+
+        return [
+            'manifiestos' => $manifiestos->count(),
+            'remesas' => $remesas->count(),
+            'flete' => (int) $manifiestos->sum('valor_flete'),
+            'anticipos' => (int) $manifiestos->sum('anticipo'),
+            'saldo_pendiente' => (int) $manifiestos->sum(fn (ManifiestoCarga $m) => $m->saldo()),
+            'toneladas' => round((float) $remesas->where('unidad', 1)->sum('cantidad') / 1000, 1),
+            'cumplidos' => $cumplidos->count(),
+            'sin_cumplir' => $manifiestos->count() - $cumplidos->count(),
+            'saldo_vencido' => $saldoVencido->count(),
+            'saldo_vencido_valor' => (int) $saldoVencido->sum(fn (ManifiestoCarga $m) => $m->saldo()),
+            'tiempos_completos' => $conTiempos,
+            'tiempos_incompletos' => $remesas->count() - $conTiempos,
+            'rndc' => $estados,
+            'en_regla' => $estados['registrado'],
+            'con_problema' => $estados['error'] + $estados['contingencia'],
+        ];
+    }
+
+    /** Flete expedido mes a mes (12 meses), para ver la tendencia del negocio de carga. */
+    public function tendenciaCarga(): array
+    {
+        $inicio = $this->hasta->copy()->startOfMonth()->subMonths(11);
+
+        $filas = ManifiestoCarga::query()->deEmpresa($this->empresaId)->whereNull('anulado_at')
+            ->where('fecha_expedicion', '>=', $inicio->toDateString())
+            ->get(['fecha_expedicion', 'valor_flete'])
+            ->groupBy(fn (ManifiestoCarga $m) => $m->fecha_expedicion->format('Y-m'));
+
+        $etiquetas = [];
+        $flete = [];
+        $cantidad = [];
+
+        for ($mes = $inicio->copy(); $mes <= $this->hasta; $mes->addMonth()) {
+            $clave = $mes->format('Y-m');
+            $etiquetas[] = Str::ucfirst($mes->translatedFormat('M y'));
+            // ->get(): el acceso por corchetes en una Collection revienta si falta la clave.
+            $mesActual = $filas->get($clave);
+            $flete[] = (int) ($mesActual?->sum('valor_flete') ?? 0);
+            $cantidad[] = (int) ($mesActual?->count() ?? 0);
+        }
+
+        return ['etiquetas' => $etiquetas, 'flete' => $flete, 'manifiestos' => $cantidad];
+    }
 
     public function pesv(): array
     {

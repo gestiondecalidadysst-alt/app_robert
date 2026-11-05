@@ -100,6 +100,12 @@ class GerenciaTest extends ConfiguracionTestCase
         $this->get('/app/cootrasec-demo/informes')->assertOk();
 
         foreach ((new TableroGerencia)->getWidgets() as $widget) {
+            // Los widgets de módulos que la empresa no tiene contratados (carga) no se
+            // renderizan a propósito: se comprueban en las pruebas de su propio módulo.
+            if (! $widget::canView()) {
+                continue;
+            }
+
             Livewire::test($widget, ['pageFilters' => ['periodo' => 'anio']])->assertOk();
         }
         Livewire::test(ResumenCartera::class, ['pageFilters' => ['periodo' => 'mes']])->assertSee('$ 12.000.000');

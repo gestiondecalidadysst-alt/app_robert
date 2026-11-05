@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Gerencia\Widgets\CargaEstadoRndc;
 use App\Filament\App\Gerencia\Widgets\CarteraPorCliente;
 use App\Filament\App\Gerencia\Widgets\CarteraPorEdades;
 use App\Filament\App\Gerencia\Widgets\ExtractosPeriodo;
@@ -10,6 +11,7 @@ use App\Filament\App\Gerencia\Widgets\MantenimientosPorTipo;
 use App\Filament\App\Gerencia\Widgets\PagosPorTipo;
 use App\Filament\App\Gerencia\Widgets\PreoperacionalEstado;
 use App\Filament\App\Gerencia\Widgets\RecaudoPeriodo;
+use App\Filament\App\Gerencia\Widgets\ResumenCarga;
 use App\Filament\App\Gerencia\Widgets\ResumenCartera;
 use App\Filament\App\Gerencia\Widgets\ResumenFlota;
 use App\Filament\App\Gerencia\Widgets\ResumenMantenimiento;
@@ -17,6 +19,7 @@ use App\Filament\App\Gerencia\Widgets\ResumenOperacion;
 use App\Filament\App\Gerencia\Widgets\ResumenSeguridadVial;
 use App\Filament\App\Gerencia\Widgets\ServiciosPorVehiculo;
 use App\Filament\App\Gerencia\Widgets\TablasGerencia;
+use App\Filament\App\Gerencia\Widgets\TendenciaCarga;
 use App\Filament\App\Gerencia\Widgets\TendenciaExtractos;
 use App\Filament\App\Gerencia\Widgets\TendenciaFinanciera;
 use App\Filament\App\Gerencia\Widgets\TendenciaPreoperacional;
@@ -91,6 +94,7 @@ class TableroGerencia extends Dashboard
             ResumenCartera::class,
             ResumenSeguridadVial::class,
             ResumenMantenimiento::class,
+            ResumenCarga::class,
             FlotaPorEstado::class,
             PagosPorTipo::class,
             PreoperacionalEstado::class,
@@ -103,6 +107,8 @@ class TableroGerencia extends Dashboard
             TendenciaPreoperacional::class,
             ServiciosPorVehiculo::class,
             MantenimientosPorTipo::class,
+            CargaEstadoRndc::class,
+            TendenciaCarga::class,
             TablasGerencia::class,
         ];
     }
