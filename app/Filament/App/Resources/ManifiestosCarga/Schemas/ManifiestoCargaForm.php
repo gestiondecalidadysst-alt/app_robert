@@ -53,13 +53,13 @@ final class ManifiestoCargaForm
                     ->default('G')->required()->native(false)
                     ->helperText('General para la mayoría; paqueteo si son muchos envíos pequeños.'),
                 DatePicker::make('fecha_expedicion')->label('Fecha de expedición')->required()->default(today())->native(false),
-                Select::make('origen_id')->label('Municipio de origen')->required()->searchable()
-                    ->getSearchResultsUsing(fn ($s) => self::municipios($s))
-                    ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo)
+                Select::make('origen_id')->label('Municipio de origen')->required()->searchable()->preload(false)
+                    ->relationship('origen', 'nombre', fn ($query) => $query->orderBy('nombre'))
+                    ->getOptionLabelFromRecordUsing(fn (Municipio $m) => $m->nombre_completo)
                     ->placeholder('Escriba el nombre del municipio…'),
-                Select::make('destino_id')->label('Municipio de destino')->required()->searchable()
-                    ->getSearchResultsUsing(fn ($s) => self::municipios($s))
-                    ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo)
+                Select::make('destino_id')->label('Municipio de destino')->required()->searchable()->preload(false)
+                    ->relationship('destino', 'nombre', fn ($query) => $query->orderBy('nombre'))
+                    ->getOptionLabelFromRecordUsing(fn (Municipio $m) => $m->nombre_completo)
                     ->placeholder('Escriba el nombre del municipio…'),
                 Textarea::make('observaciones')->label('Observaciones (opcional)')->rows(2)->maxLength(200)->columnSpanFull()
                     ->placeholder('Por ejemplo, teléfonos de emergencia o condiciones especiales del viaje.'),
@@ -138,9 +138,9 @@ final class ManifiestoCargaForm
                 TextInput::make('anticipo')->label('Anticipo al conductor')->numeric()->minValue(0)->default(0)->prefix('$')->inputMode('numeric'),
                 TextInput::make('valor_minimo_sicetac')->label('Valor mínimo SICE-TAC (opcional)')->numeric()->minValue(0)->prefix('$')->inputMode('numeric')
                     ->helperText('Consúltelo en SICE-TAC. Si se deja vacío, no se valida; si se llena y el flete está por debajo, no deja expedir.'),
-                Select::make('municipio_pago_id')->label('Municipio donde se paga el saldo')->searchable()->native(false)
-                    ->getSearchResultsUsing(fn ($s) => self::municipios($s))
-                    ->getOptionLabelUsing(fn ($v) => Municipio::find($v)?->nombre_completo)
+                Select::make('municipio_pago_id')->label('Municipio donde se paga el saldo')->searchable()->preload(false)
+                    ->relationship('municipioPago', 'nombre', fn ($query) => $query->orderBy('nombre'))
+                    ->getOptionLabelFromRecordUsing(fn (Municipio $m) => $m->nombre_completo)
                     ->placeholder('Si lo deja vacío, se asume el destino.'),
                 DatePicker::make('fecha_pago_saldo')->label('Fecha de pago del saldo')->native(false)
                     ->helperText('Máximo 5 días hábiles después del cumplido (Resolución RNDC).'),
