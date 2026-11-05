@@ -14,6 +14,7 @@ class ListarManifiestos extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()->label('Nuevo manifiesto')];
+        // Con url() va a la página del asistente en vez de abrirlo en un modal estrecho.
+        return [CreateAction::make()->label('Nuevo manifiesto')->url(fn () => CrearManifiesto::getUrl())];
     }
 }

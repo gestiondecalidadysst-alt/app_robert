@@ -262,8 +262,9 @@ class ManifiestoRemesasTest extends ConfiguracionTestCase
     }
 
     /**
-     * «Nuevo manifiesto» y «Editar» del listado son acciones MODALES, no las páginas
-     * Crear/Editar: la asociación tiene que funcionar también por ahí.
+     * La asociación vive en el modelo, no en una pantalla: debe funcionar guardando
+     * por asignación masiva (acciones con modal, comandos, importaciones), no solo
+     * desde las páginas del asistente. Fue justo lo que falló en producción.
      */
     public function test_el_modal_de_crear_del_listado_asocia_la_remesa(): void
     {

@@ -124,7 +124,10 @@ class ManifiestoCargaResource extends Resource
                     }),
                 Action::make('pdf')->label('Manifiesto (PDF)')->icon('heroicon-o-document-arrow-down')
                     ->url(fn (ManifiestoCarga $m) => $m->urlPdf(), shouldOpenInNewTab: true),
-                EditAction::make()->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado'),
+                // A la página completa, no a un modal: el asistente son 4 pasos y en el
+                // modal la barra de pasos se corta y aparecen dos juegos de botones.
+                EditAction::make()->url(fn (ManifiestoCarga $m) => EditarManifiesto::getUrl(['record' => $m]))
+                    ->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado'),
                 Action::make('anular')->label('Anular')->icon('heroicon-o-x-circle')->color('danger')->requiresConfirmation()
                     ->visible(fn (ManifiestoCarga $m) => auth()->user()?->can('anular_manifiestos_carga') && ! $m->anulado())
                     ->schema([Select::make('motivo')->options(['D' => 'Error en la digitación', 'S' => 'Cancelación del servicio'])->required()])
