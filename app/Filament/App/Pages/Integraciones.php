@@ -70,8 +70,6 @@ class Integraciones extends Page
     private function valores(Empresa $e): array
     {
         return [
-            'sms_habilitado' => $e->sms_habilitado,
-            'sms_limite_mensual' => $e->sms_limite_mensual,
             'firma_dias_enlace' => $e->firma_dias_enlace,
             'firma_dias_recordatorio' => $e->firma_dias_recordatorio,
             'firma_envio_automatico' => $e->firma_envio_automatico,
@@ -108,19 +106,17 @@ class Integraciones extends Page
             ->statePath('data')
             ->disabled(! $this->puedeEditar())
             ->components([
-                Section::make('Mensajes de texto (SMS) — Onurix')
-                    ->description('Se usan para enviar el enlace de firma y el código de verificación. Cree su cuenta en onurix.com, copie aquí el Client ID y la clave del API, y autorice en Onurix la IP de este servidor (botón «Ver IP del servidor»).')
+                Section::make('Mensajes de texto (SMS)')
+                    ->description('El envío de SMS (enlace de firma y código de verificación) es un servicio de la plataforma. No hay que configurar credenciales: lo activa el administrador de la plataforma.')
                     ->icon('heroicon-o-device-phone-mobile')
                     ->columns(['default' => 1, 'md' => 2])
                     ->schema([
-                        Toggle::make('sms_habilitado')->label('Enviar SMS')->inline(false)->columnSpanFull(),
-                        TextInput::make('onurix_cliente')->label('Client ID')->maxLength(50)->autocomplete(false)
-                            ->helperText($oculto($e->onurix_cliente)),
-                        TextInput::make('onurix_clave')->label('Clave del API (key)')->password()->maxLength(200)->autocomplete('new-password')
-                            ->helperText($oculto($e->onurix_clave)),
-                        TextInput::make('sms_limite_mensual')->label('Límite de SMS al mes')->numeric()->minValue(1)
-                            ->helperText('Opcional. Al llegar al límite, los mensajes se envían solo por correo.'),
-                        Text::make('SMS enviados este mes: '.Mensajero::smsDelMes($e))->color('gray'),
+                        Text::make($e->smsConfigurado()
+                            ? '✅ Servicio de SMS activo.'
+                            : '⚠️ El servicio de SMS no está activo para su empresa. Es opcional; solicítelo al administrador de la plataforma.')
+                            ->weight('bold')->columnSpanFull(),
+                        Text::make('SMS enviados este mes: '.Mensajero::smsDelMes($e)
+                            .($e->sms_limite_mensual ? ' de '.$e->sms_limite_mensual.' permitidos' : ''))->color('gray')->columnSpanFull(),
                     ]),
                 Section::make('Avisos por webhook (n8n)')
                     ->description('El sistema envía un POST JSON a esta URL en cada evento elegido (por ejemplo, un nodo Webhook de n8n para reenviar por WhatsApp, correo o Telegram). Cada aviso va firmado con HMAC-SHA256 en la cabecera X-Ruta-Firma.')
@@ -260,12 +256,9 @@ class Integraciones extends Page
 
         $empresa = $this->empresa();
         $datos = [...$this->valores($empresa), ...$this->form->getState()];
-        $cambiaronCredenciales = filled($datos['onurix_cliente'] ?? null) || filled($datos['onurix_clave'] ?? null);
         $cambioRndc = filled($datos['rndc_usuario'] ?? null) || filled($datos['rndc_clave'] ?? null);
 
         $empresa->fill([
-            'sms_habilitado' => (bool) $datos['sms_habilitado'],
-            'sms_limite_mensual' => filled($datos['sms_limite_mensual'] ?? null) ? (int) $datos['sms_limite_mensual'] : null,
             'firma_dias_enlace' => (int) $datos['firma_dias_enlace'],
             'firma_dias_recordatorio' => (int) $datos['firma_dias_recordatorio'],
             'firma_envio_automatico' => (bool) $datos['firma_envio_automatico'],
@@ -322,19 +315,6 @@ class Integraciones extends Page
             return;
         }
 
-        if (filled($datos['onurix_cliente'] ?? null)) {
-            $empresa->onurix_cliente = trim($datos['onurix_cliente']);
-        }
-        if (filled($datos['onurix_clave'] ?? null)) {
-            $empresa->onurix_clave = trim($datos['onurix_clave']);
-        }
-
-        if ($empresa->sms_habilitado && (blank($empresa->onurix_cliente) || blank($empresa->onurix_clave))) {
-            Notification::make()->danger()->title('Faltan las credenciales de Onurix para activar los SMS.')->send();
-
-            return;
-        }
-
         $empresa->save();
 
         if ($cambioRndc) {
@@ -343,14 +323,7 @@ class Integraciones extends Page
                 ->log('Actualizó las credenciales del RNDC');
         }
 
-        if ($cambiaronCredenciales) {
-            // La auditoría registra quién cambió las credenciales, nunca su valor.
-            activity('Empresa')->performedOn($empresa)->causedBy(auth()->user())
-                ->tap(fn ($a) => $a->empresa_id = $empresa->id)
-                ->log('Actualizó las credenciales de SMS (Onurix)');
-        }
-
-        $this->form->fill([...$datos, 'onurix_cliente' => null, 'onurix_clave' => null, 'webhook_url' => null, 'webhook_secreto' => null, 'rndc_usuario' => null, 'rndc_clave' => null]);
+        $this->form->fill([...$datos, 'webhook_url' => null, 'webhook_secreto' => null, 'rndc_usuario' => null, 'rndc_clave' => null]);
 
         Notification::make()->success()->title('Integraciones guardadas')->send();
     }
@@ -380,19 +353,6 @@ class Integraciones extends Page
                         : Notification::make()->info()->title("IP del servidor: {$ip}")
                             ->body('Regístrela en su cuenta de Onurix como IP permitida para el API. Si el proveedor del servidor cambia la IP, hay que actualizarla allá.')
                             ->persistent()->send();
-                }),
-            Action::make('saldo')
-                ->label('Consultar saldo')
-                ->icon('heroicon-o-banknotes')
-                ->color('gray')
-                ->visible(fn () => $this->empresa()->smsConfigurado())
-                ->action(function (): void {
-                    $e = $this->empresa();
-                    $saldo = (new OnurixSms((string) $e->onurix_cliente, (string) $e->onurix_clave))->saldo();
-
-                    $saldo === null
-                        ? Notification::make()->danger()->title('No se pudo consultar el saldo')->body('Revise las credenciales.')->send()
-                        : Notification::make()->success()->title('Saldo en Onurix: '.number_format($saldo, 0, ',', '.'))->send();
                 }),
             Action::make('prueba')
                 ->label('Enviar SMS de prueba')

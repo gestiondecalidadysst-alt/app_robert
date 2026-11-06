@@ -34,7 +34,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         'anio_habilitacion', 'codigo_territorial', 'logo_path', 'firma_representante_path', 'pie_documentos_path',
         'activa',
         // Integraciones (pantalla Configuración → Integraciones)
-        'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual',
+        'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual', 'sms_precio',
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
         'km_diarios_defecto', 'mantenimiento_dias_aviso', 'recibo_prefijo', 'recibo_numero_inicial',
         'jornada_max_horas_dia', 'jornada_max_horas_continuas', 'jornada_descanso_horas', 'planeacion_antelacion_horas',
@@ -72,6 +72,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
             'onurix_cliente' => 'encrypted',
             'onurix_clave' => 'encrypted',
             'sms_limite_mensual' => 'integer',
+            'sms_precio' => 'integer',
             'firma_envio_automatico' => 'boolean',
             'firma_dias_enlace' => 'integer',
             'firma_dias_recordatorio' => 'integer',
@@ -91,9 +92,10 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     }
 
     /** Tiene SMS listo para usar (activado y con credenciales). */
+    /** La empresa tiene SMS disponible: la plataforma lo tiene activo y a ella se lo activaron. */
     public function smsConfigurado(): bool
     {
-        return $this->sms_habilitado && filled($this->onurix_cliente) && filled($this->onurix_clave);
+        return $this->sms_habilitado && ProveedorSms::actual()->configurado();
     }
 
     public function plantillasContrato(): HasMany

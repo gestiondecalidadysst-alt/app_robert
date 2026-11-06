@@ -9,6 +9,7 @@ use App\Filament\Admin\Resources\Empresas\Pages\EditarEmpresa;
 use App\Filament\Admin\Resources\Empresas\Pages\ListarEmpresas;
 use App\Filament\Compartido\FormularioEmpresa;
 use App\Models\Empresa;
+use App\Models\ProveedorSms;
 use App\Models\ProveedorTransito;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -104,6 +105,20 @@ class EmpresaResource extends Resource
                     ...collect(TipoConsultaTransito::cases())->map(fn (TipoConsultaTransito $t) => TextInput::make("transito_precios.{$t->value}")
                         ->label('Precio especial · '.$t->getLabel())->numeric()->minValue(0)->prefix('$')
                         ->placeholder(fn () => ($general = ProveedorTransito::actual()->precioDe($t)) !== null ? number_format($general, 0, ',', '.').' (general)' : 'Sin precio general'))->all(),
+                ]),
+
+            Section::make('Mensajes de texto (SMS)')
+                ->columnSpanFull()
+                ->visibleOn('edit')
+                ->icon('heroicon-o-chat-bubble-left-right')
+                ->description('Servicio opcional. Si se activa, la empresa envía SMS con la cuenta de la plataforma y se le cobra por segmento. Deje el precio vacío para usar el general (Plataforma → Mensajes de texto).')
+                ->columns(['default' => 1, 'md' => 3])
+                ->schema([
+                    Toggle::make('sms_habilitado')->label('Servicio de SMS activo')->inline(false),
+                    TextInput::make('sms_precio')->label('Precio por segmento (COP)')->numeric()->minValue(0)->prefix('$')
+                        ->placeholder(fn () => ($g = (int) ProveedorSms::actual()->precio_segmento) > 0 ? number_format($g, 0, ',', '.').' (general)' : 'Sin precio general'),
+                    TextInput::make('sms_limite_mensual')->label('Límite de SMS por mes')->numeric()->minValue(0)
+                        ->helperText('Vacío = sin límite. Protege contra consumos inesperados.'),
                 ]),
 
             Section::make('Estado')

@@ -8,6 +8,7 @@ use App\Jobs\EnviarSms;
 use App\Jobs\EnviarWebhook;
 use App\Mail\CorreoInformeGerencia;
 use App\Models\ErrorSistema;
+use App\Models\ProveedorSms;
 use App\Models\User;
 use App\Services\Mensajeria\Mensajero;
 use App\Support\Sistema\Colas;
@@ -163,7 +164,9 @@ class SistemaTest extends ConfiguracionTestCase
 
     public function test_sin_creditos_en_onurix_no_es_error_del_sistema_ni_se_reintenta(): void
     {
-        $this->demo->forceFill(['sms_habilitado' => true, 'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba'])->save();
+        ProveedorSms::query()->firstOrCreate([], ['proveedor' => 'onurix', 'activo' => true,
+            'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba', 'costo_segmento' => 30, 'precio_segmento' => 80]);
+        $this->demo->forceFill(['sms_habilitado' => true])->save();
         $intentos = 0;
         Http::fake(function () use (&$intentos) {
             $intentos++;
@@ -194,7 +197,9 @@ class SistemaTest extends ConfiguracionTestCase
 
     public function test_falla_pasajera_se_reintenta_sin_registrar_error(): void
     {
-        $this->demo->forceFill(['sms_habilitado' => true, 'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba'])->save();
+        ProveedorSms::query()->firstOrCreate([], ['proveedor' => 'onurix', 'activo' => true,
+            'onurix_cliente' => '9999', 'onurix_clave' => 'clave-de-prueba', 'costo_segmento' => 30, 'precio_segmento' => 80]);
+        $this->demo->forceFill(['sms_habilitado' => true])->save();
         Http::fake(fn () => Http::response('Bad gateway', 502));
 
         config(['queue.default' => 'database']);

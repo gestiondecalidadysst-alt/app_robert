@@ -7,8 +7,10 @@ use App\Jobs\EnviarSms;
 use App\Models\DocumentoContrato;
 use App\Models\Empresa;
 use App\Models\EnvioMensaje;
+use App\Models\ProveedorSms;
 use App\Support\Contacto;
 use App\Support\Sistema\FallasEnvio;
+use App\Support\Sms;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -24,8 +26,13 @@ final class Mensajero
     /** Motivo por el que la empresa no puede enviar SMS ahora (null = puede). */
     public static function motivoSinSms(Empresa $empresa): ?string
     {
-        if (! $empresa->smsConfigurado()) {
-            return 'El envío de SMS no está configurado (Configuración → Integraciones).';
+        // La cuenta es de la plataforma; la empresa solo tiene el servicio activado o no.
+        if (! ProveedorSms::actual()->configurado()) {
+            return 'El servicio de SMS no está disponible en la plataforma en este momento.';
+        }
+
+        if (! $empresa->sms_habilitado) {
+            return 'El envío de SMS no está activo para esta empresa. Es un servicio opcional; solicítelo al administrador de la plataforma.';
         }
 
         if ($empresa->sms_limite_mensual !== null
@@ -102,10 +109,13 @@ final class Mensajero
     public static function enviarSmsAhora(EnvioMensaje $envio, string $celular, string $texto): bool
     {
         $empresa = Empresa::findOrFail($envio->empresa_id);
+        $proveedor = ProveedorSms::actual();
+        $segmentos = Sms::segmentos($texto);
         $envio->increment('intentos');
 
+        // La cuenta es la de la plataforma, no la de la empresa.
         try {
-            $resultado = (new OnurixSms((string) $empresa->onurix_cliente, (string) $empresa->onurix_clave))->enviar($celular, $texto);
+            $resultado = (new OnurixSms((string) $proveedor->onurix_cliente, (string) $proveedor->onurix_clave))->enviar($celular, $texto);
         } catch (Throwable $e) {
             $resultado = new ResultadoSms(false, error: $e->getMessage());
         }
@@ -113,6 +123,10 @@ final class Mensajero
         $envio->forceFill([
             'proveedor' => 'onurix',
             'estado' => $resultado->exito ? 'enviado' : 'fallido',
+            'segmentos' => $segmentos,
+            // Solo se cobra lo efectivamente enviado (igual que Onurix cobra a la plataforma).
+            'precio' => $resultado->exito ? $segmentos * self::precioSegmento($empresa, $proveedor) : null,
+            'costo' => $resultado->exito ? $segmentos * (int) $proveedor->costo_segmento : null,
             'referencia_proveedor' => $resultado->referencia,
             'error' => $resultado->error ? mb_substr($resultado->error, 0, 500) : null,
             'enviado_at' => $resultado->exito ? now() : null,
@@ -121,6 +135,12 @@ final class Mensajero
         self::avisarSiEsDeLaCuenta($envio);
 
         return $resultado->exito;
+    }
+
+    /** Precio por segmento que paga la empresa: el suyo propio o, si no, el por defecto de la plataforma. */
+    public static function precioSegmento(Empresa $empresa, ?ProveedorSms $proveedor = null): int
+    {
+        return $empresa->sms_precio ?? (int) ($proveedor ?? ProveedorSms::actual())->precio_segmento;
     }
 
     public static function enviarCorreoAhora(EnvioMensaje $envio, string $correo, Mailable $mensaje): bool

@@ -29,12 +29,12 @@ class EnvioMensaje extends Model
 
     protected $fillable = [
         'empresa_id', 'documento_contrato_id', 'tipo', 'canal', 'destino', 'estado', 'proveedor',
-        'referencia_proveedor', 'error', 'intentos', 'enviado_at',
+        'referencia_proveedor', 'error', 'intentos', 'enviado_at', 'segmentos', 'precio', 'costo',
     ];
 
     protected function casts(): array
     {
-        return ['enviado_at' => 'datetime', 'intentos' => 'integer'];
+        return ['enviado_at' => 'datetime', 'intentos' => 'integer', 'segmentos' => 'integer', 'precio' => 'integer', 'costo' => 'integer'];
     }
 
     public function documento(): BelongsTo

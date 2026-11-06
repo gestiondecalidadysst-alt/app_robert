@@ -124,3 +124,20 @@ La clave de todos los usuarios demo es `Ruta2026*`.
 - El parámetro `onboarding` de `CrearEmpresa` separa el alta real (clave temporal +
   correo + cambio obligatorio) de las semillas y datos de prueba, que conservan su
   clave fija.
+
+## SMS centralizado como servicio de la plataforma (2026-11-06)
+Antes cada empresa ponía sus credenciales de Onurix. Ahora es un servicio de la
+plataforma: una sola cuenta, que el superadministrador activa por empresa y cobra.
+
+- `ProveedorSms` (una fila): credenciales de Onurix (cifradas), activo, costo por
+  segmento (lo que cuesta a la plataforma) y precio de venta por defecto.
+- Página superadmin «Mensajes de texto» (`ProveedorSmsPagina`): credenciales + costo
+  + precio + ver saldo en Onurix. «Consumo de SMS» (`ConsumoSms`): por empresa y mes,
+  mensajes, segmentos, a cobrar, costo y margen, con Excel. Solo los enviados se cobran.
+- Por empresa (en EmpresaResource): `sms_habilitado` (activar el servicio), `sms_precio`
+  (precio propio opcional) y `sms_limite_mensual`, todos del superadmin.
+- Onurix cobra por SEGMENTO (160 caracteres); `Support\Sms::segmentos()` lo calcula y
+  cada `EnvioMensaje` guarda `segmentos`, `precio` y `costo`.
+- `Mensajero` usa las credenciales globales (no las de la empresa) y valida activación +
+  límite. La página de la empresa ya no pide credenciales: solo muestra estado y consumo.
+- Las columnas `onurix_cliente/clave` de `empresas` quedan sin uso (no se borran).

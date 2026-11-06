@@ -14,6 +14,7 @@ use App\Models\DocumentoContrato;
 use App\Models\Empresa;
 use App\Models\EnvioMensaje;
 use App\Models\PlantillaContrato;
+use App\Models\ProveedorSms;
 use App\Support\Contratos\PlantillaBase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Spatie\Activitylog\Models\Activity;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
 
 class FirmaContratoTest extends ConfiguracionTestCase
@@ -49,12 +49,13 @@ class FirmaContratoTest extends ConfiguracionTestCase
 
     private function configurarSms(?int $limite = null): void
     {
-        $this->demo->forceFill([
-            'sms_habilitado' => true,
-            'onurix_cliente' => '9999',
-            'onurix_clave' => 'clave-secreta-de-prueba',
-            'sms_limite_mensual' => $limite,
-        ])->save();
+        // La cuenta es de la plataforma; la empresa solo tiene el servicio activo.
+        ProveedorSms::query()->create([
+            'proveedor' => 'onurix', 'activo' => true,
+            'onurix_cliente' => '9999', 'onurix_clave' => 'clave-secreta-de-prueba',
+            'costo_segmento' => 30, 'precio_segmento' => 80,
+        ]);
+        $this->demo->forceFill(['sms_habilitado' => true, 'sms_limite_mensual' => $limite])->save();
     }
 
     /** Contrato empresarial demo (tiene todos los datos) con su documento emitido. */
@@ -379,18 +380,15 @@ class FirmaContratoTest extends ConfiguracionTestCase
         $this->assertSame(EstadoFirma::Emitido, app(EmitirDocumentoContrato::class)($documento->contrato->fresh())->estado);
     }
 
-    public function test_credenciales_cifradas_y_fuera_de_la_auditoria(): void
+    public function test_credenciales_de_sms_cifradas_en_la_cuenta_de_la_plataforma(): void
     {
         $this->entrarComo('admin@demo.test');
         $this->configurarSms();
 
-        $crudo = DB::table('empresas')->where('id', $this->demo->id)->value('onurix_clave');
+        // Las credenciales viven en la cuenta global (ProveedorSms), cifradas y ocultas.
+        $crudo = DB::table('proveedor_sms')->value('onurix_clave');
         $this->assertNotSame('clave-secreta-de-prueba', $crudo);
-        $this->assertSame('clave-secreta-de-prueba', Empresa::find($this->demo->id)->onurix_clave);
-
-        $auditoria = Activity::query()->where('subject_type', Empresa::class)->get()->toJson();
-        $this->assertStringNotContainsString('clave-secreta-de-prueba', $auditoria);
-        $this->assertStringNotContainsString('onurix_clave', $auditoria);
-        $this->assertArrayNotHasKey('onurix_clave', Empresa::find($this->demo->id)->toArray());
+        $this->assertSame('clave-secreta-de-prueba', ProveedorSms::actual()->onurix_clave);
+        $this->assertArrayNotHasKey('onurix_clave', ProveedorSms::actual()->toArray());
     }
 }
