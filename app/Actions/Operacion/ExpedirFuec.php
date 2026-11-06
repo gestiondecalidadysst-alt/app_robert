@@ -13,6 +13,7 @@ use App\Models\Vehiculo;
 use App\Support\DireccionesTerritoriales;
 use App\Support\Nit;
 use App\Support\Operacion\Horario;
+use App\Support\Push\NotificarConductor;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -50,7 +51,7 @@ class ExpedirFuec
             throw ValidationException::withMessages($errores);
         }
 
-        return DB::transaction(function () use ($empresa, $datos): Fuec {
+        $fuec = DB::transaction(function () use ($empresa, $datos): Fuec {
             /** @var Contrato $contrato */
             $contrato = Contrato::query()->deEmpresa($empresa)->whereKey($datos['contrato_id'])->lockForUpdate()->firstOrFail();
             $vehiculo = Vehiculo::query()->deEmpresa($empresa)->with(['marca', 'linea', 'claseVehiculo', 'documentos'])->findOrFail($datos['vehiculo_id']);
@@ -89,6 +90,11 @@ class ExpedirFuec
 
             return $fuec;
         });
+
+        // Avisa por push a los conductores del nuevo servicio (fuera de la transacción).
+        NotificarConductor::nuevoExtracto($fuec);
+
+        return $fuec;
     }
 
     /**

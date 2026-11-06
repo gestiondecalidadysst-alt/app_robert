@@ -9,6 +9,7 @@ use App\Models\Empresa;
 use App\Services\Mensajeria\Mensajero;
 use App\Support\Alertas\CentroAlertas;
 use App\Support\Avisos;
+use App\Support\Push\NotificarConductor;
 use App\Support\Push\WebPush;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
@@ -75,6 +76,9 @@ class EnviarAlertas extends Command
             'Hoy vence el siguiente documento:');
         $this->avisarConductores($empresa, $docsConductor, 'Un documento suyo vence hoy',
             'Hoy vence el siguiente documento:');
+
+        // Recordatorio push del preoperacional a los conductores con servicio hoy.
+        NotificarConductor::preoperacionalPendiente($empresa);
 
         $this->campana($empresa, 'Vence hoy', soloHoy: true);
     }

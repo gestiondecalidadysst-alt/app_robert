@@ -5,6 +5,7 @@ namespace App\Actions\Mantenimiento;
 use App\Models\ActividadMantenimiento;
 use App\Models\Empresa;
 use App\Support\Avisos;
+use App\Support\Push\NotificarConductor;
 use App\Support\Webhooks;
 use Filament\Notifications\Notification;
 
@@ -33,10 +34,12 @@ final class AvisosPrograma
 
         foreach ($proximas as $a) {
             Webhooks::emitir($empresa, 'mantenimiento.actividad_proxima', self::datos($a));
+            NotificarConductor::mantenimiento($a, vencida: false);
             $a->forceFill(['avisado_proximo_at' => now()])->save();
         }
         foreach ($vencidas as $a) {
             Webhooks::emitir($empresa, 'mantenimiento.actividad_vencida', self::datos($a));
+            NotificarConductor::mantenimiento($a, vencida: true);
             $a->forceFill(['avisado_vencido_at' => now()])->save();
         }
 
