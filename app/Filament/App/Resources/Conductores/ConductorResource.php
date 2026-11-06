@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\Conductores;
 
 use App\Enums\EstadoConductor;
 use App\Enums\TipoDocumentoConductor;
+use App\Filament\App\Acciones\HojaVidaPdf;
 use App\Filament\App\Carga\AccionesRndc;
 use App\Filament\App\Resources\Conductores\Acciones\CambiarEstadoConductorAction;
 use App\Filament\App\Resources\Conductores\Pages\CrearConductor;
@@ -150,6 +151,7 @@ class ConductorResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()->label('Hoja de vida'),
+                    HojaVidaPdf::conductor(),
                     EditAction::make(),
                     CambiarEstadoConductorAction::make(),
                     DeleteAction::make()

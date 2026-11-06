@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\Vehiculos;
 
 use App\Enums\EstadoVehiculo;
 use App\Enums\TipoDocumentoVehiculo;
+use App\Filament\App\Acciones\HojaVidaPdf;
 use App\Filament\App\Carga\AccionesRndc;
 use App\Filament\App\Resources\Vehiculos\Acciones\CambiarEstadoAction;
 use App\Filament\App\Resources\Vehiculos\Pages\CrearVehiculo;
@@ -134,6 +135,7 @@ class VehiculoResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()->label('Hoja de vida'),
+                    HojaVidaPdf::vehiculo(),
                     EditAction::make(),
                     CambiarEstadoAction::make(),
                     DeleteAction::make()

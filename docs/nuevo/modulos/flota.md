@@ -75,3 +75,18 @@ Queda para otros módulos: historial de mantenimientos en la hoja de vida (módu
 - Reactivación automática al llegar la fecha prevista (hoy solo es informativa).
 - Importar propietarios, vehículos y fechas de documentos desde la base del legado.
 - Días de aviso configurables por empresa (hoy es global).
+
+## Hoja de vida en PDF (2026-11-05)
+Acción «Hoja de vida (PDF)» en el listado de vehículos y de conductores
+(`Filament\App\Acciones\HojaVidaPdf`). Abre un modal donde el usuario elige qué
+secciones incluir y, para las de periodo, el rango de fechas.
+
+- Vehículo (`PdfHojaVidaVehiculo`): datos, documentos, conductores que lo han
+  conducido, servicios, preoperacionales (con extracto/contrato), mantenimientos,
+  novedades, planes de acción.
+- Conductor (`PdfHojaVidaConductor`): datos, documentos/licencia, vehículos
+  conducidos, servicios, preoperacionales firmados, novedades.
+- Secciones en `SeccionHojaVida`; las de `CON_RANGO` usan las fechas elegidas.
+- El blade pone encabezado y pie fijos (con número de página vía `counter(page)`) y
+  marca cada ficha y cada fila con `page-break-inside: avoid` para no partir
+  información entre páginas.
