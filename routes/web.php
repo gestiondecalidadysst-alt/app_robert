@@ -6,6 +6,7 @@ use App\Http\Controllers\Conductor\CargaController;
 use App\Http\Controllers\Conductor\MantenimientoController;
 use App\Http\Controllers\Conductor\PortalController;
 use App\Http\Controllers\Conductor\PreoperacionalController;
+use App\Http\Controllers\Conductor\PwaController;
 use App\Http\Controllers\Conductor\ViajeController;
 use App\Http\Controllers\EvidenciaController;
 use App\Http\Controllers\FirmaContratoController;
@@ -68,6 +69,10 @@ Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(f
 
 // Portal del conductor: ingreso con documento y clave; servicios, preoperacional y extracto.
 Route::prefix('conductor')->name('conductor.')->group(function () {
+    // PWA (instalable): service worker y página de respaldo sin conexión. Públicos.
+    Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('sw');
+    Route::get('/offline', [PwaController::class, 'offline'])->name('offline');
+
     Route::get('/ingresar', [AccesoController::class, 'formulario'])->name('ingresar');
     Route::post('/ingresar', [AccesoController::class, 'ingresar'])
         ->middleware('throttle:conductor-ingreso')->name('ingresar.enviar');

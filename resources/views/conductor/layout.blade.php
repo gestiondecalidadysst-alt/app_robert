@@ -6,7 +6,9 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#1B2B3A">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ruta Conductor">
 <link rel="manifest" href="/conductor.webmanifest">
 <link rel="icon" type="image/png" href="/images/conductor-192.png">
@@ -59,6 +61,11 @@
     .menu { display: flex; gap: 8px; margin-bottom: 14px; }
     .menu a { flex: 1; text-align: center; padding: 9px; border-radius: 10px; background: #fff; border: 1px solid var(--borde); color: var(--azul); text-decoration: none; font-size: 14px; font-weight: 600; }
     .menu a.activo { background: var(--azul); color: #fff; border-color: var(--azul); }
+    .instalar { display: none; align-items: center; gap: 10px; background: #fff7ed; border-bottom: 1px solid #fed7aa; color: #7c2d12; padding: 10px 16px; font-size: 14px; }
+    .instalar .txt { flex: 1; }
+    .instalar button { border: 0; border-radius: 8px; padding: 8px 12px; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .instalar .si { background: var(--naranja); color: #fff; }
+    .instalar .no { background: transparent; color: #9a3412; text-decoration: underline; }
 </style>
 @stack('cabeza')
 </head>
@@ -75,11 +82,66 @@
         </div>
     @endauth
 </header>
+<div class="instalar" id="barra-instalar">
+    <span class="txt" id="instalar-texto">Instala esta app en tu celular para abrirla más rápido.</span>
+    <button type="button" class="si" id="instalar-si">Instalar</button>
+    <button type="button" class="no" id="instalar-no" aria-label="Ahora no">Ahora no</button>
+</div>
 <main class="contenedor">
     @if (session('aviso'))<div class="aviso">{{ session('aviso') }}</div>@endif
     @if (session('alerta'))<div class="alerta">{{ session('alerta') }}</div>@endif
     @yield('cuerpo')
 </main>
 @stack('scripts')
+<script>
+    // Registra el service worker: permite instalar la app y que abra rápido / con respaldo sin señal.
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('{{ route('conductor.sw') }}').catch(function () {});
+        });
+    }
+
+    // Aviso de "Instalar app". En Android/Chrome usa el diálogo nativo; en iPhone muestra el instructivo.
+    (function () {
+        var barra = document.getElementById('barra-instalar');
+        var texto = document.getElementById('instalar-texto');
+        var si = document.getElementById('instalar-si');
+        var no = document.getElementById('instalar-no');
+        if (!barra) return;
+
+        var oculto = false;
+        try { oculto = localStorage.getItem('instalar-oculto') === '1'; } catch (e) {}
+        var instalada = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        if (oculto || instalada) return;
+
+        function cerrar() {
+            barra.style.display = 'none';
+            try { localStorage.setItem('instalar-oculto', '1'); } catch (e) {}
+        }
+        no.addEventListener('click', cerrar);
+
+        var prompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            prompt = e;
+            barra.style.display = 'flex';
+        });
+
+        si.addEventListener('click', function () {
+            if (prompt) {
+                prompt.prompt();
+                prompt.userChoice.finally(cerrar);
+            }
+        });
+
+        // iPhone/iPad (Safari) no dispara beforeinstallprompt: se instala desde Compartir.
+        var esIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent) && !window.MSStream;
+        if (esIOS) {
+            texto.textContent = 'Para instalar: toca Compartir y luego “Agregar a inicio”.';
+            si.style.display = 'none';
+            barra.style.display = 'flex';
+        }
+    })();
+</script>
 </body>
 </html>

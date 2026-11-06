@@ -40,7 +40,7 @@
 - [x] **Módulo 7 – Pagos de administración:** cuota mensual por vehículo (valor por clase, ajustable por vehículo), generación automática el día 1 (o con botón manual desde el estado de cuenta), estado de cuenta mes a mes con mora, pago repartido de la cuota más vieja a la más nueva (FIFO) con recibo propio en PDF, y anulación que devuelve el abono. Módulo opcional que el superadministrador activa por empresa.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción; indicador de versión del build (`.build`/`.version`) para confirmar el despliegue.
 - [x] **Centro de alertas:** bandeja unificada en el inicio (documentos de vehículos y conductores por vencer/vencidos y administración en mora, con conteo, color y enlace a su listado) y avisos automáticos por correo al propietario/conductor afectado — resumen semanal (lunes) y aviso puntual el día del vencimiento — más campana al equipo con permiso. Comando `ruta:alertas` (modos diario y semanal).
-- [x] Suite completa en verde: 289 pruebas (SQLite y MySQL).
+- [x] Suite completa en verde: 292 pruebas (SQLite y MySQL).
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
 ## Módulos que faltan por construir
@@ -53,7 +53,11 @@ Próximas a construir (acordadas con el usuario el 2026-11-06):
 - [x] **Centro de alertas y avisos automáticos de vencimientos** (hecho el 2026-11-06, ver sección "Hecho").
 
 Para después (sin fecha):
-- [ ] **PWA instalable para conductor y propietario:** convertir los portales web en app instalable (ícono en pantalla de inicio, pantalla completa, arranque rápido) con el mismo código web, sin tiendas. Por fases: (1) instalable + marca; (2) notificaciones push (preoperacional, vencimientos, cuenta de cobro) que reemplazan SMS en muchos casos; (3) preoperacional offline con cola de envío. Requisito (HTTPS) ya está. iOS: se instala y recibe push desde iOS 16.4, pero solo si el usuario la agrega a la pantalla de inicio.
+- [~] **PWA instalable para conductor y propietario** (por fases):
+  - [x] **Fase 1 – instalable + marca (conductor):** service worker (`/conductor/sw.js`), registro en el layout, página de respaldo sin conexión (`/conductor/offline`), manifest e íconos, y aviso de "Instalar app" (diálogo nativo en Android/Chrome; instructivo Compartir→Agregar a inicio en iPhone). Hecho el 2026-11-06.
+  - [ ] **Fase 2 – notificaciones push** (preoperacional, vencimientos, cuenta de cobro) que reemplazan SMS en muchos casos; requiere llaves VAPID y guardar la suscripción por usuario. iOS: push desde iOS 16.4, solo si la app está agregada a la pantalla de inicio.
+  - [ ] **Fase 3 – preoperacional offline** con cola de envío (lo más delicado; requiere pruebas en celular real).
+  - [ ] Falta la PWA del portal del propietario (va junto con ese módulo).
 - [ ] **WhatsApp como canal** (además de SMS y correo) para firma, recibos, cuentas de cobro y avisos; requiere proveedor (API de WhatsApp Business o gateway).
 - [ ] **Administración – extras:** bloqueo opcional del FUEC por mora (interruptor por empresa) y recargos/intereses de mora configurables.
 - [ ] **PESV:** registro de accidentes/incidentes e indicadores de accidentalidad y cumplimiento para reportes a Supertransporte/Mintransporte.
