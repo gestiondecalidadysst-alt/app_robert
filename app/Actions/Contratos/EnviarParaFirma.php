@@ -94,15 +94,22 @@ class EnviarParaFirma
         }
 
         if ($email) {
-            Mensajero::correo($empresa, $tipo, $email, new CorreoFirmaContrato(
+            // Igual que el SMS de arriba: el envío manual va de inmediato (quien envía ve
+            // si salió), el recordatorio automático va en cola. Antes el correo siempre se
+            // encolaba, así que si el worker no procesaba la cola el enlace de firma no
+            // llegaba aunque el recibo (que es inmediato) sí.
+            $envio = Mensajero::correo($empresa, $tipo, $email, new CorreoFirmaContrato(
                 $recordatorio ? CorreoFirmaContrato::RECORDATORIO : CorreoFirmaContrato::ENLACE,
                 $nombreEmpresa,
                 $numero,
                 $nombre,
                 enlace: $enlace,
                 vence: $vence,
-            ), $documento);
-            $canales[] = 'correo '.Contacto::ocultarCorreo($email);
+            ), $documento, ahora: ! $recordatorio);
+
+            in_array($envio->estado, ['omitido', 'fallido'], true)
+                ? $omitidos[] = 'Correo no enviado: '.$envio->error
+                : $canales[] = 'correo '.Contacto::ocultarCorreo($email);
         }
 
         // Lo omitido (p. ej. SMS sin configurar) queda en el historial de mensajes, no en las evidencias.

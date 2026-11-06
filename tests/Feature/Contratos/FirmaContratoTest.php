@@ -7,6 +7,7 @@ use App\Actions\Contratos\EmitirDocumentoContrato;
 use App\Actions\Contratos\EnviarParaFirma;
 use App\Actions\Contratos\GuardarPlantillaContrato;
 use App\Enums\EstadoFirma;
+use App\Jobs\EnviarCorreo;
 use App\Mail\CorreoFirmaContrato;
 use App\Models\Contrato;
 use App\Models\DocumentoContrato;
@@ -18,6 +19,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\Models\Activity;
@@ -180,6 +182,37 @@ class FirmaContratoTest extends ConfiguracionTestCase
 
         // No se emite dos veces mientras haya uno activo.
         $this->assertThrows(fn () => app(EmitirDocumentoContrato::class)($documento->contrato), ValidationException::class);
+    }
+
+    public function test_el_enlace_de_firma_por_correo_se_envia_de_inmediato_no_por_cola(): void
+    {
+        // El recibo de pago se envía al instante y el enlace de firma se encolaba: si el
+        // worker no procesaba la cola, llegaba el recibo pero no la firma. El envío manual
+        // ahora sale de inmediato, igual que el SMS y que el recibo.
+        Mail::fake();
+        Queue::fake();
+        $documento = $this->documentoEmitido();
+
+        app(EnviarParaFirma::class)($documento, ['nombre' => 'Firmante', 'email' => 'firma@agro.test']);
+
+        // No se encoló: se mandó en la misma petición.
+        Queue::assertNotPushed(EnviarCorreo::class);
+        Mail::assertSent(CorreoFirmaContrato::class, fn ($m) => $m->hasTo('firma@agro.test'));
+        $this->assertSame('enviado', EnvioMensaje::query()->deEmpresa($this->demo)
+            ->where('canal', 'correo')->latest('id')->value('estado'));
+    }
+
+    public function test_el_recordatorio_de_firma_si_va_por_cola(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        $documento = $this->documentoEmitido();
+        // Primero un envío para que exista el enlace vigente.
+        app(EnviarParaFirma::class)($documento, ['nombre' => 'Firmante', 'email' => 'firma@agro.test']);
+
+        app(EnviarParaFirma::class)($documento->fresh(), ['nombre' => 'Firmante', 'email' => 'firma@agro.test'], recordatorio: true);
+
+        Queue::assertPushed(EnviarCorreo::class);
     }
 
     public function test_flujo_completo_de_firma_con_sms(): void
