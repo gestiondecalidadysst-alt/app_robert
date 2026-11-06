@@ -46,7 +46,7 @@ class DemoSeeder extends Seeder
             'name' => 'Administrador Demo',
             'email' => 'admin@demo.test',
             'password' => self::CLAVE,
-        ], 'Montería');
+        ], 'Montería', onboarding: false);
 
         Oficina::query()->deEmpresa($demo)->firstOrCreate(
             ['empresa_id' => $demo->id, 'nombre' => 'Montería Oppal'],
@@ -84,7 +84,7 @@ class DemoSeeder extends Seeder
                 'name' => 'Administrador Ejemplo',
                 'email' => 'admin@ejemplo.test',
                 'password' => self::CLAVE,
-            ]);
+            ], onboarding: false);
         }
 
         $this->call([DemoFlotaSeeder::class, DemoConductoresSeeder::class, DemoOperacionSeeder::class, DemoPesvSeeder::class]);

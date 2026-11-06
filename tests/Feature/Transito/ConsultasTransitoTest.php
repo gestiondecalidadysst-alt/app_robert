@@ -369,6 +369,8 @@ class ConsultasTransitoTest extends ConfiguracionTestCase
         $this->get('/admin/empresas/'.$this->demo->id.'/editar')->assertOk()->assertSee('Consultas de tránsito');
 
         $this->actingAs($this->usuario('admin@demo.test'));
-        $this->get('/admin/consumo-consultas')->assertForbidden();
+        $resp = $this->get('/admin/consumo-consultas');
+        $resp->assertRedirect();
+        $this->assertStringNotContainsString('/admin', $resp->headers->get('Location'));
     }
 }

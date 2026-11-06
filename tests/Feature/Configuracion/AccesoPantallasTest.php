@@ -56,9 +56,12 @@ class AccesoPantallasTest extends ConfiguracionTestCase
 
     public function test_un_usuario_de_empresa_no_entra_al_panel_de_plataforma(): void
     {
+        // No ve el panel admin ni un 403 crudo: se le redirige a su propio panel.
         $this->actingAs($this->usuario('admin@demo.test'));
 
-        $this->get('/admin')->assertForbidden();
+        $resp = $this->get('/admin');
+        $resp->assertRedirect();
+        $this->assertStringNotContainsString('/admin', $resp->headers->get('Location'));
     }
 
     public function test_gerencia_ve_pero_no_crea_ni_edita(): void

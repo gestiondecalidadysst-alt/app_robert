@@ -23,8 +23,10 @@ class AutenticarPanel extends Authenticate
         $guard = Filament::auth();
         $usuario = $guard->user();
 
+        $panel = Filament::getCurrentOrDefaultPanel();
+
         if ($usuario instanceof FilamentUser
-            && ! $usuario->canAccessPanel(Filament::getCurrentOrDefaultPanel())
+            && ! $usuario->canAccessPanel($panel)
             && ServiciosConductor::conductores($usuario)->isNotEmpty()) {
             $guard->logout();
             $request->session()->invalidate();
@@ -38,6 +40,16 @@ class AutenticarPanel extends Authenticate
                 ->send();
 
             throw new HttpResponseException(redirect()->to(Filament::getLoginUrl()));
+        }
+
+        // Un usuario de empresa que llega al panel /admin no debe ver un 403 crudo ni el
+        // formulario de acceso: el panel de administración es solo del superadministrador.
+        // Se le envía a su propio panel, donde sí tiene acceso.
+        if ($usuario instanceof FilamentUser
+            && $panel->getId() === 'admin'
+            && ! $usuario->es_superadmin
+            && $usuario->canAccessPanel(Filament::getPanel('app'))) {
+            throw new HttpResponseException(redirect()->to(Filament::getPanel('app')->getUrl()));
         }
 
         parent::authenticate($request, $guards);

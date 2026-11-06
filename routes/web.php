@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CambiarClaveController;
 use App\Http\Controllers\Conductor\AccesoController;
 use App\Http\Controllers\Conductor\CargaController;
 use App\Http\Controllers\Conductor\MantenimientoController;
@@ -102,3 +103,11 @@ Route::prefix('conductor')->name('conductor.')->group(function () {
 // Evidencias (facturas, fotos) de mantenimientos y planes de acción: disco privado, con permiso.
 Route::get('/evidencias/{evidencia}', EvidenciaController::class)
     ->middleware('auth')->whereNumber('evidencia')->name('evidencia');
+
+// Cambio de clave obligatorio del panel /app (clave temporal del primer ingreso).
+// Ruta plana, fuera del panel, para no depender del enrutado por empresa de Filament.
+Route::middleware('auth')->group(function () {
+    Route::get('/clave-nueva', [CambiarClaveController::class, 'mostrar'])->name('clave.obligatoria');
+    Route::post('/clave-nueva', [CambiarClaveController::class, 'guardar'])
+        ->middleware('throttle:10,1')->name('clave.obligatoria.guardar');
+});

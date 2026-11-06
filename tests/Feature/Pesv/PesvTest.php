@@ -514,8 +514,8 @@ class PesvTest extends ConfiguracionTestCase
         $this->get('/admin')->assertRedirect('/admin/login');
         $this->assertGuest();
 
-        // Un usuario de oficina sin acceso sigue recibiendo 403.
+        // Un usuario de empresa no entra al panel admin: se le lleva a su propio panel.
         $this->actingAs($this->usuario('admin@demo.test'));
-        $this->get('/admin')->assertForbidden();
+        $this->get('/admin')->assertRedirect();
     }
 }

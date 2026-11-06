@@ -107,3 +107,20 @@ La clave de todos los usuarios demo es `Ruta2026*`.
 ## Pendientes / ideas
 - Recuperación de contraseña por correo: la pantalla existe, pero falta configurar el SMTP en `.env`.
 - Los permisos de Flota ya están en `Permisos.php`. Cada módulo nuevo agrega los suyos ahí; al desplegar, los roles existentes reciben solo los permisos nuevos.
+
+## Acceso al panel admin y claves temporales (2026-11-05)
+
+- **Panel /admin solo para el superadministrador.** `canAccessPanel('admin')` ya
+  exigía `es_superadmin`; ahora un usuario de empresa autenticado que llega a /admin
+  no ve un 403 crudo ni el formulario: `AutenticarPanel` lo redirige a su propio
+  panel /app.
+- **Alta de empresa con clave genérica por correo.** Si el superadministrador deja la
+  clave vacía, `CrearEmpresa` genera una temporal (`Str::password(12)`) y envía las
+  credenciales al correo del administrador (`CorreoCredencialesEmpresa`). El admin
+  nuevo entra con `debe_cambiar_clave`.
+- **Cambio obligatorio en el primer ingreso.** El middleware `ForzarCambioClave` del
+  panel /app retiene al usuario en la ruta plana `/clave-nueva`
+  (`CambiarClaveController`) hasta que define una clave propia, distinta de la temporal.
+- El parámetro `onboarding` de `CrearEmpresa` separa el alta real (clave temporal +
+  correo + cambio obligatorio) de las semillas y datos de prueba, que conservan su
+  clave fija.

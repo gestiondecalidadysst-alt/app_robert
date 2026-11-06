@@ -2,6 +2,7 @@
 
 namespace App\Actions\Configuracion;
 
+use App\Mail\CorreoCredencialesEmpresa;
 use App\Models\Empresa;
 use App\Models\Oficina;
 use App\Models\PlantillaContrato;
@@ -12,6 +13,8 @@ use App\Support\Mantenimiento\RutinasBase;
 use App\Support\Permisos;
 use App\Support\Pesv\ItemsBase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -24,9 +27,17 @@ class CrearEmpresa
      * @param  array  $datosEmpresa  Columnas de la tabla empresas.
      * @param  array{name: string, email: string, password?: string|null, documento?: string|null}  $administrador
      */
-    public function __invoke(array $datosEmpresa, array $administrador, string $nombreOficina = 'Principal'): Empresa
+    public function __invoke(array $datosEmpresa, array $administrador, string $nombreOficina = 'Principal', bool $onboarding = true): Empresa
     {
-        return DB::transaction(function () use ($datosEmpresa, $administrador, $nombreOficina): Empresa {
+        // En el alta real ($onboarding): si el superadministrador no escribe una clave, se
+        // genera una genérica, se envía por correo y el administrador entra obligado a
+        // cambiarla. Las semillas y los datos de prueba pasan false: conservan su clave fija.
+        $claveTemporal = filled($administrador['password'] ?? null)
+            ? (string) $administrador['password']
+            : Str::password(12, symbols: false);
+
+        /** @var array{empresa: Empresa, correoCredenciales: ?CorreoCredencialesEmpresa} $resultado */
+        $resultado = DB::transaction(function () use ($datosEmpresa, $administrador, $nombreOficina, $claveTemporal, $onboarding): array {
             app(SincronizarPermisos::class)();
 
             $empresa = Empresa::create($datosEmpresa);
@@ -41,13 +52,18 @@ class CrearEmpresa
                 'telefono' => $empresa->telefono,
             ]);
 
+            // Un correo ya existente se vincula tal cual: conserva su clave y sus accesos.
+            // Solo un administrador nuevo recibe la clave temporal y el correo.
             $usuario = User::query()->firstWhere('email', $administrador['email']);
-            if (! $usuario) {
+            $esNuevo = $usuario === null;
+
+            if ($esNuevo) {
                 $usuario = User::create([
                     'name' => $administrador['name'],
                     'email' => $administrador['email'],
                     'documento' => $administrador['documento'] ?? null,
-                    'password' => $administrador['password'],
+                    'password' => $claveTemporal,
+                    'debe_cambiar_clave' => $onboarding,
                 ]);
             }
 
@@ -61,8 +77,26 @@ class CrearEmpresa
             ItemsBase::crear($empresa);
             RutinasBase::crear($empresa);
 
-            return $empresa;
+            $correo = ($esNuevo && $onboarding)
+                ? new CorreoCredencialesEmpresa(
+                    empresa: $empresa->razon_social,
+                    nombre: $usuario->name,
+                    correo: $usuario->email,
+                    claveTemporal: $claveTemporal,
+                    enlace: rtrim((string) config('app.url'), '/').'/app',
+                )
+                : null;
+
+            return ['empresa' => $empresa, 'correoCredenciales' => $correo];
         });
+
+        // El correo se envía fuera de la transacción: si falla el envío, la empresa ya
+        // quedó creada y el superadministrador puede reenviar las credenciales.
+        if ($resultado['correoCredenciales'] !== null) {
+            Mail::to($administrador['email'])->send($resultado['correoCredenciales']);
+        }
+
+        return $resultado['empresa'];
     }
 
     /** Versión 1 de la plantilla de contrato con el texto base, si la empresa no tiene. */

@@ -140,9 +140,12 @@ class SistemaTest extends ConfiguracionTestCase
         Livewire::test(EstadoSistema::class)->callTableAction('resolver', $error);
         $this->assertNotNull($error->refresh()->resuelto_at);
 
-        // Un usuario de empresa no entra.
+        // Un usuario de empresa no entra al panel admin: se le lleva a su propio panel.
         $this->actingAs($this->usuario('admin@demo.test'));
-        $this->get('/admin/estado-sistema')->assertForbidden();
+        $resp = $this->get('/admin/estado-sistema');
+        $resp->assertRedirect();
+        $this->assertStringContainsString('/app', $resp->headers->get('Location'));
+        $this->assertStringNotContainsString('/admin', $resp->headers->get('Location'));
     }
 
     public function test_aviso_si_app_url_quedo_en_localhost(): void

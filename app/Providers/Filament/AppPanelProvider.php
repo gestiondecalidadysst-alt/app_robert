@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\App\Pages\Inicio;
 use App\Filament\App\Pages\Tenancy\EditarEmpresa;
 use App\Http\Middleware\AutenticarPanel;
+use App\Http\Middleware\ForzarCambioClave;
 use App\Http\Middleware\PrepararEmpresaActiva;
 use App\Models\Empresa;
 use App\Providers\Filament\Concerns\EstiloRuta;
@@ -82,6 +83,7 @@ class AppPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 AutenticarPanel::class,
+                ForzarCambioClave::class,
             ]);
     }
 }

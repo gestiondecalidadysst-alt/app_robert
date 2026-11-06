@@ -62,11 +62,11 @@ class EmpresaResource extends Resource
                     TextInput::make('administrador.name')->label('Nombre completo')->required(),
                     TextInput::make('administrador.email')->label('Correo electrónico')->email()->required(),
                     TextInput::make('administrador.password')
-                        ->label('Contraseña')
+                        ->label('Contraseña (opcional)')
                         ->password()
                         ->revealable()
                         ->minLength(8)
-                        ->required(),
+                        ->helperText('Déjela vacía y el sistema genera una temporal y la envía al correo. El administrador deberá cambiarla al entrar.'),
                 ]),
 
             Section::make('Módulos contratados')
