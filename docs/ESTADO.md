@@ -1,6 +1,6 @@
 # Estado del proyecto – Rediseño COOTRASEC (multiempresa)
 
-Última actualización: 2026-11-01
+Última actualización: 2026-11-06
 
 ## Hecho
 - [x] Relevamiento del legado (`legado/`), decisiones (`DECISIONES.md`) y arquitectura (`nuevo/ARQUITECTURA.md`).
@@ -32,29 +32,44 @@
 - [x] **Carga, fase 1 – datos maestros del RNDC:** terceros, remolques, datos de carga del vehículo, registro por web service (listo, sin conectar), ficha PDF y bitácora. Detalle en `nuevo/modulos/carga.md`.
 - [x] **Carga, fase 2 – remesas y manifiestos:** expedición con consecutivos propios, PDF del manifiesto con QR verificable, anulación con motivos del RNDC. Detalle en `nuevo/modulos/carga.md`.
 - [x] **Carga, fase 3 – cumplidos:** cumplir remesas y manifiestos con tiempos reales y ajustes al pago; validaciones del manual v2.3; neto a pagar al titular. Detalle en `nuevo/modulos/carga.md`.
-- [ ] **Carga, fase 4 (y 5):** anulaciones reportadas al RNDC (procesos 7-9, 32) y tiempos logísticos desde el celular. Pendiente: usuario del RNDC de la empresa y confirmar el formato del web service en la primera conexión.
-- [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción.
+- [x] **Carga, fase 4 y 5:** anulaciones reportadas al RNDC (proceso 9 remesa y 32 manifiesto, con sus motivos y transbordo), contingencia del RNDC (comando `ruta:rndc-contingencia` que reencola lo pendiente si se pierde la cola), tiempos logísticos desde el celular del conductor, SICE-TAC automático, plazos de pago y rutas municipales. Falta solo la conexión real al web service (ver Pendiente). Detalle en `nuevo/modulos/carga.md`.
+- [x] **SMS centralizado como servicio de la plataforma:** una sola cuenta Onurix que el superadministrador configura en `/admin`, activa y cobra por empresa; contador de consumo por empresa (segmentos, precio y costo) con pantalla para facturar. La empresa ya no instala credenciales por su cuenta. Detalle en `nuevo/modulos/sistema.md`.
+- [x] **Informes de operación en Excel y PDF:** extracción de los informes del módulo Operación con la cabecera y el pie de página estándar del sistema (horizontal cuando hay muchas columnas); los preoperacionales incluyen el número de extracto (FUEC) y de contrato.
+- [x] **Hoja de vida en PDF (vehículo y conductor):** por secciones que el usuario elige (datos, documentos, servicios, preoperacionales, conductores que lo condujeron…), con cabecera, pie y sin cortar información entre páginas.
+- [x] **Acceso del panel de plataforma restringido:** a `/admin` solo entra el superadministrador; al crear una empresa, el administrador recibe sus credenciales por correo con una clave temporal y el sistema lo obliga a cambiarla en el primer ingreso.
+- [x] **Módulo 7 – Pagos de administración:** cuota mensual por vehículo (valor por clase, ajustable por vehículo), generación automática el día 1 (o con botón manual desde el estado de cuenta), estado de cuenta mes a mes con mora, pago repartido de la cuota más vieja a la más nueva (FIFO) con recibo propio en PDF, y anulación que devuelve el abono. Módulo opcional que el superadministrador activa por empresa.
+- [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción; indicador de versión del build (`.build`/`.version`) para confirmar el despliegue.
+- [x] Suite completa en verde: 283 pruebas (SQLite y MySQL).
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
+## Módulos que faltan por construir
+- [ ] **Combustible y liquidación de vehículos:** consumo/tanqueo por vehículo y liquidación al propietario (servicios menos administración, combustible y descuentos). Se cruza con pagos de administración.
+- [ ] **Planillas, tiquetes y caja:** recaudo diario del despacho (planilla por vehículo/ruta, tiquetes, cuadre de caja). El tablero de gerencia ya está listo para recibir estos números.
+
 ## Pendiente / bloqueos
-- [ ] Redesplegar en Easypanel para publicar los módulos 2, 3 y 4 (las migraciones corren solas al arrancar). En «Mi empresa» completar código territorial, resolución y año de habilitación: sin ellos no se expide FUEC.
-- [ ] Confirmar con el usuario los campos extra del registro de operadores en la app actual.
-- [ ] Consultas de tránsito:
-  - poner la API key de PlacApi y los precios en `/admin/consultas-transito`;
-  - habilitar el módulo en cada empresa;
-  - revisar la primera respuesta real en el historial.
-- [ ] Configurar el correo (SMTP) en Easypanel: recuperación de contraseñas y correos de firma (enlace, código, copia firmada).
-- [ ] Crear la cuenta de Onurix, poner sus credenciales en Configuración → Integraciones y probar con "Enviar SMS de prueba" (la URL del API no está verificada con documentación oficial).
-- [ ] Confirmar la finalidad del tratamiento de datos (cláusula 19 del contrato) y revisar con el abogado las correcciones del texto y la cláusula de firma electrónica.
-- [ ] En «Mi empresa»: subir la firma escaneada del representante, la cédula "expedida en", el sitio web y la imagen del pie (certificaciones).
+### Despliegue y configuración (lado del usuario)
+- [ ] Redesplegar en Easypanel (web, **worker** y **scheduler**) para publicar todo lo construido; las migraciones corren solas al arrancar. El worker es imprescindible: sin él no salen recordatorios de firma, webhooks, contingencia del RNDC ni los informes mensuales.
+- [ ] Montar el volumen de `storage/app` en Easypanel (firmas, evidencias, logos) — sin él se pierden en cada despliegue.
+- [ ] Crear el servicio `scheduler` (`CONTAINER_ROLE=scheduler`), poner `SCHEDULE_EN_WORKER=false` en el worker y, si se quiere, `ALERTAS_CORREO`.
+- [ ] Correo con Brevo: poner `MAIL_PASSWORD` (clave SMTP de Brevo) y las variables de correo en Easypanel; probar con `ruta:probar-correo`. Verificar el DNS del dominio (SPF/DKIM/DMARC) para que el correo no caiga en spam.
+- [ ] SMS: crear la cuenta de Onurix y ponerla en `/admin` → Plataforma → Mensajes de texto; luego activar el SMS por empresa (la URL del API no está verificada con documentación oficial).
+- [ ] Consultas de tránsito: poner la API key de PlacApi y los precios en `/admin/consultas-transito`, habilitar el módulo por empresa y revisar la primera respuesta real.
+- [ ] Activar por empresa los módulos opcionales que vayan a usar (carga, consultas de tránsito, **pagos de administración**).
+- [ ] En «Mi empresa»: completar código territorial, resolución y año de habilitación (sin ellos no se expide FUEC); subir la firma del representante, la cédula "expedida en", el sitio web y la imagen del pie (certificaciones).
+
+### Carga – conexión real al RNDC
+- [ ] Poner el usuario del RNDC de la empresa y confirmar el formato del web service en la primera conexión real. Todo el código (registro, remesas, manifiestos, cumplidos, anulaciones, tiempos) ya está; falta conectarlo y probar contra el ambiente real.
+
+### Legal / externos
+- [ ] Confirmar la finalidad del tratamiento de datos (cláusula 19 del contrato) y revisar con el abogado el texto y la cláusula de firma electrónica.
 - [ ] FUEC electrónico por RUNT (Decreto 1048 de 2026): pendiente de reglamentación del Ministerio.
 
-- [ ] PESV: revisar con el usuario los ítems por defecto y cuáles son críticos (Seguridad vial → Ítems de chequeo); dar acceso al portal a los conductores.
+### PESV
+- [ ] Revisar con el usuario los ítems por defecto y cuáles son críticos (Seguridad vial → Ítems de chequeo); dar acceso al portal a los conductores.
 
 ## Siguiente paso
-1. Redesplegar (web y worker), completar Mi empresa e Integraciones, firmar un contrato de prueba y hacer un preoperacional desde un celular.
-2. Siguiente módulo sugerido: **Módulo 7 – Pagos de administración** (cuota mensual por vehículo, estado de cuenta; la app anterior bloqueaba el FUEC con administración atrasada). Después: combustible y liquidación de vehículos; planillas, tiquetes y caja (el tablero de gerencia ya está construido).
-3. En cada vehículo: registrar el punto de partida del plan (o «arrancan hoy»), generar el programa anual y aprobarlo; configurar el webhook de n8n en Integraciones.
+1. Redesplegar (web, worker y scheduler) con el volumen de `storage/app`, completar Mi empresa e Integraciones (Brevo, Onurix), y probar correo y SMS.
+2. Siguiente módulo sugerido: **Combustible y liquidación de vehículos**. Después: planillas, tiquetes y caja.
+3. En cada vehículo: definir el valor de administración (por clase o ajuste) y generar las cuotas del mes; registrar el punto de partida del plan de mantenimiento y aprobar el programa anual; configurar el webhook de n8n en Integraciones.
 4. Crear los rutogramas de las rutas frecuentes y poner la política de jornada de la empresa en Integraciones → Planeador de servicios.
-5. En Easypanel: crear el servicio `scheduler` (`CONTAINER_ROLE=scheduler`), poner `SCHEDULE_EN_WORKER=false` en el worker y, si se quiere, `ALERTAS_CORREO`.
-6. Montar el volumen de `storage/app` en Easypanel (firmas, evidencias, logos) — sin él se pierden en cada despliegue.
+5. Conectar el RNDC real (usuario de la empresa) y validar el web service.
