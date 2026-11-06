@@ -46,6 +46,18 @@
 - [ ] **Combustible y liquidación de vehículos:** consumo/tanqueo por vehículo y liquidación al propietario (servicios menos administración, combustible y descuentos). Se cruza con pagos de administración.
 - [ ] **Planillas, tiquetes y caja:** recaudo diario del despacho (planilla por vehículo/ruta, tiquetes, cuadre de caja). El tablero de gerencia ya está listo para recibir estos números.
 
+## Mejoras acordadas (backlog)
+Próximas a construir (acordadas con el usuario el 2026-11-06):
+- [ ] **Portal del propietario / afiliado:** acceso tipo portal (como el del conductor) para que el dueño vea el estado de cuenta de administración de sus vehículos, descargue recibos y paz y salvo, y vea los documentos y vencimientos de su vehículo. Incluye como parte del mismo trabajo: enviar la cuenta de cobro/recibo de administración al propietario (correo y SMS) y el estado de cuenta consolidado en PDF.
+- [ ] **Centro de alertas y avisos automáticos de vencimientos:** bandeja unificada en el inicio + aviso automático (correo/SMS) cuando esté por vencer SOAT, tecnomecánica, tarjeta de operación, licencias o RTM, o cuando haya administración en mora. Unifica las pantallas de vencimientos que ya existen y las hace avisar solas.
+
+Para después (sin fecha):
+- [ ] **PWA instalable para conductor y propietario:** convertir los portales web en app instalable (ícono en pantalla de inicio, pantalla completa, arranque rápido) con el mismo código web, sin tiendas. Por fases: (1) instalable + marca; (2) notificaciones push (preoperacional, vencimientos, cuenta de cobro) que reemplazan SMS en muchos casos; (3) preoperacional offline con cola de envío. Requisito (HTTPS) ya está. iOS: se instala y recibe push desde iOS 16.4, pero solo si el usuario la agrega a la pantalla de inicio.
+- [ ] **WhatsApp como canal** (además de SMS y correo) para firma, recibos, cuentas de cobro y avisos; requiere proveedor (API de WhatsApp Business o gateway).
+- [ ] **Administración – extras:** bloqueo opcional del FUEC por mora (interruptor por empresa) y recargos/intereses de mora configurables.
+- [ ] **PESV:** registro de accidentes/incidentes e indicadores de accidentalidad y cumplimiento para reportes a Supertransporte/Mintransporte.
+- [ ] **Facturación electrónica DIAN** de servicios/contratos.
+
 ## Pendiente / bloqueos
 ### Despliegue y configuración (lado del usuario)
 - [ ] Redesplegar en Easypanel (web, **worker** y **scheduler**) para publicar todo lo construido; las migraciones corren solas al arrancar. El worker es imprescindible: sin él no salen recordatorios de firma, webhooks, contingencia del RNDC ni los informes mensuales.
