@@ -19,6 +19,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
     case Mantenimiento = 'mantenimiento';
     case Gerencia = 'gerencia';
     case Carga = 'carga';
+    case Administracion = 'administracion';
 
     /** recurso de permiso (Permisos::RECURSOS) => módulo. Los que no están son de la base. */
     public const RECURSOS = [
@@ -45,6 +46,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
         'manifiestos_carga' => 'carga',
         'cumplidos_carga' => 'carga',
         'tarifas_sicetac' => 'carga',
+        'pagos_administracion' => 'administracion',
     ];
 
     public function getLabel(): string
@@ -55,6 +57,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
             self::Mantenimiento => 'Mantenimiento',
             self::Gerencia => 'Gerencia',
             self::Carga => 'Carga (RNDC)',
+            self::Administracion => 'Pagos de administración',
         };
     }
 
@@ -66,6 +69,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
             self::Mantenimiento => 'Planes de acción, mantenimientos, plan preventivo, programa anual y calendario.',
             self::Gerencia => 'Tablero de gerencia, informes en Excel y resumen mensual.',
             self::Carga => 'Remesas, manifiestos y cumplidos reportados al RNDC, con anulaciones, contingencia, tiempos logísticos y control del SICE-TAC.',
+            self::Administracion => 'Cuota mensual de administración por vehículo, estado de cuenta por propietario y recibos.',
         };
     }
 

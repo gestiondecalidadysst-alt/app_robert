@@ -28,3 +28,6 @@ Schedule::command('ruta:consultas-transito')->dailyAt('05:20')->withoutOverlappi
 
 // Contingencia del RNDC: reencola lo que quedó esperando si la cola se perdió.
 Schedule::command('ruta:rndc-contingencia')->everyTenMinutes()->withoutOverlapping()->onOneServer();
+
+// Cuota de administración del mes por vehículo (empresas con el módulo), el día 1 a las 6:30 a. m.
+Schedule::command('ruta:generar-cuotas-administracion')->monthlyOn(1, '06:30')->withoutOverlapping()->onOneServer();

@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Vehiculos\Schemas;
 
+use App\Enums\ModuloEmpresa;
 use App\Filament\App\Resources\Propietarios\PropietarioResource;
 use App\Filament\Compartido\CamposComunes;
 use App\Models\Carroceria;
@@ -14,7 +15,9 @@ use App\Models\Propietario;
 use App\Models\TipoServicio;
 use App\Models\Vehiculo;
 use App\Support\Carga\CatalogoRndc;
+use App\Support\Modulos;
 use Closure;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -140,6 +143,13 @@ final class VehiculoForm
                 ->required()
                 ->createOptionForm(PropietarioResource::campos())
                 ->createOptionModalHeading('Nuevo propietario'),
+            TextInput::make('administracion_valor')
+                ->label('Cuota de administración (ajuste)')
+                ->numeric()
+                ->minValue(0)
+                ->prefix('$')
+                ->helperText('Opcional. Si se deja vacío, usa el valor de la clase. Si se indica, manda sobre el de la clase para este vehículo.')
+                ->visible(fn () => Modulos::activo(Filament::getTenant(), ModuloEmpresa::Administracion)),
             FileUpload::make('foto_path')
                 ->label('Foto')
                 ->image()

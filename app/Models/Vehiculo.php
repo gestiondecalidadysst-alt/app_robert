@@ -55,6 +55,7 @@ class Vehiculo extends Model implements RegistrableRndc
         'empresa_convenio_id', 'fecha_vinculacion', 'observaciones',
         'rndc_configuracion', 'numero_ejes', 'rndc_marca', 'rndc_linea', 'rndc_color', 'rndc_carroceria', 'rndc_combustible',
         'peso_vacio', 'unidad_capacidad', 'ano_repotenciacion', 'soat_nit_aseguradora', 'tenedor_id',
+        'administracion_valor',
     ];
 
     protected $attributes = [
@@ -73,6 +74,7 @@ class Vehiculo extends Model implements RegistrableRndc
             'fecha_vinculacion' => 'date',
             'ficha_tecnica' => 'array',
             'modelo' => 'integer',
+            'administracion_valor' => 'integer',
         ];
     }
 
@@ -99,6 +101,25 @@ class Vehiculo extends Model implements RegistrableRndc
     public function propietario(): BelongsTo
     {
         return $this->belongsTo(Propietario::class)->withTrashed();
+    }
+
+    public function cuotasAdministracion(): HasMany
+    {
+        return $this->hasMany(CuotaAdministracion::class);
+    }
+
+    public function pagosAdministracion(): HasMany
+    {
+        return $this->hasMany(PagoAdministracion::class);
+    }
+
+    /** Lo que el vehículo debe hoy de administración (cuotas con saldo, sin anular). */
+    public function saldoAdministracion(): int
+    {
+        return (int) $this->cuotasAdministracion()
+            ->whereNull('anulado_at')
+            ->get(['valor', 'pagado', 'anulado_at'])
+            ->sum(fn (CuotaAdministracion $c) => $c->saldo());
     }
 
     public function marca(): BelongsTo

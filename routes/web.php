@@ -9,6 +9,7 @@ use App\Http\Controllers\Conductor\PreoperacionalController;
 use App\Http\Controllers\Conductor\ViajeController;
 use App\Http\Controllers\EvidenciaController;
 use App\Http\Controllers\FirmaContratoController;
+use App\Http\Controllers\ReciboAdministracionController;
 use App\Http\Controllers\VerificarConsultaTransitoController;
 use App\Http\Controllers\VerificarContratoController;
 use App\Http\Controllers\VerificarFuecController;
@@ -103,6 +104,10 @@ Route::prefix('conductor')->name('conductor.')->group(function () {
 // Evidencias (facturas, fotos) de mantenimientos y planes de acción: disco privado, con permiso.
 Route::get('/evidencias/{evidencia}', EvidenciaController::class)
     ->middleware('auth')->whereNumber('evidencia')->name('evidencia');
+
+// Descarga del recibo de pago de administración (usuario del panel con permiso y de la empresa).
+Route::get('/administracion/recibo/{pago}', ReciboAdministracionController::class)
+    ->middleware('auth')->whereNumber('pago')->name('administracion.recibo');
 
 // Cambio de clave obligatorio del panel /app (clave temporal del primer ingreso).
 // Ruta plana, fuera del panel, para no depender del enrutado por empresa de Filament.
