@@ -31,3 +31,7 @@ Schedule::command('ruta:rndc-contingencia')->everyTenMinutes()->withoutOverlappi
 
 // Cuota de administración del mes por vehículo (empresas con el módulo), el día 1 a las 6:30 a. m.
 Schedule::command('ruta:generar-cuotas-administracion')->monthlyOn(1, '06:30')->withoutOverlapping()->onOneServer();
+
+// Centro de alertas: aviso puntual de lo que vence hoy (diario) y resumen los lunes (semanal).
+Schedule::command('ruta:alertas --modo=diario')->dailyAt('06:40')->withoutOverlapping()->onOneServer();
+Schedule::command('ruta:alertas --modo=semanal')->weeklyOn(1, '07:00')->withoutOverlapping()->onOneServer();

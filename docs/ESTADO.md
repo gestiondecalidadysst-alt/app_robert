@@ -39,7 +39,8 @@
 - [x] **Acceso del panel de plataforma restringido:** a `/admin` solo entra el superadministrador; al crear una empresa, el administrador recibe sus credenciales por correo con una clave temporal y el sistema lo obliga a cambiarla en el primer ingreso.
 - [x] **Módulo 7 – Pagos de administración:** cuota mensual por vehículo (valor por clase, ajustable por vehículo), generación automática el día 1 (o con botón manual desde el estado de cuenta), estado de cuenta mes a mes con mora, pago repartido de la cuota más vieja a la más nueva (FIFO) con recibo propio en PDF, y anulación que devuelve el abono. Módulo opcional que el superadministrador activa por empresa.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción; indicador de versión del build (`.build`/`.version`) para confirmar el despliegue.
-- [x] Suite completa en verde: 283 pruebas (SQLite y MySQL).
+- [x] **Centro de alertas:** bandeja unificada en el inicio (documentos de vehículos y conductores por vencer/vencidos y administración en mora, con conteo, color y enlace a su listado) y avisos automáticos por correo al propietario/conductor afectado — resumen semanal (lunes) y aviso puntual el día del vencimiento — más campana al equipo con permiso. Comando `ruta:alertas` (modos diario y semanal).
+- [x] Suite completa en verde: 289 pruebas (SQLite y MySQL).
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
 ## Módulos que faltan por construir
@@ -49,7 +50,7 @@
 ## Mejoras acordadas (backlog)
 Próximas a construir (acordadas con el usuario el 2026-11-06):
 - [ ] **Portal del propietario / afiliado:** acceso tipo portal (como el del conductor) para que el dueño vea el estado de cuenta de administración de sus vehículos, descargue recibos y paz y salvo, y vea los documentos y vencimientos de su vehículo. Incluye como parte del mismo trabajo: enviar la cuenta de cobro/recibo de administración al propietario (correo y SMS) y el estado de cuenta consolidado en PDF.
-- [ ] **Centro de alertas y avisos automáticos de vencimientos:** bandeja unificada en el inicio + aviso automático (correo/SMS) cuando esté por vencer SOAT, tecnomecánica, tarjeta de operación, licencias o RTM, o cuando haya administración en mora. Unifica las pantallas de vencimientos que ya existen y las hace avisar solas.
+- [x] **Centro de alertas y avisos automáticos de vencimientos** (hecho el 2026-11-06, ver sección "Hecho").
 
 Para después (sin fecha):
 - [ ] **PWA instalable para conductor y propietario:** convertir los portales web en app instalable (ícono en pantalla de inicio, pantalla completa, arranque rápido) con el mismo código web, sin tiendas. Por fases: (1) instalable + marca; (2) notificaciones push (preoperacional, vencimientos, cuenta de cobro) que reemplazan SMS en muchos casos; (3) preoperacional offline con cola de envío. Requisito (HTTPS) ya está. iOS: se instala y recibe push desde iOS 16.4, pero solo si el usuario la agrega a la pantalla de inicio.
