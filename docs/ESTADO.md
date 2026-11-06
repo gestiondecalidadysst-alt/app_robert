@@ -40,7 +40,7 @@
 - [x] **Módulo 7 – Pagos de administración:** cuota mensual por vehículo (valor por clase, ajustable por vehículo), generación automática el día 1 (o con botón manual desde el estado de cuenta), estado de cuenta mes a mes con mora, pago repartido de la cuota más vieja a la más nueva (FIFO) con recibo propio en PDF, y anulación que devuelve el abono. Módulo opcional que el superadministrador activa por empresa.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción; indicador de versión del build (`.build`/`.version`) para confirmar el despliegue.
 - [x] **Centro de alertas:** bandeja unificada en el inicio (documentos de vehículos y conductores por vencer/vencidos y administración en mora, con conteo, color y enlace a su listado) y avisos automáticos por correo al propietario/conductor afectado — resumen semanal (lunes) y aviso puntual el día del vencimiento — más campana al equipo con permiso. Comando `ruta:alertas` (modos diario y semanal).
-- [x] Suite completa en verde: 292 pruebas (SQLite y MySQL).
+- [x] Suite completa en verde: 298 pruebas (SQLite y MySQL).
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
 ## Módulos que faltan por construir
@@ -55,7 +55,7 @@ Próximas a construir (acordadas con el usuario el 2026-11-06):
 Para después (sin fecha):
 - [~] **PWA instalable para conductor y propietario** (por fases):
   - [x] **Fase 1 – instalable + marca (conductor):** service worker (`/conductor/sw.js`), registro en el layout, página de respaldo sin conexión (`/conductor/offline`), manifest e íconos, y aviso de "Instalar app" (diálogo nativo en Android/Chrome; instructivo Compartir→Agregar a inicio en iPhone). Hecho el 2026-11-06.
-  - [ ] **Fase 2 – notificaciones push** (preoperacional, vencimientos, cuenta de cobro) que reemplazan SMS en muchos casos; requiere llaves VAPID y guardar la suscripción por usuario. iOS: push desde iOS 16.4, solo si la app está agregada a la pantalla de inicio.
+  - [x] **Fase 2 – notificaciones push (conductor):** Web Push nativo (aes128gcm + VAPID ES256, sin librerías ni extensiones extra), suscripción desde el portal ("Activar avisos"), tabla `suscripciones_push`, service worker con `push`/`notificationclick`, baja automática en 404/410, y envío integrado al comando `ruta:alertas` (el conductor recibe también por push sus documentos por vencer). Comando `ruta:generar-vapid` para las llaves. Hecho el 2026-11-06. Pendiente de despliegue: poner `VAPID_PUBLIC` y `VAPID_PRIVATE_PEM_B64` en Easypanel y verificar en un celular real (la entrega solo se puede probar contra el servicio de push en producción). iOS: push desde iOS 16.4, solo si la app está agregada a la pantalla de inicio.
   - [ ] **Fase 3 – preoperacional offline** con cola de envío (lo más delicado; requiere pruebas en celular real).
   - [ ] Falta la PWA del portal del propietario (va junto con ese módulo).
 - [ ] **WhatsApp como canal** (además de SMS y correo) para firma, recibos, cuentas de cobro y avisos; requiere proveedor (API de WhatsApp Business o gateway).
@@ -70,6 +70,7 @@ Para después (sin fecha):
 - [ ] Crear el servicio `scheduler` (`CONTAINER_ROLE=scheduler`), poner `SCHEDULE_EN_WORKER=false` en el worker y, si se quiere, `ALERTAS_CORREO`.
 - [ ] Correo con Brevo: poner `MAIL_PASSWORD` (clave SMTP de Brevo) y las variables de correo en Easypanel; probar con `ruta:probar-correo`. Verificar el DNS del dominio (SPF/DKIM/DMARC) para que el correo no caiga en spam.
 - [ ] SMS: crear la cuenta de Onurix y ponerla en `/admin` → Plataforma → Mensajes de texto; luego activar el SMS por empresa (la URL del API no está verificada con documentación oficial).
+- [ ] Notificaciones push del conductor: generar las llaves con `php artisan ruta:generar-vapid`, poner `VAPID_PUBLIC` y `VAPID_PRIVATE_PEM_B64` en Easypanel, redesplegar y probar "Activar avisos" en un celular.
 - [ ] Consultas de tránsito: poner la API key de PlacApi y los precios en `/admin/consultas-transito`, habilitar el módulo por empresa y revisar la primera respuesta real.
 - [ ] Activar por empresa los módulos opcionales que vayan a usar (carga, consultas de tránsito, **pagos de administración**).
 - [ ] En «Mi empresa»: completar código territorial, resolución y año de habilitación (sin ellos no se expide FUEC); subir la firma del representante, la cédula "expedida en", el sitio web y la imagen del pie (certificaciones).

@@ -47,6 +47,32 @@ self.addEventListener('fetch', (e) => {
         e.respondWith(caches.match(req).then((r) => r || fetch(req)));
     }
 });
+
+// Notificaciones push: muestra el aviso que envía el servidor.
+self.addEventListener('push', (e) => {
+    let d = {};
+    try { d = e.data ? e.data.json() : {}; } catch (x) {}
+    const titulo = d.title || 'Ruta';
+    e.waitUntil(self.registration.showNotification(titulo, {
+        body: d.body || '',
+        icon: '/images/conductor-192.png',
+        badge: '/images/conductor-192.png',
+        tag: d.tag || undefined,
+        data: { url: d.url || '/conductor' },
+    }));
+});
+
+// Al tocar la notificación: abre o enfoca el portal.
+self.addEventListener('notificationclick', (e) => {
+    e.notification.close();
+    const destino = (e.notification.data && e.notification.data.url) || '/conductor';
+    e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
+        for (const c of lista) {
+            if (c.url.includes('/conductor') && 'focus' in c) return c.focus();
+        }
+        return clients.openWindow(destino);
+    }));
+});
 JS;
 
         return response($js, 200, [

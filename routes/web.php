@@ -6,6 +6,7 @@ use App\Http\Controllers\Conductor\CargaController;
 use App\Http\Controllers\Conductor\MantenimientoController;
 use App\Http\Controllers\Conductor\PortalController;
 use App\Http\Controllers\Conductor\PreoperacionalController;
+use App\Http\Controllers\Conductor\PushController;
 use App\Http\Controllers\Conductor\PwaController;
 use App\Http\Controllers\Conductor\ViajeController;
 use App\Http\Controllers\EvidenciaController;
@@ -80,6 +81,10 @@ Route::prefix('conductor')->name('conductor.')->group(function () {
     Route::middleware('conductor')->group(function () {
         Route::get('/', [PortalController::class, 'inicio'])->name('inicio');
         Route::post('/salir', [AccesoController::class, 'salir'])->name('salir');
+        // Notificaciones Web Push: suscribir el navegador, darlo de baja y enviar una de prueba.
+        Route::post('/push/suscribir', [PushController::class, 'suscribir'])->middleware('throttle:30,1')->name('push.suscribir');
+        Route::post('/push/baja', [PushController::class, 'baja'])->name('push.baja');
+        Route::post('/push/probar', [PushController::class, 'probar'])->middleware('throttle:10,1')->name('push.probar');
         Route::get('/clave', [AccesoController::class, 'formularioClave'])->name('clave');
         Route::post('/clave', [AccesoController::class, 'cambiarClave'])->name('clave.guardar');
         Route::get('/firma', [PortalController::class, 'formularioFirma'])->name('firma');

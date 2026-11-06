@@ -9,6 +9,7 @@ use App\Models\Empresa;
 use App\Services\Mensajeria\Mensajero;
 use App\Support\Alertas\CentroAlertas;
 use App\Support\Avisos;
+use App\Support\Push\WebPush;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
@@ -135,7 +136,16 @@ class EnviarAlertas extends Command
         }
 
         foreach ($items as $grupo) {
-            $this->enviar($empresa, $grupo['conductor']->email, $grupo['conductor']->nombre_completo, $titulo, $intro, $grupo['lista']);
+            $conductor = $grupo['conductor'];
+            $this->enviar($empresa, $conductor->email, $conductor->nombre_completo, $titulo, $intro, $grupo['lista']);
+
+            // Además del correo, notificación push al celular del conductor (si tiene la PWA y avisos activos).
+            if ($conductor->usuario) {
+                $n = count($grupo['lista']);
+                WebPush::aUsuario($conductor->usuario, $titulo, $n === 1
+                    ? $grupo['lista'][0]['texto'].' — '.$grupo['lista'][0]['detalle']
+                    : "Tienes {$n} documentos por renovar. Ábrelos en la app.", route('conductor.inicio'), 'vencimientos');
+            }
         }
     }
 

@@ -76,6 +76,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         return $this->hasMany(Conductor::class, 'user_id')->withoutGlobalScopes()->whereNull('conductores.deleted_at');
     }
 
+    /** Suscripciones Web Push (navegadores que aceptaron recibir avisos). */
+    public function suscripcionesPush(): HasMany
+    {
+        return $this->hasMany(SuscripcionPush::class, 'user_id');
+    }
+
     /**
      * Empresas donde el usuario tiene el rol Conductor: solo usa el portal del conductor, no el panel.
      *

@@ -13,6 +13,10 @@
 <link rel="manifest" href="/conductor.webmanifest">
 <link rel="icon" type="image/png" href="/images/conductor-192.png">
 <link rel="apple-touch-icon" href="/images/conductor-192.png">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+@auth
+    @if (config('webpush.public_key'))<meta name="vapid-key" content="{{ config('webpush.public_key') }}">@endif
+@endauth
 <title>@yield('titulo', 'Portal del conductor') · Ruta</title>
 <style>
     :root { color-scheme: light; --azul: #1B2B3A; --naranja: #C2410C; --naranja-osc: #9A3412; --fondo: #F3F5F8; --borde: #e2e7ee; --tenue: #64748b; --verde: #15803d; --rojo: #b91c1c; }
@@ -87,6 +91,13 @@
     <button type="button" class="si" id="instalar-si">Instalar</button>
     <button type="button" class="no" id="instalar-no" aria-label="Ahora no">Ahora no</button>
 </div>
+@auth
+    <div class="instalar" id="barra-avisos">
+        <span class="txt" id="avisos-texto">Activa los avisos para enterarte de tus documentos por vencer.</span>
+        <button type="button" class="si" id="avisos-si">Activar avisos</button>
+        <button type="button" class="no" id="avisos-no" aria-label="Ahora no">Ahora no</button>
+    </div>
+@endauth
 <main class="contenedor">
     @if (session('aviso'))<div class="aviso">{{ session('aviso') }}</div>@endif
     @if (session('alerta'))<div class="alerta">{{ session('alerta') }}</div>@endif
@@ -141,6 +152,72 @@
             si.style.display = 'none';
             barra.style.display = 'flex';
         }
+    })();
+
+    // Notificaciones push: pide permiso, suscribe el navegador y lo registra en el servidor.
+    (function () {
+        var barra = document.getElementById('barra-avisos');
+        var meta = document.querySelector('meta[name="vapid-key"]');
+        if (!barra || !meta) return;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+
+        var si = document.getElementById('avisos-si');
+        var no = document.getElementById('avisos-no');
+        var texto = document.getElementById('avisos-texto');
+        var clave = meta.getAttribute('content');
+        var token = (document.querySelector('meta[name="csrf-token"]') || {}).content;
+
+        function base64aUint8(base64) {
+            var pad = '='.repeat((4 - base64.length % 4) % 4);
+            var b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+            var raw = atob(b64);
+            var out = new Uint8Array(raw.length);
+            for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+            return out;
+        }
+
+        function ocultar() { barra.style.display = 'none'; }
+
+        if (Notification.permission === 'denied') return;
+
+        var pospuesto = false;
+        try { pospuesto = localStorage.getItem('avisos-pospuesto') === '1'; } catch (e) {}
+
+        navigator.serviceWorker.ready.then(function (reg) {
+            return reg.pushManager.getSubscription().then(function (sub) {
+                if (sub) return; // ya está suscrito: no molestar
+                if (pospuesto) return;
+                barra.style.display = 'flex';
+            });
+        });
+
+        no.addEventListener('click', function () {
+            ocultar();
+            try { localStorage.setItem('avisos-pospuesto', '1'); } catch (e) {}
+        });
+
+        si.addEventListener('click', function () {
+            texto.textContent = 'Activando…';
+            Notification.requestPermission().then(function (permiso) {
+                if (permiso !== 'granted') { ocultar(); return; }
+                navigator.serviceWorker.ready.then(function (reg) {
+                    return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64aUint8(clave) });
+                }).then(function (sub) {
+                    var datos = sub.toJSON();
+                    return fetch('{{ route('conductor.push.suscribir') }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                        body: JSON.stringify({ endpoint: datos.endpoint, keys: datos.keys }),
+                    });
+                }).then(function () {
+                    ocultar();
+                    // Envía una notificación de prueba para que vea que quedó activo.
+                    fetch('{{ route('conductor.push.probar') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': token } });
+                }).catch(function () {
+                    texto.textContent = 'No se pudieron activar los avisos. Intenta más tarde.';
+                });
+            });
+        });
     })();
 </script>
 </body>
