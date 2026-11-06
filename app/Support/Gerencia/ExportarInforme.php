@@ -8,6 +8,7 @@ use App\Models\Inspeccion;
 use App\Models\Mantenimiento;
 use App\Models\PagoContrato;
 use App\Models\Servicio;
+use App\Support\Pdf\PdfTablaInforme;
 use Illuminate\Support\Carbon;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
@@ -27,18 +28,24 @@ final class ExportarInforme
         'mantenimientos' => 'Mantenimientos',
     ];
 
-    public static function excel(string $informe, int $empresaId, Carbon $desde, Carbon $hasta, ?int $oficinaId = null): string
+    /** Informes que pertenecen al módulo de operación (servicios y extractos). */
+    public const DE_OPERACION = ['operacion', 'extractos'];
+
+    /**
+     * Datos de un informe (columnas + filas), en un solo sitio para que los compartan el
+     * Excel y el PDF. La primera fila que arma cada informe son sus encabezados.
+     *
+     * @return array{titulo: string, columnas: list<string>, filas: list<list<mixed>>}
+     */
+    public static function conjunto(string $informe, int $empresaId, Carbon $desde, Carbon $hasta, ?int $oficinaId = null): array
     {
         abort_unless(isset(self::INFORMES[$informe]), 404);
 
-        $ruta = tempnam(sys_get_temp_dir(), 'inf').'.xlsx';
-        $writer = new Writer;
-        $writer->openToFile($ruta);
-        $writer->getCurrentSheet()->setName(mb_substr(ucfirst($informe), 0, 30));
-        $writer->addRow(Row::fromValues([self::INFORMES[$informe].' · '.$desde->format('d/m/Y').' – '.$hasta->format('d/m/Y')]));
-
+        $filas = [];
+        $fila = function (array $v) use (&$filas): void {
+            $filas[] = $v;
+        };
         $rango = [$desde->toDateString(), $hasta->toDateString()];
-        $fila = fn (array $v) => $writer->addRow(Row::fromValues($v));
         $oficina = fn ($q, string $col = 'oficina_id') => $q->when($oficinaId, fn ($q) => $q->where($col, $oficinaId));
 
         match ($informe) {
@@ -117,9 +124,37 @@ final class ExportarInforme
             })(),
         };
 
+        $columnas = array_shift($filas) ?? [];
+
+        return ['titulo' => self::INFORMES[$informe], 'columnas' => $columnas, 'filas' => array_values($filas)];
+    }
+
+    public static function excel(string $informe, int $empresaId, Carbon $desde, Carbon $hasta, ?int $oficinaId = null): string
+    {
+        $conjunto = self::conjunto($informe, $empresaId, $desde, $hasta, $oficinaId);
+
+        $ruta = tempnam(sys_get_temp_dir(), 'inf').'.xlsx';
+        $writer = new Writer;
+        $writer->openToFile($ruta);
+        $writer->getCurrentSheet()->setName(mb_substr(ucfirst($informe), 0, 30));
+        $writer->addRow(Row::fromValues([$conjunto['titulo'].' · '.$desde->format('d/m/Y').' – '.$hasta->format('d/m/Y')]));
+        $writer->addRow(Row::fromValues($conjunto['columnas']));
+
+        foreach ($conjunto['filas'] as $f) {
+            $writer->addRow(Row::fromValues($f));
+        }
+
         $writer->close();
 
         return $ruta;
+    }
+
+    /** Mismo informe que el Excel, pero en PDF con el aspecto estándar del sistema. */
+    public static function pdf(string $informe, int $empresaId, Carbon $desde, Carbon $hasta, ?int $oficinaId = null): string
+    {
+        $conjunto = self::conjunto($informe, $empresaId, $desde, $hasta, $oficinaId);
+
+        return PdfTablaInforme::generar($empresaId, $conjunto['titulo'], $desde, $hasta, $oficinaId, $conjunto['columnas'], $conjunto['filas']);
     }
 
     public static function nombre(string $informe, Carbon $desde, Carbon $hasta): string

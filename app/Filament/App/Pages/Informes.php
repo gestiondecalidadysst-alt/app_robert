@@ -6,6 +6,7 @@ use App\Models\Oficina;
 use App\Support\Gerencia\ExportarInforme;
 use App\Support\Gerencia\Indicadores;
 use App\Support\Gerencia\InformeGerencia;
+use App\Support\Pdf\PdfTablaInforme;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -51,6 +52,7 @@ class Informes extends Page implements HasSchemas
     {
         $this->form->fill([
             'informe' => 'pagos',
+            'formato' => 'excel',
             'desde' => today()->startOfMonth()->toDateString(),
             'hasta' => today()->toDateString(),
         ]);
@@ -61,7 +63,13 @@ class Informes extends Page implements HasSchemas
         return $schema->statePath('data')->components([
             Section::make()->columns(['default' => 1, 'md' => 4])->schema([
                 Select::make('informe')->label('Informe')->options(ExportarInforme::INFORMES + ['resumen' => 'Resumen de gerencia (PDF)'])
-                    ->required()->selectablePlaceholder(false)->columnSpan(['md' => 2]),
+                    ->required()->selectablePlaceholder(false)->columnSpan(['md' => 2])->live(),
+                Select::make('formato')->label('Formato')
+                    ->options(['excel' => 'Excel', 'pdf' => 'PDF'])->default('excel')
+                    ->selectablePlaceholder(false)
+                    // El resumen de gerencia solo existe en PDF.
+                    ->disabled(fn ($get) => $get('informe') === 'resumen')
+                    ->dehydrated(),
                 DatePicker::make('desde')->required(),
                 DatePicker::make('hasta')->required()->afterOrEqual('desde'),
                 Select::make('oficina_id')->label('Oficina')->placeholder('Todas')
@@ -86,6 +94,14 @@ class Informes extends Page implements HasSchemas
             $i = new Indicadores($empresa, $desde, $hasta, $oficina);
 
             return response()->streamDownload(fn () => print (InformeGerencia::pdf($i)), InformeGerencia::nombre($i), ['Content-Type' => 'application/pdf']);
+        }
+
+        if (($d['formato'] ?? 'excel') === 'pdf') {
+            return response()->streamDownload(
+                fn () => print (ExportarInforme::pdf($d['informe'], $empresa, $desde, $hasta, $oficina)),
+                PdfTablaInforme::nombre($d['informe'], $desde, $hasta),
+                ['Content-Type' => 'application/pdf'],
+            );
         }
 
         return response()->download(ExportarInforme::excel($d['informe'], $empresa, $desde, $hasta, $oficina), ExportarInforme::nombre($d['informe'], $desde, $hasta))

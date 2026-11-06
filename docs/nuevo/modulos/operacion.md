@@ -198,3 +198,15 @@ Reemplaza estas pantallas del legado (detalle en `legado/modulos/contratos.md` y
   - `Http/Controllers/Conductor/ViajeController.php`.
 - **Pruebas:** `tests/Feature/Operacion/PlaneadorTest.php`, con 7 pruebas.
 
+
+## Informes de operación en Excel o PDF (2026-11-06)
+Página «Informes de operación» en el grupo Operación (`InformesOperacion`, permiso
+`ver_servicios`): servicios por día y extractos (FUEC) expedidos, en Excel o PDF.
+
+- `ExportarInforme::conjunto()` arma columnas + filas una sola vez; de ahí comen el
+  Excel (`excel()`) y el PDF (`pdf()`), así no divergen.
+- El PDF usa `PdfTablaInforme` + `pdf.tabla-informe`: encabezado con logo y empresa,
+  pie con fecha de generación y «Página X de Y», y horizontal cuando hay más de 8
+  columnas. Es el aspecto estándar, igual que las hojas de vida.
+- La página de Gerencia (`Informes`) ganó el mismo selector Excel/PDF para todos sus
+  informes tabulares; el resumen de gerencia sigue siendo solo PDF.
