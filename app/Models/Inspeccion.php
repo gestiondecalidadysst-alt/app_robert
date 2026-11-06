@@ -86,6 +86,23 @@ class Inspeccion extends Model
         return $this->datos['conductor']['nombre'] ?? $this->conductor?->nombre_completo;
     }
 
+    /**
+     * Número del extracto (FUEC) para el que se hizo el preoperacional.
+     *
+     * Se prefiere el FUEC vivo (número formateado para leer); si ya no existe, se usa el
+     * que quedó en el snapshot del preoperacional. Null si no se hizo contra un FUEC.
+     */
+    public function numeroExtracto(): ?string
+    {
+        return $this->fuec?->numero_formateado ?? ($this->datos['fuec']['numero'] ?? null);
+    }
+
+    /** Número del contrato al que pertenece ese extracto. */
+    public function numeroContrato(): ?string
+    {
+        return $this->fuec?->contrato?->numero_formateado ?? ($this->datos['fuec']['contrato'] ?? null);
+    }
+
     public function urlVerificacion(): string
     {
         return route('inspeccion.verificar', ['codigo' => $this->codigo_verificacion]);

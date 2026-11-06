@@ -96,11 +96,12 @@ final class ExportarInforme
                 }
             })(),
             'preoperacionales' => (function () use ($fila, $empresaId, $rango) {
-                $fila(['Fecha', 'Tipo', 'Placa', 'Conductor', 'Resultado', 'Kilometraje', 'Ítems que no cumplen', 'Observaciones']);
+                $fila(['Fecha', 'Tipo', 'Placa', 'Conductor', 'Extracto (FUEC)', 'Contrato', 'Resultado', 'Kilometraje', 'Ítems que no cumplen', 'Observaciones']);
                 Inspeccion::query()->deEmpresa($empresaId)->whereDate('fecha', '>=', $rango[0])->whereDate('fecha', '<=', $rango[1])
-                    ->with(['vehiculo', 'conductor'])->orderBy('fecha')->orderBy('id')->get()
+                    ->with(['vehiculo', 'conductor', 'fuec.contrato'])->orderBy('fecha')->orderBy('id')->get()
                     ->each(fn (Inspeccion $i) => $fila([
                         $i->fecha->format('Y-m-d'), $i->tipo->getLabel(), $i->vehiculo?->placa, $i->conductor?->nombre_completo,
+                        $i->numeroExtracto(), $i->numeroContrato(),
                         $i->resultado->getLabel(), $i->kilometraje, collect($i->fallas())->pluck('descripcion')->filter()->implode('; '), $i->observaciones,
                     ]));
             })(),

@@ -66,7 +66,7 @@
         <th>Licencia</th><td>{{ ! empty($c['licencia']) ? $c['licencia'].(! empty($c['categoria']) ? ' ('.$c['categoria'].')' : '') : '—' }}</td>
     </tr>
     @if (! empty($d['fuec']))
-        <tr><th>FUEC</th><td colspan="3">{{ $d['fuec']['numero'] }}{{ ! empty($d['fuec']['contrato']) ? ' · contrato '.$d['fuec']['contrato'] : '' }}</td></tr>
+        <tr><th>Extracto (FUEC)</th><td colspan="3">{{ $i->numeroExtracto() ?? $d['fuec']['numero'] }}{{ $i->numeroContrato() ? ' · contrato '.$i->numeroContrato() : (! empty($d['fuec']['contrato']) ? ' · contrato '.$d['fuec']['contrato'] : '') }}</td></tr>
     @endif
 </table>
 
