@@ -5,11 +5,13 @@ namespace Tests\Feature\Administracion;
 use App\Actions\Administracion\AnularPagoAdministracion;
 use App\Actions\Administracion\RegistrarPagoAdministracion;
 use App\Enums\ModuloEmpresa;
+use App\Filament\App\Resources\EstadoAdministracion\Pages\ListEstadoAdministracion;
 use App\Models\CuotaAdministracion;
 use App\Models\Vehiculo;
 use App\Support\Modulos;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
 
 /**
@@ -63,6 +65,31 @@ class PagosAdministracionTest extends ConfiguracionTestCase
 
         // Idempotente: una segunda corrida no duplica la cuota del mismo mes.
         $this->artisan('ruta:generar-cuotas-administracion')->assertSuccessful();
+        $this->assertSame(1, CuotaAdministracion::query()->deEmpresa($this->demo)
+            ->where('vehiculo_id', $vehiculo->id)
+            ->whereDate('periodo', now()->startOfMonth()->toDateString())->count());
+    }
+
+    public function test_el_boton_del_estado_de_cuenta_genera_las_cuotas_del_mes(): void
+    {
+        $this->activarModulo();
+        $vehiculo = $this->vehiculoDemo();
+        $vehiculo->forceFill(['administracion_valor' => 180000])->save();
+
+        $this->entrarComo('admin@demo.test');
+
+        Livewire::test(ListEstadoAdministracion::class)
+            ->callAction('generar');
+
+        $cuota = CuotaAdministracion::query()->deEmpresa($this->demo)
+            ->where('vehiculo_id', $vehiculo->id)
+            ->whereDate('periodo', now()->startOfMonth()->toDateString())
+            ->first();
+        $this->assertNotNull($cuota);
+        $this->assertSame(180000, (int) $cuota->valor);
+
+        // Repetir el botón no duplica.
+        Livewire::test(ListEstadoAdministracion::class)->callAction('generar');
         $this->assertSame(1, CuotaAdministracion::query()->deEmpresa($this->demo)
             ->where('vehiculo_id', $vehiculo->id)
             ->whereDate('periodo', now()->startOfMonth()->toDateString())->count());
