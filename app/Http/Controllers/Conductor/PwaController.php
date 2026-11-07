@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Conductor;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * Soporte PWA del portal del conductor: el service worker (para instalar la app y que arranque
@@ -11,8 +13,15 @@ use Illuminate\Http\Response;
  */
 class PwaController extends Controller
 {
-    public function serviceWorker(): Response
+    public function serviceWorker(Request $request): SymfonyResponse
     {
+        // Red de seguridad: si alguien abre esta URL como página (navegación), lo mandamos al
+        // portal en vez de mostrar el código. El registro del service worker usa Sec-Fetch-Dest
+        // "serviceworker", no "document", así que ese sí recibe el JavaScript.
+        if ($request->header('Sec-Fetch-Dest') === 'document') {
+            return redirect()->route('conductor.inicio');
+        }
+
         $js = <<<'JS'
 // Service worker del portal del conductor (Ruta): instalable + arranque rápido + respaldo offline + push.
 const CACHE = 'conductor-v2';

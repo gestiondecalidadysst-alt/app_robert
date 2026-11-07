@@ -20,6 +20,13 @@ class PwaTest extends TestCase
         $respuesta->assertSee('conductor/offline', false);
     }
 
+    public function test_abrir_el_service_worker_como_pagina_lleva_al_portal(): void
+    {
+        // Una navegación del usuario (Sec-Fetch-Dest: document) no debe mostrar el código.
+        $this->get('/conductor/sw.js', ['Sec-Fetch-Dest' => 'document'])
+            ->assertRedirect(route('conductor.inicio'));
+    }
+
     public function test_la_pagina_sin_conexion_responde(): void
     {
         $this->get('/conductor/offline')->assertOk()->assertSee('Sin conexión');
