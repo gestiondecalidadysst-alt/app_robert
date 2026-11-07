@@ -48,8 +48,13 @@ final class FuecForm
                         ->live()
                         ->afterStateUpdated(fn (Set $set, ?string $state) => self::aplicarContrato($set, $state))
                         ->columnSpan(['md' => 3]),
-                    DatePicker::make('fecha_inicio')->label('Fecha inicial')->required()->minDate(today())->live(),
+                    DatePicker::make('fecha_inicio')->label('Fecha inicial')->required()->live()
+                        ->minDate(fn (Get $get) => self::minInicio($get))
+                        ->maxDate(fn (Get $get) => self::maxFin($get))
+                        ->helperText('Dentro de la vigencia del contrato.'),
                     DatePicker::make('fecha_fin')->label('Fecha de vencimiento')->required()->afterOrEqual('fecha_inicio')->live()
+                        ->minDate(fn (Get $get) => $get('fecha_inicio') ?: self::minInicio($get))
+                        ->maxDate(fn (Get $get) => self::maxFin($get))
                         ->helperText('No puede superar la vigencia del contrato.')
                         ->hintAction(
                             Action::make('usarFechaMaxima')
@@ -155,6 +160,30 @@ final class FuecForm
         foreach (self::valoresDeContrato($contratoId) as $campo => $valor) {
             $set($campo, $valor);
         }
+    }
+
+    /** Contrato elegido en el formulario (solo los disponibles para FUEC). */
+    private static function contratoSeleccionado(Get $get): ?Contrato
+    {
+        $id = $get('contrato_id');
+
+        return $id ? Contrato::query()->disponiblesParaFuec()->find($id) : null;
+    }
+
+    /** Fecha mínima que puede llevar el extracto: el inicio del contrato, nunca antes de hoy. */
+    private static function minInicio(Get $get): string
+    {
+        $contrato = self::contratoSeleccionado($get);
+
+        return $contrato
+            ? Carbon::parse(max($contrato->fecha_inicio->toDateString(), today()->toDateString()))->toDateString()
+            : today()->toDateString();
+    }
+
+    /** Fecha máxima que puede llevar el extracto: la terminación del contrato. */
+    private static function maxFin(Get $get): ?string
+    {
+        return self::contratoSeleccionado($get)?->fecha_fin?->toDateString();
     }
 
     public static function sugerirConductores(Set $set, ?string $vehiculoId): void
