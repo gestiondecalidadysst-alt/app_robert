@@ -22,6 +22,11 @@ final class PdfHojaVidaConductor
      */
     public static function generar(Conductor $conductor, array $secciones, Carbon $desde, Carbon $hasta): string
     {
+        // Un conductor con mucho historial (preoperacionales/servicios de un año) genera un PDF
+        // grande; dompdf consume bastante memoria, así que se amplían los límites del proceso.
+        @ini_set('memory_limit', '768M');
+        @set_time_limit(180);
+
         $conductor->loadMissing(['tipoIdentificacion', 'municipio', 'eps', 'arl', 'nivelAcademico', 'oficina']);
 
         $empresa = Empresa::query()->with('municipio')->findOrFail($conductor->empresa_id);

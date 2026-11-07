@@ -27,6 +27,11 @@ final class PdfHojaVidaVehiculo
      */
     public static function generar(Vehiculo $vehiculo, array $secciones, Carbon $desde, Carbon $hasta): string
     {
+        // Historial amplio (servicios/preoperacionales/mantenimientos del año) = PDF grande;
+        // dompdf consume bastante memoria, así que se amplían los límites del proceso.
+        @ini_set('memory_limit', '768M');
+        @set_time_limit(180);
+
         $vehiculo->loadMissing([
             'marca', 'linea', 'claseVehiculo', 'carroceria', 'combustible', 'tipoServicio',
             'propietario', 'tenedor', 'organismoTransito', 'empresaConvenio',

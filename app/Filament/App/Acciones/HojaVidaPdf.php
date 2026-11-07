@@ -10,6 +10,7 @@ use App\Support\Pdf\SeccionHojaVida;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Carbon;
 
@@ -22,9 +23,9 @@ final class HojaVidaPdf
     public static function vehiculo(): Action
     {
         return self::accion(SeccionHojaVida::VEHICULO)
-            ->action(function (Vehiculo $record, array $data) {
+            ->action(function (Vehiculo $record, array $data, Action $action) {
                 [$desde, $hasta] = self::rango($data);
-                $pdf = PdfHojaVidaVehiculo::generar($record, $data['secciones'], $desde, $hasta);
+                $pdf = self::generar($action, fn () => PdfHojaVidaVehiculo::generar($record, $data['secciones'], $desde, $hasta));
 
                 return response()->streamDownload(fn () => print ($pdf), PdfHojaVidaVehiculo::nombre($record), ['Content-Type' => 'application/pdf']);
             });
@@ -33,12 +34,29 @@ final class HojaVidaPdf
     public static function conductor(): Action
     {
         return self::accion(SeccionHojaVida::CONDUCTOR)
-            ->action(function (Conductor $record, array $data) {
+            ->action(function (Conductor $record, array $data, Action $action) {
                 [$desde, $hasta] = self::rango($data);
-                $pdf = PdfHojaVidaConductor::generar($record, $data['secciones'], $desde, $hasta);
+                $pdf = self::generar($action, fn () => PdfHojaVidaConductor::generar($record, $data['secciones'], $desde, $hasta));
 
                 return response()->streamDownload(fn () => print ($pdf), PdfHojaVidaConductor::nombre($record), ['Content-Type' => 'application/pdf']);
             });
+    }
+
+    /** Genera el PDF; si falla (p. ej. mucho historial en el rango), avisa claro en vez de romper. */
+    private static function generar(Action $action, \Closure $generar): string
+    {
+        try {
+            return $generar();
+        } catch (\Throwable $e) {
+            report($e);
+            Notification::make()
+                ->danger()
+                ->title('No se pudo generar la hoja de vida')
+                ->body('Puede ser por demasiados registros en el rango de fechas. Intente con un rango más corto o con menos secciones.')
+                ->persistent()
+                ->send();
+            $action->halt();
+        }
     }
 
     /**
