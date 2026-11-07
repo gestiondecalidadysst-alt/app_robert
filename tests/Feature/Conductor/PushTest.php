@@ -89,6 +89,16 @@ class PushTest extends ConfiguracionTestCase
         $this->assertSame(64, strlen(WebPush::b64urlDecode($partes[2]))); // r||s crudos
     }
 
+    public function test_el_login_no_redirige_al_service_worker(): void
+    {
+        // Aunque quede una URL "pretendida" que no es una página (el service worker), el login
+        // siempre lleva al inicio del portal, no a /conductor/sw.js.
+        $this->withSession(['url.intended' => url('/conductor/sw.js')]);
+
+        $this->post('/conductor/ingresar', ['documento' => '20.000.001', 'clave' => 'Ruta2026*'])
+            ->assertRedirect(route('conductor.inicio'));
+    }
+
     public function test_el_navegador_registra_su_suscripcion(): void
     {
         $this->post('/conductor/ingresar', ['documento' => '20.000.001', 'clave' => 'Ruta2026*'])

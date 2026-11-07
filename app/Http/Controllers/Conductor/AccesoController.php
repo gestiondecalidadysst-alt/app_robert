@@ -62,7 +62,11 @@ class AccesoController extends Controller
         $request->session()->regenerate();
         $usuario->forceFill(['ultimo_acceso_at' => now()])->saveQuietly();
 
-        return redirect()->intended(route('conductor.inicio'));
+        // Siempre al inicio del portal. No usamos intended() porque podía quedar guardada una URL
+        // que no es una página (p. ej. /conductor/sw.js, el service worker) y mandar ahí al entrar.
+        $request->session()->forget('url.intended');
+
+        return redirect()->route('conductor.inicio');
     }
 
     public function salir(Request $request): RedirectResponse
