@@ -83,7 +83,7 @@ class WebPush
         // Llave efímera del servidor para este envío.
         $as = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
         $det = openssl_pkey_get_details($as);
-        $asPublic = "\x04".$det['ec']['x'].$det['ec']['y'];
+        $asPublic = self::puntoSinComprimir($det['ec']['x'], $det['ec']['y']);
 
         // Secreto compartido (ECDH) con la clave pública del navegador.
         $ecdh = openssl_pkey_derive($this->claveDesdePunto($uaPublic), $as, 32);
@@ -156,6 +156,15 @@ class WebPush
         $p = parse_url($url);
 
         return $p['scheme'].'://'.$p['host'].(isset($p['port']) ? ':'.$p['port'] : '');
+    }
+
+    /**
+     * Punto EC sin comprimir (0x04 || X || Y) con cada coordenada en 32 bytes. OpenSSL devuelve las
+     * coordenadas sin ceros a la izquierda, así que hay que rellenarlas o el punto queda inválido.
+     */
+    public static function puntoSinComprimir(string $x, string $y): string
+    {
+        return "\x04".str_pad($x, 32, "\0", STR_PAD_LEFT).str_pad($y, 32, "\0", STR_PAD_LEFT);
     }
 
     public static function b64url(string $datos): string

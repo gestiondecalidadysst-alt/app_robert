@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Push\WebPush;
 use Illuminate\Console\Command;
 
 /**
@@ -19,7 +20,7 @@ class GenerarVapid extends Command
         $pk = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
         openssl_pkey_export($pk, $pem);
         $d = openssl_pkey_get_details($pk);
-        $publica = rtrim(strtr(base64_encode("\x04".$d['ec']['x'].$d['ec']['y']), '+/', '-_'), '=');
+        $publica = WebPush::b64url(WebPush::puntoSinComprimir($d['ec']['x'], $d['ec']['y']));
 
         $this->info('Pegue estas dos variables en el entorno (Easypanel) y redespliegue:');
         $this->newLine();

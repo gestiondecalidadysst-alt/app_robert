@@ -28,7 +28,7 @@ class NotificarConductorTest extends ConfiguracionTestCase
         openssl_pkey_export($pk, $pem);
         $d = openssl_pkey_get_details($pk);
         config([
-            'webpush.public_key' => WebPush::b64url("\x04".$d['ec']['x'].$d['ec']['y']),
+            'webpush.public_key' => WebPush::b64url(WebPush::puntoSinComprimir($d['ec']['x'], $d['ec']['y'])),
             'webpush.private_pem' => base64_encode($pem),
         ]);
     }
@@ -42,7 +42,7 @@ class NotificarConductorTest extends ConfiguracionTestCase
         $d = openssl_pkey_get_details($pk);
         SuscripcionPush::registrar($user, [
             'endpoint' => 'https://push.example.test/'.Str::random(6),
-            'p256dh' => WebPush::b64url("\x04".$d['ec']['x'].$d['ec']['y']),
+            'p256dh' => WebPush::b64url(WebPush::puntoSinComprimir($d['ec']['x'], $d['ec']['y'])),
             'auth' => WebPush::b64url(random_bytes(16)),
         ]);
 

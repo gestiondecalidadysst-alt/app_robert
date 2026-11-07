@@ -21,7 +21,7 @@ class PushTest extends ConfiguracionTestCase
         $pk = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
         openssl_pkey_export($pk, $pem);
         $d = openssl_pkey_get_details($pk);
-        $publica = WebPush::b64url("\x04".$d['ec']['x'].$d['ec']['y']);
+        $publica = WebPush::b64url(WebPush::puntoSinComprimir($d['ec']['x'], $d['ec']['y']));
 
         config([
             'webpush.public_key' => $publica,
@@ -38,7 +38,7 @@ class PushTest extends ConfiguracionTestCase
 
         return SuscripcionPush::registrar($usuario, [
             'endpoint' => $endpoint,
-            'p256dh' => WebPush::b64url("\x04".$d['ec']['x'].$d['ec']['y']),
+            'p256dh' => WebPush::b64url(WebPush::puntoSinComprimir($d['ec']['x'], $d['ec']['y'])),
             'auth' => WebPush::b64url(random_bytes(16)),
         ]);
     }
@@ -47,7 +47,7 @@ class PushTest extends ConfiguracionTestCase
     {
         $ua = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
         $d = openssl_pkey_get_details($ua);
-        $uaPublic = "\x04".$d['ec']['x'].$d['ec']['y'];
+        $uaPublic = WebPush::puntoSinComprimir($d['ec']['x'], $d['ec']['y']);
         $auth = random_bytes(16);
         $mensaje = json_encode(['title' => 'Prueba', 'body' => 'Hola ñ áé', 'url' => '/conductor']);
 
