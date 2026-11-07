@@ -2,11 +2,13 @@
 
 namespace App\Support\Gerencia;
 
+use App\Enums\EstadoPlan;
 use App\Models\Contrato;
 use App\Models\Fuec;
 use App\Models\Inspeccion;
 use App\Models\Mantenimiento;
 use App\Models\PagoContrato;
+use App\Models\PlanAccion;
 use App\Models\Servicio;
 use App\Support\Pdf\PdfTablaInforme;
 use Illuminate\Support\Carbon;
@@ -103,13 +105,14 @@ final class ExportarInforme
                 }
             })(),
             'preoperacionales' => (function () use ($fila, $empresaId, $rango) {
-                $fila(['Fecha', 'Tipo', 'Placa', 'Conductor', 'Extracto (FUEC)', 'Contrato', 'Resultado', 'Kilometraje', 'Ítems que no cumplen', 'Observaciones']);
+                $fila(['Fecha', 'Tipo', 'Placa', 'Conductor', 'Extracto (FUEC)', 'Contrato', 'Resultado', 'Kilometraje', 'Ítems que no cumplen', 'Observaciones', 'Estado del hallazgo', 'Cierre del hallazgo (qué se hizo)']);
                 Inspeccion::query()->deEmpresa($empresaId)->whereDate('fecha', '>=', $rango[0])->whereDate('fecha', '<=', $rango[1])
-                    ->with(['vehiculo', 'conductor', 'fuec.contrato'])->orderBy('fecha')->orderBy('id')->get()
+                    ->with(['vehiculo', 'conductor', 'fuec.contrato', 'planesAccion.cerradoPor'])->orderBy('fecha')->orderBy('id')->get()
                     ->each(fn (Inspeccion $i) => $fila([
                         $i->fecha->format('Y-m-d'), $i->tipo->getLabel(), $i->vehiculo?->placa, $i->conductor?->nombre_completo,
                         $i->numeroExtracto(), $i->numeroContrato(),
                         $i->resultado->getLabel(), $i->kilometraje, collect($i->fallas())->pluck('descripcion')->filter()->implode('; '), $i->observaciones,
+                        self::estadoHallazgo($i), self::cierreHallazgo($i),
                     ]));
             })(),
             'mantenimientos' => (function () use ($fila, $empresaId, $rango) {
@@ -127,6 +130,39 @@ final class ExportarInforme
         $columnas = array_shift($filas) ?? [];
 
         return ['titulo' => self::INFORMES[$informe], 'columnas' => $columnas, 'filas' => array_values($filas)];
+    }
+
+    /** Estado del/los plan(es) de acción del hallazgo del preoperacional (cerrado, abierto, etc.). */
+    private static function estadoHallazgo(Inspeccion $i): string
+    {
+        if ($i->planesAccion->isEmpty()) {
+            return $i->fallas() ? 'Sin plan de acción' : '';
+        }
+
+        return $i->planesAccion->map(function (PlanAccion $p): string {
+            $estado = $p->estado->getLabel();
+            if ($p->estado === EstadoPlan::Cerrado && $p->cerrado_at) {
+                return $estado.' el '.$p->cerrado_at->format('Y-m-d');
+            }
+            if ($p->fecha_limite) {
+                return $estado.' · vence '.$p->fecha_limite->format('Y-m-d');
+            }
+
+            return $estado;
+        })->implode('; ');
+    }
+
+    /** Lo que se hizo para cerrar el hallazgo (o la acción planeada si aún no se ha cerrado). */
+    private static function cierreHallazgo(Inspeccion $i): string
+    {
+        return $i->planesAccion->map(function (PlanAccion $p): ?string {
+            $texto = filled($p->observacion_cierre) ? $p->observacion_cierre : $p->accion;
+            if ($p->estado === EstadoPlan::Cerrado && $p->cerradoPor && filled($texto)) {
+                $texto .= ' (verificó: '.$p->cerradoPor->name.')';
+            }
+
+            return $texto;
+        })->filter()->implode(' | ');
     }
 
     public static function excel(string $informe, int $empresaId, Carbon $desde, Carbon $hasta, ?int $oficinaId = null): string

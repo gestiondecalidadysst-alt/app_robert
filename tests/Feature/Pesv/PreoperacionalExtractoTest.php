@@ -4,6 +4,7 @@ namespace Tests\Feature\Pesv;
 
 use App\Models\Fuec;
 use App\Models\Inspeccion;
+use App\Models\PlanAccion;
 use App\Models\Vehiculo;
 use App\Support\Gerencia\ExportarInforme;
 use Illuminate\Support\Str;
@@ -73,6 +74,34 @@ class PreoperacionalExtractoTest extends ConfiguracionTestCase
 
         $this->assertStringContainsString('Extracto (FUEC)', $texto, 'La cabecera debe traer el extracto');
         $this->assertStringContainsString('Contrato', $texto);
+    }
+
+    public function test_el_informe_muestra_el_cierre_del_hallazgo(): void
+    {
+        $this->entrarComo('admin@demo.test');
+        $vehiculo = Vehiculo::query()->deEmpresa($this->demo)->first();
+
+        $preop = new Inspeccion([
+            'tipo' => 'preoperacional', 'vehiculo_id' => $vehiculo->id, 'fecha' => today(),
+            'resultado' => 'no_apto', 'respuestas' => [], 'datos' => [], 'observaciones' => 'Falla en frenos',
+            'codigo_verificacion' => Str::lower(Str::random(24)),
+        ]);
+        $preop->empresa_id = $this->demo->id;
+        $preop->save();
+
+        $plan = new PlanAccion([
+            'vehiculo_id' => $vehiculo->id, 'origen' => 'preoperacional', 'inspeccion_id' => $preop->id,
+            'prioridad' => 'alta', 'titulo' => 'Frenos', 'hallazgos' => [['descripcion' => 'Frenos']],
+            'accion' => 'Cambiar pastillas', 'estado' => 'cerrado',
+        ]);
+        $plan->empresa_id = $this->demo->id;
+        $plan->forceFill(['cerrado_at' => now(), 'observacion_cierre' => 'Se cambiaron las pastillas de freno'])->save();
+
+        $texto = $this->texto(ExportarInforme::excel('preoperacionales', $this->demo->id, today()->startOfMonth(), today()->endOfMonth()));
+
+        $this->assertStringContainsString('Cierre del hallazgo', $texto, 'La cabecera debe incluir el cierre');
+        $this->assertStringContainsString('Se cambiaron las pastillas de freno', $texto, 'Debe mostrar qué se hizo para cerrar');
+        $this->assertStringContainsString('Cerrado', $texto, 'Debe mostrar el estado del hallazgo');
     }
 
     public function test_sin_fuec_el_extracto_queda_vacio_sin_romper(): void

@@ -9,6 +9,7 @@ use App\Models\Concerns\PerteneceAEmpresa;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Preoperacional o inspección mensual de un vehículo. Se registra con
@@ -63,6 +64,12 @@ class Inspeccion extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /** Planes de acción abiertos a partir de los hallazgos de este preoperacional. */
+    public function planesAccion(): HasMany
+    {
+        return $this->hasMany(PlanAccion::class);
     }
 
     public function apta(): bool
