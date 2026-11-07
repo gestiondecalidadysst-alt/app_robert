@@ -18,6 +18,7 @@ use App\Http\Controllers\VerificarFuecController;
 use App\Http\Controllers\VerificarInspeccionController;
 use App\Http\Controllers\VerificarManifiestoController;
 use App\Http\Controllers\VerificarReciboController;
+use App\Http\Middleware\SinCachePortal;
 use Illuminate\Support\Facades\Route;
 
 // La raíz lleva al panel de empresas (pide inicio de sesión si hace falta).
@@ -69,7 +70,7 @@ Route::where(['codigo' => '[a-z0-9]{24}'])->middleware('throttle:30,1')->group(f
 });
 
 // Portal del conductor: ingreso con documento y clave; servicios, preoperacional y extracto.
-Route::prefix('conductor')->name('conductor.')->group(function () {
+Route::prefix('conductor')->name('conductor.')->middleware(SinCachePortal::class)->group(function () {
     // PWA (instalable): service worker y página de respaldo sin conexión. Públicos.
     Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('sw');
     Route::get('/offline', [PwaController::class, 'offline'])->name('offline');
