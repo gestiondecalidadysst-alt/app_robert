@@ -14,8 +14,8 @@ class PwaController extends Controller
     public function serviceWorker(): Response
     {
         $js = <<<'JS'
-// Service worker del portal del conductor (Ruta). Fase 1: instalable + arranque rápido + respaldo offline.
-const CACHE = 'conductor-v1';
+// Service worker del portal del conductor (Ruta): instalable + arranque rápido + respaldo offline + push.
+const CACHE = 'conductor-v2';
 const PRECARGA = ['/conductor/offline', '/images/conductor-192.png', '/images/conductor-512.png', '/conductor.webmanifest'];
 
 self.addEventListener('install', (e) => {

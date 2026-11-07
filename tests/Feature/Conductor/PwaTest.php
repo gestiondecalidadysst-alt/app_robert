@@ -16,7 +16,7 @@ class PwaTest extends TestCase
 
         $respuesta->assertOk();
         $this->assertStringContainsString('javascript', strtolower($respuesta->headers->get('content-type') ?? ''));
-        $respuesta->assertSee('conductor-v1', false);
+        $respuesta->assertSee("addEventListener('push'", false);
         $respuesta->assertSee('conductor/offline', false);
     }
 
