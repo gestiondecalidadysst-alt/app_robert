@@ -21,6 +21,8 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev unzip \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install -j"$(nproc)" intl zip gd pdo_mysql bcmath exif pcntl opcache \
+ && (yes '' | pecl install redis) \
+ && docker-php-ext-enable redis \
  && rm -rf /var/lib/apt/lists/* \
  && a2enmod rewrite headers \
  && sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \

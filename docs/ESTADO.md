@@ -85,6 +85,15 @@ Para después (sin fecha):
 ### PESV
 - [ ] Revisar con el usuario los ítems por defecto y cuáles son críticos (Seguridad vial → Ítems de chequeo); dar acceso al portal a los conductores.
 
+## Escalar (alta concurrencia: cientos/miles de usuarios activos)
+Hecho en la app: la imagen ya trae la extensión `phpredis` y el `.env.example` documenta el salto a Redis; las tareas pesadas van a cola (worker); hay índices por `empresa_id`.
+Pendiente (configuración/infra en Easypanel, por orden de impacto):
+- [ ] **Redis para sesión, caché y cola:** levantar un servicio Redis y poner `SESSION_DRIVER=redis`, `CACHE_STORE=redis`, `QUEUE_CONNECTION=redis`, `REDIS_HOST=<redis>` en web y worker. Descarga la base de datos (hoy esas tres pegan a MySQL en cada clic) y es requisito para varias réplicas.
+- [ ] **Varias réplicas del servicio web** detrás del balanceador de Easypanel (app sin estado: sesión en Redis y archivos en volumen compartido o S3). Con `FILESYSTEM_DISK=local` cada réplica tendría su disco: usar el MISMO volumen en todas, o `FILESYSTEM_DISK=s3`.
+- [ ] **Servidor web de mayor concurrencia:** Apache mod_php gasta mucha memoria por proceso; evaluar PHP-FPM + Nginx o Laravel Octane/FrankenPHP.
+- [ ] **Base de datos** (el techo real): instancia dedicada, afinar (buffer pool, conexiones), y réplicas de lectura para informes si hace falta.
+- [ ] **Más workers** en paralelo para absorber picos de cola; **medir** antes (tiempos de respuesta, consultas lentas) para dimensionar con datos.
+
 ## Siguiente paso
 1. Redesplegar (web, worker y scheduler) con el volumen de `storage/app`, completar Mi empresa e Integraciones (Brevo, Onurix), y probar correo y SMS.
 2. Siguiente módulo sugerido: **Combustible y liquidación de vehículos**. Después: planillas, tiquetes y caja.
