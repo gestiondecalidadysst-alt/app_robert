@@ -70,6 +70,10 @@
                 <span class="boton bloq" aria-disabled="true">🔒 Ver extracto (FUEC)</span>
                 <p class="nota" style="margin-top:-4px">{{ $t['motivo_extracto'] }}</p>
             @endif
+
+            @if ($f->tieneListadoPasajeros())
+                <a class="boton sec" href="{{ route('conductor.pasajeros', $f) }}">Listado de pasajeros ({{ $f->pasajeros()->count() }})</a>
+            @endif
         </div>
     </article>
 @empty

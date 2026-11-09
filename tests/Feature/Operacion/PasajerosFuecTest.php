@@ -108,4 +108,41 @@ class PasajerosFuecTest extends ConfiguracionTestCase
             ->assertSessionHas('estado', 'lleno');
         $this->assertSame(1, $fuec->pasajeros()->count());
     }
+
+    public function test_el_conductor_ve_el_listado_de_su_extracto(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->entrarComo('admin@demo.test');
+        $this->contrato()->forceFill(['objeto' => ObjetoContrato::Turismo])->save();
+        $fuec = app(ExpedirFuec::class)($this->demo, $this->datos());
+        $this->post(route('pasajeros.registrar', $fuec->pasajeros_token), [
+            'nombre' => 'Ana Gómez', 'tipo_documento' => 'CC', 'documento' => '123456789',
+        ]);
+
+        $this->post('/conductor/ingresar', ['documento' => '20.000.001', 'clave' => 'Ruta2026*'])
+            ->assertRedirect(route('conductor.inicio'));
+
+        $this->get(route('conductor.pasajeros', $fuec))
+            ->assertOk()
+            ->assertSee('Listado de pasajeros')
+            ->assertSee('Ana Gómez');
+    }
+
+    public function test_verificacion_publica_muestra_documento_parcial(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->entrarComo('admin@demo.test');
+        $this->contrato()->forceFill(['objeto' => ObjetoContrato::Turismo])->save();
+        $fuec = app(ExpedirFuec::class)($this->demo, $this->datos());
+        $this->post(route('pasajeros.registrar', $fuec->pasajeros_token), [
+            'nombre' => 'Ana Gómez', 'tipo_documento' => 'CC', 'documento' => '123456789',
+        ]);
+
+        $r = $this->get(route('listado.verificar', $fuec->pasajeros_codigo));
+        $r->assertOk()
+            ->assertSee('Listado verificado')
+            ->assertSee('Ana Gómez')
+            ->assertSee('789')
+            ->assertDontSee('123456789');
+    }
 }

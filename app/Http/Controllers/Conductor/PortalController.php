@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Fuec;
 use App\Models\ManifiestoCarga;
 use App\Support\Modulos;
+use App\Support\Pdf\Imagenes;
 use App\Support\Pdf\PdfFuec;
 use App\Support\Pesv\ServiciosConductor;
 use Illuminate\Http\RedirectResponse;
@@ -98,6 +99,20 @@ class PortalController extends Controller
         return response(PdfFuec::generar($fuec), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.PdfFuec::nombreArchivo($fuec).'"',
+        ]);
+    }
+
+    /** Listado de pasajeros del extracto asignado, para mostrarlo en una revisión. */
+    public function pasajeros(Request $request, Fuec $fuec): View
+    {
+        abort_unless(ServiciosConductor::esSuyo($request->user(), $fuec) && ! $fuec->anulado(), 404);
+        abort_unless($fuec->tieneListadoPasajeros(), 404);
+
+        $fuec->load('pasajeros');
+
+        return view('conductor.pasajeros', [
+            'fuec' => $fuec,
+            'qr' => Imagenes::qr(route('listado.verificar', $fuec->pasajeros_codigo), 5),
         ]);
     }
 }

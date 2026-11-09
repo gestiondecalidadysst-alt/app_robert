@@ -11,6 +11,7 @@ use App\Http\Controllers\Conductor\PwaController;
 use App\Http\Controllers\Conductor\ViajeController;
 use App\Http\Controllers\EvidenciaController;
 use App\Http\Controllers\RegistroPasajerosController;
+use App\Http\Controllers\VerificarListadoController;
 use App\Http\Controllers\FirmaContratoController;
 use App\Http\Controllers\ReciboAdministracionController;
 use App\Http\Controllers\VerificarConsultaTransitoController;
@@ -44,6 +45,9 @@ Route::middleware('throttle:firma')->where(['token' => '[A-Za-z0-9]{22}', 'codig
     Route::get('/verificar/contrato/{codigo}', [VerificarContratoController::class, 'mostrar'])->name('contrato.verificar');
     Route::post('/verificar/contrato/{codigo}', [VerificarContratoController::class, 'archivo'])
         ->middleware('throttle:verificar-archivo')->name('contrato.verificar.archivo');
+
+    // Verificación pública del listado de pasajeros de un FUEC (QR).
+    Route::get('/verificar/listado/{codigo}', [VerificarListadoController::class, 'mostrar'])->name('listado.verificar');
 });
 
 // Autorregistro de pasajeros al listado de un FUEC (el cliente comparte este enlace con los pasajeros).
@@ -99,6 +103,7 @@ Route::prefix('conductor')->name('conductor.')->middleware(SinCachePortal::class
         Route::get('/firma', [PortalController::class, 'formularioFirma'])->name('firma');
         Route::post('/firma', [PortalController::class, 'guardarFirma'])->name('firma.guardar');
         Route::get('/fuec/{fuec}/extracto', [PortalController::class, 'extracto'])->name('extracto');
+        Route::get('/fuec/{fuec}/pasajeros', [PortalController::class, 'pasajeros'])->name('pasajeros');
         Route::get('/preoperacional/{vehiculo}', [PreoperacionalController::class, 'formulario'])->name('preoperacional');
         Route::post('/preoperacional/{vehiculo}', [PreoperacionalController::class, 'guardar'])
             ->middleware('throttle:20,1')->name('preoperacional.guardar');
