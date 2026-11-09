@@ -86,6 +86,7 @@ Para después (sin fecha):
 - [ ] Revisar con el usuario los ítems por defecto y cuáles son críticos (Seguridad vial → Ítems de chequeo); dar acceso al portal a los conductores.
 
 ## Escalar (alta concurrencia: cientos/miles de usuarios activos)
+Guía completa y cómo actuar: **`docs/nuevo/ESCALABILIDAD.md`**.
 Hecho en la app: la imagen ya trae la extensión `phpredis` y el `.env.example` documenta el salto a Redis; las tareas pesadas van a cola (worker); hay índices por `empresa_id`.
 Pendiente (configuración/infra en Easypanel, por orden de impacto):
 - [ ] **Redis para sesión, caché y cola:** levantar un servicio Redis y poner `SESSION_DRIVER=redis`, `CACHE_STORE=redis`, `QUEUE_CONNECTION=redis`, `REDIS_HOST=<redis>` en web y worker. Descarga la base de datos (hoy esas tres pegan a MySQL en cada clic) y es requisito para varias réplicas.
