@@ -33,6 +33,9 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         'representante_documento', 'representante_expedicion', 'sitio_web', 'resolucion_habilitacion',
         'anio_habilitacion', 'codigo_territorial', 'logo_path', 'firma_representante_path', 'pie_documentos_path',
         'activa',
+        // Cotizaciones (diseño del PDF por empresa)
+        'cotizacion_color', 'cotizacion_color_acento', 'cotizacion_validez_dias', 'cotizacion_incluye',
+        'cotizacion_equipo', 'cotizacion_telefono_2', 'cotizacion_instagram', 'cotizacion_certificados',
         // Integraciones (pantalla Configuración → Integraciones)
         'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual', 'sms_precio',
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
@@ -68,6 +71,10 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
             'transito_bloquear_desde' => 'decimal:2',
             'dv' => 'integer',
             'anio_habilitacion' => 'integer',
+            'cotizacion_validez_dias' => 'integer',
+            'cotizacion_incluye' => 'array',
+            'cotizacion_equipo' => 'array',
+            'cotizacion_certificados' => 'array',
             'sms_habilitado' => 'boolean',
             'onurix_cliente' => 'encrypted',
             'onurix_clave' => 'encrypted',
@@ -96,6 +103,26 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
     public function smsConfigurado(): bool
     {
         return $this->sms_habilitado && ProveedorSms::actual()->configurado();
+    }
+
+    /** Configuración del diseño de la cotización, con valores por defecto si la empresa no los definió. */
+    public function cotizacionConfig(): array
+    {
+        return [
+            'color' => $this->cotizacion_color ?: '#15312a',
+            'color_acento' => $this->cotizacion_color_acento ?: '#74a92c',
+            'validez_dias' => $this->cotizacion_validez_dias ?: 15,
+            'incluye' => $this->cotizacion_incluye ?: ['Combustible', 'Peajes', 'Nómina y seguridad social', 'Viáticos del conductor'],
+            'equipo' => $this->cotizacion_equipo ?: ['Tarjeta de propiedad y SOAT al día', 'Revisión técnico-mecánica vigente', 'Póliza de responsabilidad civil', 'Conductores certificados y asegurados'],
+            'telefono_2' => $this->cotizacion_telefono_2,
+            'instagram' => $this->cotizacion_instagram,
+            'certificados' => $this->cotizacion_certificados ?: [],
+        ];
+    }
+
+    public function cotizaciones(): HasMany
+    {
+        return $this->hasMany(Cotizacion::class);
     }
 
     public function plantillasContrato(): HasMany

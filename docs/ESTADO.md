@@ -1,6 +1,6 @@
 # Estado del proyecto – Rediseño COOTRASEC (multiempresa)
 
-Última actualización: 2026-11-06
+Última actualización: 2026-11-09
 
 ## Hecho
 - [x] Relevamiento del legado (`legado/`), decisiones (`DECISIONES.md`) y arquitectura (`nuevo/ARQUITECTURA.md`).
@@ -39,6 +39,7 @@
 - [x] **Acceso del panel de plataforma restringido:** a `/admin` solo entra el superadministrador; al crear una empresa, el administrador recibe sus credenciales por correo con una clave temporal y el sistema lo obliga a cambiarla en el primer ingreso.
 - [x] **Módulo 7 – Pagos de administración:** cuota mensual por vehículo (valor por clase, ajustable por vehículo), generación automática el día 1 (o con botón manual desde el estado de cuenta), estado de cuenta mes a mes con mora, pago repartido de la cuota más vieja a la más nueva (FIFO) con recibo propio en PDF, y anulación que devuelve el abono. Módulo opcional que el superadministrador activa por empresa.
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción; indicador de versión del build (`.build`/`.version`) para confirmar el despliegue.
+- [x] **Cotizador de servicios (Operación):** cotizaciones de transporte especial con líneas Fecha/Ruta/Duración/Valor, descuento e IVA opcional; PDF con la marca de la empresa idéntico al formato aprobado (encabezado, tabla, total, bloques "incluye"/"equipo", validez con logos de certificación, pie), configurable por empresa (colores, textos, validez, pie, logos) en Configuración → Mi empresa → Cotizaciones; envío por correo al cliente con el PDF adjunto; y conversión de la cotización aceptada en contrato (de ahí sale el FUEC). Destinatario cliente o prospecto. Permiso `cotizaciones`, módulo Pasajeros.
 - [x] **Centro de alertas:** bandeja unificada en el inicio (documentos de vehículos y conductores por vencer/vencidos y administración en mora, con conteo, color y enlace a su listado) y avisos automáticos por correo al propietario/conductor afectado — resumen semanal (lunes) y aviso puntual el día del vencimiento — más campana al equipo con permiso. Comando `ruta:alertas` (modos diario y semanal).
 - [x] Suite completa en verde: 302 pruebas (SQLite y MySQL).
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.

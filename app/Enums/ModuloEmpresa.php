@@ -27,6 +27,7 @@ enum ModuloEmpresa: string implements HasDescription, HasLabel
         'contratos' => 'pasajeros',
         'pagos_contrato' => 'pasajeros',
         'fuecs' => 'pasajeros',
+        'cotizaciones' => 'pasajeros',
         'documentos_contrato' => 'pasajeros',
         'plantillas_contrato' => 'pasajeros',
         'empresas_convenio' => 'pasajeros',

@@ -4,8 +4,10 @@ namespace App\Filament\Compartido;
 
 use App\Models\TipoIdentificacion;
 use App\Support\DireccionesTerritoriales;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -111,6 +113,34 @@ final class FormularioEmpresa
                         ->directory('pies-documento')
                         ->maxSize(1024)
                         ->helperText('Franja con certificaciones y sellos (ICONTEC, Vigilado SuperTransporte…). Se ajusta al ancho de la página.'),
+                ]),
+
+            Section::make('Cotizaciones')
+                ->description('Diseño y textos del PDF de las cotizaciones de servicios.')
+                ->columnSpanFull()
+                ->icon('heroicon-o-calculator')
+                ->collapsed()
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    ColorPicker::make('cotizacion_color')->label('Color principal')
+                        ->placeholder('#15312a')->helperText('Encabezado y pie. Por defecto verde oscuro.'),
+                    ColorPicker::make('cotizacion_color_acento')->label('Color de acento')
+                        ->placeholder('#74a92c')->helperText('Línea, total y viñetas. Por defecto verde lima.'),
+                    TextInput::make('cotizacion_validez_dias')->label('Validez (días)')->numeric()
+                        ->minValue(1)->maxValue(365)->placeholder('15'),
+                    Grid::make(2)->schema([
+                        TextInput::make('cotizacion_telefono_2')->label('Teléfono adicional (pie)')->maxLength(60),
+                        TextInput::make('cotizacion_instagram')->label('Instagram (pie)')->placeholder('@empresa')->maxLength(100),
+                    ]),
+                    TagsInput::make('cotizacion_incluye')->label('"El valor incluye"')
+                        ->placeholder('Agregar ítem')->columnSpanFull()
+                        ->helperText('Vacío = Combustible, Peajes, Nómina y seguridad social, Viáticos del conductor.'),
+                    TagsInput::make('cotizacion_equipo')->label('"Nuestro equipo automotor"')
+                        ->placeholder('Agregar ítem')->columnSpanFull()
+                        ->helperText('Vacío = Tarjeta y SOAT al día, Tecnomecánica vigente, Póliza RC, Conductores certificados.'),
+                    FileUpload::make('cotizacion_certificados')->label('Logos de certificación (validez)')
+                        ->image()->multiple()->disk('public')->directory('cotizacion-certificados')->maxSize(512)
+                        ->helperText('ICONTEC, IQNET, etc. Aparecen en la franja de validez.')->columnSpanFull(),
                 ]),
         ];
     }

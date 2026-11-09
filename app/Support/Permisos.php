@@ -17,6 +17,7 @@ final class Permisos
         'editar' => 'Editar',
         'eliminar' => 'Eliminar',
         'anular' => 'Anular',
+        'enviar' => 'Enviar',
         'aprobar' => 'Aprobar',
     ];
 
@@ -44,6 +45,7 @@ final class Permisos
         'contratos' => ['Contratos', 'Operación', ['ver', 'crear', 'editar', 'anular']],
         'pagos_contrato' => ['Pagos de contratos y recibos', 'Operación', ['ver', 'crear', 'anular']],
         'fuecs' => ['FUEC (extractos)', 'Operación', ['ver', 'crear', 'anular']],
+        'cotizaciones' => ['Cotizaciones de servicios', 'Operación', ['ver', 'crear', 'enviar', 'anular']],
         'documentos_contrato' => ['Contratos: emisión y firma', 'Operación', ['ver', 'crear', 'anular']],
         'servicios' => ['Planeador de servicios', 'Operación', ['ver', 'crear', 'editar', 'anular']],
         'rutas' => ['Rutogramas', 'Operación', ['ver', 'crear', 'editar', 'eliminar']],
