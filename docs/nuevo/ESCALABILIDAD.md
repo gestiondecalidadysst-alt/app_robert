@@ -32,7 +32,12 @@ primero que nada.
 **Qué hacer en Easypanel:**
 1. Levantar un servicio **Redis**.
 2. En los servicios **web y worker**, poner: `SESSION_DRIVER=redis`, `CACHE_STORE=redis`,
-   `QUEUE_CONNECTION=redis`, `REDIS_HOST=<nombre-del-redis>` (y `REDIS_PASSWORD` si aplica).
+   `QUEUE_CONNECTION=redis`, `REDIS_HOST=<nombre-del-redis>`, `REDIS_PORT=6379`.
+   **IMPORTANTE:** si el Redis tiene contraseña (lo normal en Easypanel), hay que poner
+   `REDIS_PASSWORD=<la contraseña del servicio Redis>`. Si falta, el arranque falla con
+   `RedisException: NOAUTH Authentication required` y el seeder de permisos no corre
+   (síntoma: permisos/menús nuevos no aparecen). Si no se va a usar Redis, dejar las tres
+   variables de arriba en `database`.
 3. Redesplegar (con rebuild/restart; ver nota de OPcache abajo).
 **Efecto:** el mismo servidor pasa a aguantar muchísimos más usuarios. Para el escenario realista
 (1000 conectados, pocas decenas activos por segundo) **suele ser suficiente con esto + un servidor decente**
