@@ -32,37 +32,33 @@
     .centro { text-align: center; }
     .titulo { text-align: center; font-weight: bold; font-size: 10px; padding: 6px 4px; line-height: 1.35; }
     .numero { font-family: DejaVu Sans Mono, monospace; font-size: 11.5px; letter-spacing: 1px; }
-    .valor { font-size: 10px; color: #111; }
-    .caja { display: inline-block; border: 1px solid #333; width: 12px; height: 11px; text-align: center; line-height: 11px; font-size: 8px; vertical-align: middle; }
-    .vigilado { height: 26px; }
-    .logo { max-height: 42px; max-width: 150px; }
     .pagina2 { page-break-before: always; }
     .anulado { position: fixed; top: 330px; left: 30px; font-size: 92px; color: rgba(200, 0, 0, .2); transform: rotate(-30deg); font-weight: bold; }
     .instructivo p { margin: 0 0 6px; line-height: 1.45; font-size: 9px; text-align: justify; }
     .codigos td { font-size: 8.6px; padding: 3px 6px; }
 
-    /* ===== anverso (diseño de tarjetas, compatible con dompdf) ===== */
-    .cab td { border: none; padding: 0; }
-    .dk { background: #15312a; }
-    .min { color: #fff; font-weight: bold; font-size: 11px; letter-spacing: .3px; }
-    .minsub { color: #aec6ba; font-size: 8px; }
-    .marca { color: #fff; font-weight: bold; font-size: 15px; }
-    .marcasub { color: #aec6ba; font-size: 8px; }
-    .plate td { border: none; background: #fff; }
-    .sub td { border: none; padding: 8px 2px 9px; }
-    .sub { border-bottom: 3px solid #74a92c; }
-    .ttl { font-weight: bold; font-size: 9px; color: #15312a; line-height: 1.35; }
-    .badge { border: 1.5px solid #74a92c; padding: 4px 8px; text-align: center; }
-    .badge .lb { font-size: 6.5px; letter-spacing: 1.5px; color: #5b6b63; text-transform: uppercase; }
-    .card { margin-top: 8px; }
-    .card td, .card th { border: 1px solid #d9ded9; }
-    .hd td { background: #eef2ee; color: #15312a; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 8px; padding: 4px 7px; }
-    .cell .rot { display: block; margin-bottom: 1px; }
-    .ct th { background: #f6f8f6; color: #5b6b63; font-size: 7.5px; text-transform: uppercase; letter-spacing: .3px; font-weight: bold; }
+    /* ===== anverso (minimalista, sin rejilla; compatible con dompdf) ===== */
+    .flat td, .flat th { border: none; padding: 0; }
+    .cabsep { border-bottom: 1px solid #e2e6e2; }
+    .vigilado { height: 30px; }
+    .logo { max-height: 40px; max-width: 150px; }
+    .k { font-size: 7.4px; letter-spacing: .3px; text-transform: uppercase; color: #8a948f; font-weight: bold; }
+    .v { font-size: 10.5px; color: #111; }
+    .min { font-weight: bold; font-size: 11px; color: #15312a; }
+    .minsub { font-size: 8px; color: #8a948f; }
+    .marca { font-weight: bold; font-size: 15px; color: #111; }
+    .ttl { font-weight: bold; font-size: 9px; color: #111; line-height: 1.35; }
+    .exlb { font-size: 7px; letter-spacing: 2px; color: #8a948f; text-transform: uppercase; }
+    .sl { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #111; padding: 13px 0 7px; }
+    .caja { display: inline-block; border: 1px solid #9aa; width: 12px; height: 11px; text-align: center; line-height: 11px; font-size: 8px; vertical-align: middle; }
+    .vigd { font-size: 14px; font-weight: bold; color: #111; letter-spacing: .5px; }
+    .lite td, .lite th { border: none; }
+    .lite th { padding: 3px 8px 5px 0; text-align: left; font-size: 7.4px; letter-spacing: .3px; text-transform: uppercase; color: #8a948f; font-weight: bold; }
+    .lite td { padding: 7px 8px 7px 0; font-size: 10px; }
+    .lite td.rolk { font-size: 7.6px; color: #8a948f; font-weight: bold; text-transform: uppercase; letter-spacing: .3px; }
+    .lite .rt td { border-top: 1px solid #ededed; }
     .placa { font-weight: bold; letter-spacing: 1px; }
-    .pie td { border: none; }
-    .firma { border-top: 1px solid #000; margin: 26px 10px 3px; padding-top: 3px; text-align: center; }
-    .qr { border: 1px solid #d9ded9; }
+    .firma-line { border-top: 1px solid #333; margin: 2px 12px 0; padding-top: 3px; text-align: center; }
 </style>
 </head>
 <body>
@@ -71,155 +67,145 @@
 @endif
 
 {{-- ===================== ANVERSO ===================== --}}
-<table class="cab">
+<table class="flat cabsep">
     <tr>
-        <td class="dk" style="width: 56%; padding: 11px 14px">
-            <table style="width: auto"><tr>
-                <td class="plate" style="padding: 4px 7px; vertical-align: middle">
+        <td style="width: 56%; padding: 2px 0 12px">
+            <table class="flat" style="width: auto"><tr>
+                <td style="vertical-align: middle; padding-right: 11px">
                     <img class="vigilado" src="{{ $vigilado }}" alt="Vigilado SuperTransporte">
                 </td>
-                <td style="border: none; padding-left: 11px; vertical-align: middle">
+                <td style="vertical-align: middle">
                     <div class="min">MINISTERIO DE TRANSPORTE</div>
                     <div class="minsub">República de Colombia</div>
                 </td>
             </tr></table>
         </td>
-        <td class="dk" style="width: 44%; padding: 11px 14px; text-align: right; vertical-align: middle">
+        <td style="width: 44%; padding: 2px 0 12px; text-align: right; vertical-align: middle">
             @if ($logo)
-                <table class="plate" style="width: auto; float: right"><tr>
-                    <td style="padding: 4px 8px; text-align: center"><img class="logo" src="{{ $logo }}" alt=""></td>
-                </tr></table>
-                <div style="clear: both"></div>
+                <img class="logo" src="{{ $logo }}" alt=""><br>
             @else
-                <div class="marca">{{ $e['razon_social'] }}</div>
+                <span class="marca">{{ $e['razon_social'] }}</span><br>
             @endif
-            <div class="marcasub" style="margin-top: 4px">NIT {{ $e['nit'] }}</div>
+            <span class="minsub">NIT {{ $e['nit'] }}</span>
         </td>
     </tr>
 </table>
 
-<table class="sub">
+<table class="flat" style="margin-top: 14px">
     <tr>
-        <td style="width: 71%">
+        <td style="width: 72%; vertical-align: top">
             <div class="ttl">FORMATO ÚNICO DE EXTRACTO DEL CONTRATO DEL SERVICIO PÚBLICO DE TRANSPORTE TERRESTRE AUTOMOTOR ESPECIAL</div>
         </td>
-        <td style="width: 29%; text-align: right">
-            <div class="badge">
-                <span class="lb">Extracto No.</span><br>
-                <span class="numero">{{ $n }}</span>
-            </div>
+        <td style="width: 28%; text-align: right; vertical-align: top">
+            <div class="exlb">Extracto No.</div>
+            <div class="numero" style="font-size: 12px">{{ $n }}</div>
         </td>
     </tr>
 </table>
 
-<table class="card">
-    <tr class="hd"><td colspan="6">Partes del contrato</td></tr>
+<div class="sl">Partes del contrato</div>
+<table class="flat">
     <tr>
-        <td colspan="4" class="cell"><span class="rot">Razón social empresa de transporte</span><span class="valor">{{ $e['razon_social'] }}</span></td>
-        <td colspan="2" class="cell"><span class="rot">NIT</span><span class="valor">{{ $e['nit'] }}</span></td>
+        <td style="width: 50%; padding-bottom: 9px; vertical-align: top"><div class="k">Razón social empresa de transporte</div><div class="v">{{ $e['razon_social'] }}</div></td>
+        <td style="width: 24%; padding-bottom: 9px; vertical-align: top"><div class="k">NIT</div><div class="v">{{ $e['nit'] }}</div></td>
+        <td style="width: 26%; padding-bottom: 9px; vertical-align: top"><div class="k">Contrato No.</div><div class="v">{{ $c['numero'] }}</div></td>
     </tr>
     <tr>
-        <td colspan="1" class="cell"><span class="rot">Contrato No.</span><span class="valor">{{ $c['numero'] }}</span></td>
-        <td colspan="3" class="cell"><span class="rot">Contratante</span><span class="valor">{{ $c['contratante'] }}</span></td>
-        <td colspan="2" class="cell"><span class="rot">NIT / CC</span><span class="valor">{{ $c['identificacion'] }}</span></td>
+        <td style="padding-bottom: 9px; vertical-align: top"><div class="k">Contratante</div><div class="v">{{ $c['contratante'] }}</div></td>
+        <td colspan="2" style="padding-bottom: 9px; vertical-align: top"><div class="k">NIT / CC</div><div class="v">{{ $c['identificacion'] }}</div></td>
     </tr>
     <tr>
-        <td colspan="6" class="cell">
-            <span class="rot">Objeto del contrato</span>
-            <span class="valor">{{ $c['objeto'] }}{{ $c['descripcion_objeto'] ? '. '.$c['descripcion_objeto'] : '' }}@if ($c['disposicion_total']) — Disposición total del vehículo (zonas/municipios): {{ $c['zonas_disposicion'] }}@endif</span>
-        </td>
+        <td colspan="3" style="padding-bottom: 9px"><div class="k">Objeto del contrato</div><div class="v">{{ $c['objeto'] }}{{ $c['descripcion_objeto'] ? '. '.$c['descripcion_objeto'] : '' }}@if ($c['disposicion_total']) — Disposición total del vehículo (zonas/municipios): {{ $c['zonas_disposicion'] }}@endif</div></td>
     </tr>
     <tr>
-        <td colspan="6" class="cell">
-            <span class="rot">Origen – destino, describiendo el recorrido</span>
-            <span class="valor">{{ $d['origen'] }} – {{ $d['destino'] }}{{ $fuec->recorrido ? '. '.$fuec->recorrido : '' }}</span>
-        </td>
+        <td colspan="3" style="padding-bottom: 9px"><div class="k">Origen – destino, describiendo el recorrido</div><div class="v">{{ $d['origen'] }} – {{ $d['destino'] }}{{ $fuec->recorrido ? '. '.$fuec->recorrido : '' }}</div></td>
     </tr>
     <tr>
-        <td colspan="6">
-            <span class="caja">{{ $d['convenio'] ? 'X' : '' }}</span> <span class="rot" style="display: inline">Convenio</span>
-            &nbsp;&nbsp;<span class="caja"></span> <span class="rot" style="display: inline">Consorcio</span>
-            &nbsp;&nbsp;<span class="caja"></span> <span class="rot" style="display: inline">Unión temporal</span>
-            &nbsp;&nbsp;<span class="rot" style="display: inline">Con:</span>
-            <span class="valor">{{ $d['convenio'] ? $d['convenio']['razon_social'].' — NIT '.$d['convenio']['nit'] : '—' }}</span>
+        <td colspan="3">
+            <span class="caja">{{ $d['convenio'] ? 'X' : '' }}</span> <span class="k">Convenio</span>
+            &nbsp;&nbsp;<span class="caja"></span> <span class="k">Consorcio</span>
+            &nbsp;&nbsp;<span class="caja"></span> <span class="k">Unión temporal</span>
+            &nbsp;&nbsp;<span class="k">Con:</span>
+            <span class="v">{{ $d['convenio'] ? $d['convenio']['razon_social'].' — NIT '.$d['convenio']['nit'] : '—' }}</span>
         </td>
     </tr>
 </table>
 
-<table class="card ct">
-    <tr class="hd"><td colspan="8">Vigencia del contrato</td></tr>
-    <tr class="centro">
-        <th rowspan="2" style="width: 18%">Fecha inicial</th>
-        <th style="width: 9%">Día</th><th style="width: 9%">Mes</th><th style="width: 14%">Año</th>
-        <th rowspan="2" style="width: 18%">Fecha vencimiento</th>
-        <th style="width: 9%">Día</th><th style="width: 9%">Mes</th><th style="width: 14%">Año</th>
-    </tr>
-    <tr class="centro valor">
-        <td>{{ $di }}</td><td>{{ $mi }}</td><td>{{ $ai }}</td>
-        <td>{{ $df }}</td><td>{{ $mf }}</td><td>{{ $af }}</td>
+<div class="sl">Vigencia del contrato</div>
+<table class="flat" style="width: auto">
+    <tr>
+        <td style="padding-right: 48px; vertical-align: top">
+            <div class="k">Fecha inicial</div>
+            <div class="vigd">{{ $di }} / {{ $mi }} / {{ $ai }}</div>
+            <div style="font-size: 7.3px; color: #8a948f">Día · Mes · Año</div>
+        </td>
+        <td style="vertical-align: top">
+            <div class="k">Fecha de vencimiento</div>
+            <div class="vigd">{{ $df }} / {{ $mf }} / {{ $af }}</div>
+            <div style="font-size: 7.3px; color: #8a948f">Día · Mes · Año</div>
+        </td>
     </tr>
 </table>
 
-<table class="card ct">
-    <tr class="hd"><td colspan="6">Características del vehículo</td></tr>
-    <tr class="centro">
+<div class="sl">Características del vehículo</div>
+<table class="lite">
+    <tr>
         <th>Placa</th><th>Modelo</th><th>Marca</th><th>Clase</th><th>Número interno</th><th>Tarjeta de operación</th>
     </tr>
-    <tr class="centro valor">
+    <tr class="rt">
         <td class="placa">{{ $v['placa'] }}</td><td>{{ $v['modelo'] }}</td>
         <td>{{ trim(($v['marca'] ?? '').' '.($v['linea'] ?? '')) }}</td><td>{{ $v['clase'] }}</td>
         <td>{{ $v['numero_interno'] }}</td><td>{{ $v['tarjeta_operacion'] }}</td>
     </tr>
 </table>
 
-<table class="card ct">
-    <tr class="hd"><td colspan="5">Conductores autorizados y responsable</td></tr>
+<div class="sl">Conductores autorizados y responsable</div>
+<table class="lite">
     <tr>
-        <th style="width: 17%"></th><th style="text-align: left">Nombres y apellidos</th>
+        <th style="width: 17%"></th><th>Nombres y apellidos</th>
         <th>No. cédula</th><th>Licencia (cat.)</th><th>Vigencia</th>
     </tr>
     @foreach ([1, 2, 3] as $i)
         @php($cond = $conductores->get($i))
-        <tr class="valor" style="height: 16px">
-            <td class="rot">Conductor {{ $i }}</td>
+        <tr class="rt">
+            <td class="rolk">Conductor {{ $i }}</td>
             <td>{{ $cond['nombre'] ?? '' }}</td>
-            <td class="centro">{{ $cond['documento'] ?? '' }}</td>
-            <td class="centro">{{ $cond['licencia'] ?? '' }}{{ isset($cond['categoria']) && $cond['categoria'] ? ' ('.$cond['categoria'].')' : '' }}</td>
-            <td class="centro">{{ $f($cond['licencia_vence'] ?? null) }}</td>
+            <td>{{ $cond['documento'] ?? '' }}</td>
+            <td>{{ $cond['licencia'] ?? '' }}{{ isset($cond['categoria']) && $cond['categoria'] ? ' ('.$cond['categoria'].')' : '' }}</td>
+            <td>{{ $f($cond['licencia_vence'] ?? null) }}</td>
         </tr>
     @endforeach
-    <tr>
-        <th></th><th style="text-align: left">Nombres y apellidos</th>
-        <th>No. cédula</th><th>Teléfono</th><th>Dirección</th>
-    </tr>
-    <tr class="valor" style="height: 16px">
-        <td class="rot">Responsable del contratante</td>
+    <tr class="rt">
+        <td class="rolk">Responsable del contratante</td>
         <td>{{ $resp['nombre'] ?? '' }}</td>
-        <td class="centro">{{ $resp['documento'] ?? '' }}</td>
-        <td class="centro">{{ $resp['telefono'] ?? '' }}</td>
+        <td>{{ $resp['documento'] ?? '' }}</td>
+        <td>{{ ! empty($resp['telefono']) ? 'Tel '.$resp['telefono'] : '' }}</td>
         <td>{{ $resp['direccion'] ?? '' }}</td>
     </tr>
 </table>
 
-<table class="pie" style="margin-top: 10px">
+<table class="flat" style="margin-top: 20px">
     <tr>
         <td style="width: 46%; vertical-align: bottom">
-            <div class="valor">{{ $e['direccion'] }}{{ $e['municipio'] ? ', '.$e['municipio'] : '' }}</div>
-            <div class="valor">{{ collect([$e['telefono'], $e['email']])->filter()->implode(' · ') }}</div>
-            <div style="margin-top: 5px; font-size: 7.5px; color: #5b6b63">
+            <div class="v">{{ $e['direccion'] }}{{ $e['municipio'] ? ', '.$e['municipio'] : '' }}</div>
+            <div class="v">{{ collect([$e['telefono'], $e['email']])->filter()->implode(' · ') }}</div>
+            <div style="margin-top: 5px; font-size: 7.5px; color: #8a948f">
                 Habilitada por la Dirección Territorial {{ DireccionesTerritoriales::nombre($n ? substr($n, 0, 3) : null) }},
                 Resolución {{ $e['resolucion_habilitacion'] }} de {{ $e['anio_habilitacion'] }}.
             </div>
         </td>
-        <td style="width: 36%; vertical-align: bottom">
-            <div class="firma">
+        <td style="width: 36%; text-align: center; vertical-align: bottom">
+            @if ($firma)
+                <img src="{{ $firma }}" style="max-height: 46px; max-width: 165px" alt=""><br>
+            @endif
+            <div class="firma-line">
                 <strong>{{ $e['representante_legal'] }}</strong><br>
-                <span class="rot">Firma y sello gerente empresa</span>
+                <span class="k">Firma y sello gerente empresa</span>
             </div>
         </td>
         <td style="width: 18%; text-align: center; vertical-align: bottom">
-            <img src="{{ $qr }}" class="qr" style="width: 72px; height: 72px" alt="QR"><br>
-            <span style="font-size: 6.5px; color: #5b6b63">Verificación</span>
+            <img src="{{ $qr }}" style="width: 70px; height: 70px" alt="QR"><br>
+            <span style="font-size: 6.5px; color: #8a948f">Verificación</span>
         </td>
     </tr>
 </table>

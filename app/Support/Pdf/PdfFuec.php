@@ -22,6 +22,10 @@ final class PdfFuec
             'qr' => Imagenes::qr($fuec->urlVerificacion()),
             'vigilado' => Imagenes::deArchivo(resource_path('images/vigilado-supertransporte.png')),
             'logo' => Imagenes::deDisco($logo, 'public'),
+            'firma' => Imagenes::deDisco(
+                $datos['empresa']['firma_representante_path'] ?? $fuec->empresa?->firma_representante_path,
+                'local',
+            ),
         ])->render();
 
         return Pdf::loadHTML($html)

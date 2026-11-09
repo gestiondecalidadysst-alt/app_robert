@@ -344,6 +344,7 @@ class ExpedirFuec
                 'resolucion_habilitacion' => $empresa->resolucion_habilitacion,
                 'anio_habilitacion' => $empresa->anio_habilitacion,
                 'logo_path' => $empresa->logo_path,
+                'firma_representante_path' => $empresa->firma_representante_path,
             ],
             'contrato' => [
                 'numero' => $contrato->numero_formateado,
