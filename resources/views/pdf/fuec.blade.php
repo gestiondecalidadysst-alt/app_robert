@@ -23,26 +23,46 @@
 <meta charset="utf-8">
 <title>FUEC {{ $n }}</title>
 <style>
-    @page { margin: 22px 28px; }
-    body { font-family: DejaVu Sans, sans-serif; font-size: 8.6px; color: #000; }
+    @page { margin: 20px 24px; }
+    body { font-family: DejaVu Sans, sans-serif; font-size: 8.6px; color: #111; }
     table { width: 100%; border-collapse: collapse; }
-    td, th { border: 1px solid #000; padding: 3px 5px; vertical-align: middle; }
-    .sinborde td { border: none; padding: 0; }
-    .rot { font-weight: bold; font-size: 7.8px; text-transform: uppercase; }
+    td, th { border: 1px solid #000; padding: 3px 5px; vertical-align: middle; }   /* base (reverso) */
+    .rot { font-weight: bold; font-size: 7.6px; text-transform: uppercase; letter-spacing: .3px; color: #5b6b63; }
     .gris { background: #e6e6e6; }
     .centro { text-align: center; }
     .titulo { text-align: center; font-weight: bold; font-size: 10px; padding: 6px 4px; line-height: 1.35; }
     .numero { font-family: DejaVu Sans Mono, monospace; font-size: 11.5px; letter-spacing: 1px; }
-    .valor { font-size: 9px; }
-    .caja { display: inline-block; border: 1px solid #000; width: 12px; height: 10px; text-align: center; line-height: 10px; font-size: 8px; }
-    .esp { height: 5px; border: none; }
-    .ministerio { font-weight: bold; font-size: 10px; letter-spacing: .5px; line-height: 1.3; }
-    .logo { max-height: 62px; max-width: 170px; }
-    .vigilado { height: 30px; }
+    .valor { font-size: 10px; color: #111; }
+    .caja { display: inline-block; border: 1px solid #333; width: 12px; height: 11px; text-align: center; line-height: 11px; font-size: 8px; vertical-align: middle; }
+    .vigilado { height: 26px; }
+    .logo { max-height: 42px; max-width: 150px; }
     .pagina2 { page-break-before: always; }
     .anulado { position: fixed; top: 330px; left: 30px; font-size: 92px; color: rgba(200, 0, 0, .2); transform: rotate(-30deg); font-weight: bold; }
     .instructivo p { margin: 0 0 6px; line-height: 1.45; font-size: 9px; text-align: justify; }
     .codigos td { font-size: 8.6px; padding: 3px 6px; }
+
+    /* ===== anverso (diseño de tarjetas, compatible con dompdf) ===== */
+    .cab td { border: none; padding: 0; }
+    .dk { background: #15312a; }
+    .min { color: #fff; font-weight: bold; font-size: 11px; letter-spacing: .3px; }
+    .minsub { color: #aec6ba; font-size: 8px; }
+    .marca { color: #fff; font-weight: bold; font-size: 15px; }
+    .marcasub { color: #aec6ba; font-size: 8px; }
+    .plate td { border: none; background: #fff; }
+    .sub td { border: none; padding: 8px 2px 9px; }
+    .sub { border-bottom: 3px solid #74a92c; }
+    .ttl { font-weight: bold; font-size: 9px; color: #15312a; line-height: 1.35; }
+    .badge { border: 1.5px solid #74a92c; padding: 4px 8px; text-align: center; }
+    .badge .lb { font-size: 6.5px; letter-spacing: 1.5px; color: #5b6b63; text-transform: uppercase; }
+    .card { margin-top: 8px; }
+    .card td, .card th { border: 1px solid #d9ded9; }
+    .hd td { background: #eef2ee; color: #15312a; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 8px; padding: 4px 7px; }
+    .cell .rot { display: block; margin-bottom: 1px; }
+    .ct th { background: #f6f8f6; color: #5b6b63; font-size: 7.5px; text-transform: uppercase; letter-spacing: .3px; font-weight: bold; }
+    .placa { font-weight: bold; letter-spacing: 1px; }
+    .pie td { border: none; }
+    .firma { border-top: 1px solid #000; margin: 26px 10px 3px; padding-top: 3px; text-align: center; }
+    .qr { border: 1px solid #d9ded9; }
 </style>
 </head>
 <body>
@@ -51,75 +71,88 @@
 @endif
 
 {{-- ===================== ANVERSO ===================== --}}
-<table>
+<table class="cab">
     <tr>
-        <td style="width: 50%; height: 70px" class="centro">
-            <div class="ministerio">MINISTERIO DE TRANSPORTE</div>
-            <div style="font-size: 7.5px; margin-bottom: 4px">República de Colombia</div>
-            <img class="vigilado" src="{{ $vigilado }}" alt="Vigilado SuperTransporte">
+        <td class="dk" style="width: 56%; padding: 11px 14px">
+            <table style="width: auto"><tr>
+                <td class="plate" style="padding: 4px 7px; vertical-align: middle">
+                    <img class="vigilado" src="{{ $vigilado }}" alt="Vigilado SuperTransporte">
+                </td>
+                <td style="border: none; padding-left: 11px; vertical-align: middle">
+                    <div class="min">MINISTERIO DE TRANSPORTE</div>
+                    <div class="minsub">República de Colombia</div>
+                </td>
+            </tr></table>
         </td>
-        <td style="width: 50%" class="centro">
+        <td class="dk" style="width: 44%; padding: 11px 14px; text-align: right; vertical-align: middle">
             @if ($logo)
-                <img class="logo" src="{{ $logo }}" alt="">
+                <table class="plate" style="width: auto; float: right"><tr>
+                    <td style="padding: 4px 8px; text-align: center"><img class="logo" src="{{ $logo }}" alt=""></td>
+                </tr></table>
+                <div style="clear: both"></div>
             @else
-                <div class="ministerio">{{ $e['razon_social'] }}</div>
+                <div class="marca">{{ $e['razon_social'] }}</div>
             @endif
-        </td>
-    </tr>
-    <tr>
-        <td colspan="2" class="titulo">
-            FORMATO ÚNICO DE EXTRACTO DEL CONTRATO DEL SERVICIO PÚBLICO DE<br>
-            TRANSPORTE TERRESTRE AUTOMOTOR ESPECIAL<br>
-            No. <span class="numero">{{ $n }}</span>
+            <div class="marcasub" style="margin-top: 4px">NIT {{ $e['nit'] }}</div>
         </td>
     </tr>
 </table>
 
-<table style="border-top: none">
+<table class="sub">
     <tr>
-        <td style="width: 68%"><span class="rot">Razón social de la empresa de transporte especial:</span> <span class="valor">{{ $e['razon_social'] }}</span></td>
-        <td><span class="rot">NIT:</span> <span class="valor">{{ $e['nit'] }}</span></td>
+        <td style="width: 71%">
+            <div class="ttl">FORMATO ÚNICO DE EXTRACTO DEL CONTRATO DEL SERVICIO PÚBLICO DE TRANSPORTE TERRESTRE AUTOMOTOR ESPECIAL</div>
+        </td>
+        <td style="width: 29%; text-align: right">
+            <div class="badge">
+                <span class="lb">Extracto No.</span><br>
+                <span class="numero">{{ $n }}</span>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<table class="card">
+    <tr class="hd"><td colspan="6">Partes del contrato</td></tr>
+    <tr>
+        <td colspan="4" class="cell"><span class="rot">Razón social empresa de transporte</span><span class="valor">{{ $e['razon_social'] }}</span></td>
+        <td colspan="2" class="cell"><span class="rot">NIT</span><span class="valor">{{ $e['nit'] }}</span></td>
     </tr>
     <tr>
-        <td colspan="2"><span class="rot">Contrato No.:</span> <span class="valor">{{ $c['numero'] }}</span></td>
+        <td colspan="1" class="cell"><span class="rot">Contrato No.</span><span class="valor">{{ $c['numero'] }}</span></td>
+        <td colspan="3" class="cell"><span class="rot">Contratante</span><span class="valor">{{ $c['contratante'] }}</span></td>
+        <td colspan="2" class="cell"><span class="rot">NIT / CC</span><span class="valor">{{ $c['identificacion'] }}</span></td>
     </tr>
     <tr>
-        <td><span class="rot">Contratante:</span> <span class="valor">{{ $c['contratante'] }}</span></td>
-        <td><span class="rot">NIT/CC:</span> <span class="valor">{{ $c['identificacion'] }}</span></td>
-    </tr>
-    <tr>
-        <td colspan="2">
-            <span class="rot">Objeto contrato:</span>
-            <span class="valor">{{ $c['objeto'] }}{{ $c['descripcion_objeto'] ? '. '.$c['descripcion_objeto'] : '' }}</span>
-            @if ($c['disposicion_total'])
-                <br><span class="rot">Disposición total del vehículo — zonas y municipios:</span> <span class="valor">{{ $c['zonas_disposicion'] }}</span>
-            @endif
+        <td colspan="6" class="cell">
+            <span class="rot">Objeto del contrato</span>
+            <span class="valor">{{ $c['objeto'] }}{{ $c['descripcion_objeto'] ? '. '.$c['descripcion_objeto'] : '' }}@if ($c['disposicion_total']) — Disposición total del vehículo (zonas/municipios): {{ $c['zonas_disposicion'] }}@endif</span>
         </td>
     </tr>
     <tr>
-        <td colspan="2" style="height: 30px">
-            <span class="rot">Origen-destino, describiendo el recorrido:</span>
+        <td colspan="6" class="cell">
+            <span class="rot">Origen – destino, describiendo el recorrido</span>
             <span class="valor">{{ $d['origen'] }} – {{ $d['destino'] }}{{ $fuec->recorrido ? '. '.$fuec->recorrido : '' }}</span>
         </td>
     </tr>
     <tr>
-        <td colspan="2">
-            <span class="rot">Convenio</span> <span class="caja">{{ $d['convenio'] ? 'X' : '' }}</span>
-            &nbsp;&nbsp;<span class="rot">Consorcio</span> <span class="caja"></span>
-            &nbsp;&nbsp;<span class="rot">Unión temporal</span> <span class="caja"></span>
-            &nbsp;&nbsp;<span class="rot">Con:</span>
-            <span class="valor">{{ $d['convenio'] ? $d['convenio']['razon_social'].' — NIT '.$d['convenio']['nit'] : '' }}</span>
+        <td colspan="6">
+            <span class="caja">{{ $d['convenio'] ? 'X' : '' }}</span> <span class="rot" style="display: inline">Convenio</span>
+            &nbsp;&nbsp;<span class="caja"></span> <span class="rot" style="display: inline">Consorcio</span>
+            &nbsp;&nbsp;<span class="caja"></span> <span class="rot" style="display: inline">Unión temporal</span>
+            &nbsp;&nbsp;<span class="rot" style="display: inline">Con:</span>
+            <span class="valor">{{ $d['convenio'] ? $d['convenio']['razon_social'].' — NIT '.$d['convenio']['nit'] : '—' }}</span>
         </td>
     </tr>
 </table>
 
-<table style="border-top: none">
-    <tr><td colspan="8" class="rot centro gris">Vigencia del contrato</td></tr>
+<table class="card ct">
+    <tr class="hd"><td colspan="8">Vigencia del contrato</td></tr>
     <tr class="centro">
-        <td rowspan="2" class="rot" style="width: 19%">Fecha inicial</td>
-        <td class="rot gris" style="width: 9%">Día</td><td class="rot gris" style="width: 9%">Mes</td><td class="rot gris" style="width: 13%">Año</td>
-        <td rowspan="2" class="rot" style="width: 19%">Fecha vencimiento</td>
-        <td class="rot gris" style="width: 9%">Día</td><td class="rot gris" style="width: 9%">Mes</td><td class="rot gris" style="width: 13%">Año</td>
+        <th rowspan="2" style="width: 18%">Fecha inicial</th>
+        <th style="width: 9%">Día</th><th style="width: 9%">Mes</th><th style="width: 14%">Año</th>
+        <th rowspan="2" style="width: 18%">Fecha vencimiento</th>
+        <th style="width: 9%">Día</th><th style="width: 9%">Mes</th><th style="width: 14%">Año</th>
     </tr>
     <tr class="centro valor">
         <td>{{ $di }}</td><td>{{ $mi }}</td><td>{{ $ai }}</td>
@@ -127,52 +160,39 @@
     </tr>
 </table>
 
-<table style="border-top: none">
-    <tr><td colspan="4" class="rot centro gris">Características del vehículo</td></tr>
+<table class="card ct">
+    <tr class="hd"><td colspan="6">Características del vehículo</td></tr>
     <tr class="centro">
-        <td class="rot gris" style="width: 25%">Placa</td><td class="rot gris" style="width: 25%">Modelo</td>
-        <td class="rot gris" style="width: 25%">Marca</td><td class="rot gris" style="width: 25%">Clase</td>
+        <th>Placa</th><th>Modelo</th><th>Marca</th><th>Clase</th><th>Número interno</th><th>Tarjeta de operación</th>
     </tr>
     <tr class="centro valor">
-        <td><strong>{{ $v['placa'] }}</strong></td><td>{{ $v['modelo'] }}</td>
+        <td class="placa">{{ $v['placa'] }}</td><td>{{ $v['modelo'] }}</td>
         <td>{{ trim(($v['marca'] ?? '').' '.($v['linea'] ?? '')) }}</td><td>{{ $v['clase'] }}</td>
-    </tr>
-    <tr class="centro">
-        <td colspan="2" class="rot gris">Número interno</td>
-        <td colspan="2" class="rot gris">Número tarjeta de operación</td>
-    </tr>
-    <tr class="centro valor">
-        <td colspan="2">{{ $v['numero_interno'] }}</td>
-        <td colspan="2">{{ $v['tarjeta_operacion'] }}</td>
+        <td>{{ $v['numero_interno'] }}</td><td>{{ $v['tarjeta_operacion'] }}</td>
     </tr>
 </table>
 
-<table style="border-top: none">
-    <tr class="centro">
-        <td class="rot gris" style="width: 15%"></td>
-        <td class="rot gris" style="width: 35%">Nombres y apellidos</td>
-        <td class="rot gris" style="width: 17%">No. cédula</td>
-        <td class="rot gris" style="width: 18%">No. licencia de conducción</td>
-        <td class="rot gris" style="width: 15%">Vigencia</td>
+<table class="card ct">
+    <tr class="hd"><td colspan="5">Conductores autorizados y responsable</td></tr>
+    <tr>
+        <th style="width: 17%"></th><th style="text-align: left">Nombres y apellidos</th>
+        <th>No. cédula</th><th>Licencia (cat.)</th><th>Vigencia</th>
     </tr>
     @foreach ([1, 2, 3] as $i)
         @php($cond = $conductores->get($i))
-        <tr class="valor" style="height: 18px">
-            <td class="rot">Datos del conductor {{ $i }}</td>
+        <tr class="valor" style="height: 16px">
+            <td class="rot">Conductor {{ $i }}</td>
             <td>{{ $cond['nombre'] ?? '' }}</td>
             <td class="centro">{{ $cond['documento'] ?? '' }}</td>
             <td class="centro">{{ $cond['licencia'] ?? '' }}{{ isset($cond['categoria']) && $cond['categoria'] ? ' ('.$cond['categoria'].')' : '' }}</td>
             <td class="centro">{{ $f($cond['licencia_vence'] ?? null) }}</td>
         </tr>
     @endforeach
-    <tr class="centro">
-        <td class="rot gris"></td>
-        <td class="rot gris">Nombres y apellidos</td>
-        <td class="rot gris">No. cédula</td>
-        <td class="rot gris">Teléfono</td>
-        <td class="rot gris">Dirección</td>
+    <tr>
+        <th></th><th style="text-align: left">Nombres y apellidos</th>
+        <th>No. cédula</th><th>Teléfono</th><th>Dirección</th>
     </tr>
-    <tr class="valor" style="height: 18px">
+    <tr class="valor" style="height: 16px">
         <td class="rot">Responsable del contratante</td>
         <td>{{ $resp['nombre'] ?? '' }}</td>
         <td class="centro">{{ $resp['documento'] ?? '' }}</td>
@@ -181,25 +201,25 @@
     </tr>
 </table>
 
-<table style="border-top: none">
+<table class="pie" style="margin-top: 10px">
     <tr>
-        <td style="width: 46%; height: 92px; vertical-align: top">
+        <td style="width: 46%; vertical-align: bottom">
             <div class="valor">{{ $e['direccion'] }}{{ $e['municipio'] ? ', '.$e['municipio'] : '' }}</div>
             <div class="valor">{{ collect([$e['telefono'], $e['email']])->filter()->implode(' · ') }}</div>
-            <div style="margin-top: 6px; font-size: 7.5px">
+            <div style="margin-top: 5px; font-size: 7.5px; color: #5b6b63">
                 Habilitada por la Dirección Territorial {{ DireccionesTerritoriales::nombre($n ? substr($n, 0, 3) : null) }},
                 Resolución {{ $e['resolucion_habilitacion'] }} de {{ $e['anio_habilitacion'] }}.
             </div>
         </td>
-        <td style="width: 36%; vertical-align: bottom" class="centro">
-            <div style="border-top: 1px solid #000; margin: 0 14px; padding-top: 3px">
+        <td style="width: 36%; vertical-align: bottom">
+            <div class="firma">
                 <strong>{{ $e['representante_legal'] }}</strong><br>
                 <span class="rot">Firma y sello gerente empresa</span>
             </div>
         </td>
-        <td style="width: 18%" class="centro">
-            <img src="{{ $qr }}" style="width: 74px; height: 74px" alt="QR"><br>
-            <span style="font-size: 6.5px">Verificación</span>
+        <td style="width: 18%; text-align: center; vertical-align: bottom">
+            <img src="{{ $qr }}" class="qr" style="width: 72px; height: 72px" alt="QR"><br>
+            <span style="font-size: 6.5px; color: #5b6b63">Verificación</span>
         </td>
     </tr>
 </table>
