@@ -71,7 +71,7 @@ class ProgramaMantenimientoResource extends Resource
                 TextColumn::make('aprobadoPor.name')->label('Aprobó')->placeholder('—')
                     ->description(fn (ProgramaMantenimiento $r) => $r->aprobado_at?->format('d/m/Y')),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([ViewAction::make()->iconButton()]);
     }
 
     public static function infolist(Schema $schema): Schema

@@ -98,14 +98,14 @@ class ClienteResource extends Resource
             ])
             ->filters([TernaryFilter::make('activo')])
             ->recordActions([
-                Action::make('contratos')
+                Action::make('contratos')->iconButton()
                     ->label('Contratos')
                     ->icon('heroicon-o-document-text')
                     ->color('gray')
                     ->visible(fn (Cliente $record) => $record->contratos_count > 0)
                     ->url(fn (Cliente $record) => ContratoResource::getUrl('index', ['filters' => ['cliente_id' => ['value' => $record->getKey()]]])),
-                EditAction::make(),
-                DeleteAction::make()
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton()
                     ->before(function (Cliente $record, DeleteAction $action): void {
                         if ($record->contratos()->exists()) {
                             Notification::make()->title('No se puede eliminar')

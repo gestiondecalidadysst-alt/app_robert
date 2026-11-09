@@ -125,8 +125,8 @@ class ContratoResource extends Resource
                     ->searchable(),
             ])
             ->recordActions([
-                ViewAction::make()->label('Ver'),
-                EditAction::make()->visible(fn (Contrato $record) => ! $record->anulado() && ! $record->documentoActivo()),
+                ViewAction::make()->iconButton()->label('Ver'),
+                EditAction::make()->iconButton()->visible(fn (Contrato $record) => ! $record->anulado() && ! $record->documentoActivo()),
             ]);
     }
 

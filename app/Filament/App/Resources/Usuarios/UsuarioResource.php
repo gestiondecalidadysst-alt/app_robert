@@ -206,8 +206,8 @@ class UsuarioResource extends Resource
                         : $query),
             ])
             ->recordActions([
-                EditAction::make(),
-                Action::make('quitar')
+                EditAction::make()->iconButton(),
+                Action::make('quitar')->iconButton()
                     ->label('Quitar de la empresa')
                     ->icon('heroicon-o-user-minus')
                     ->color('danger')

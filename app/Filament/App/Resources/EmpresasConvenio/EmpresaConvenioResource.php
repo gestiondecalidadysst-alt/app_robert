@@ -83,8 +83,8 @@ class EmpresaConvenioResource extends Resource
                 SelectFilter::make('tipo_vinculacion')->label('Vinculación')->options(EmpresaConvenio::TIPOS_VINCULACION),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton(),
             ]);
     }
 

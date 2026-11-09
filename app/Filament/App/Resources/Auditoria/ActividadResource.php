@@ -107,7 +107,7 @@ class ActividadResource extends Resource
                         ->when($data['hasta'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '<=', $d))),
             ])
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()->iconButton(),
             ]);
     }
 

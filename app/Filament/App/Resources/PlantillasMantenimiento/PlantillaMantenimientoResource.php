@@ -142,8 +142,8 @@ class PlantillaMantenimientoResource extends Resource
                 IconColumn::make('activo')->boolean(),
             ])
             ->recordActions([
-                EditAction::make(),
-                Action::make('aplicar')
+                EditAction::make()->iconButton(),
+                Action::make('aplicar')->iconButton()
                     ->label('Asignar a vehículos')
                     ->icon('heroicon-o-truck')
                     ->color('gray')
@@ -158,7 +158,7 @@ class PlantillaMantenimientoResource extends Resource
                         Vehiculo::query()->whereKey($data['vehiculos'])->get()->each(fn (Vehiculo $v) => PlanDeVehiculo::seguirPlantilla($v, $record));
                         Notification::make()->success()->title(count($data['vehiculos']).' vehículo(s) siguen la plantilla «'.$record->nombre.'»')->send();
                     }),
-                Action::make('duplicar')
+                Action::make('duplicar')->iconButton()
                     ->label('Duplicar')
                     ->icon('heroicon-o-document-duplicate')
                     ->color('gray')

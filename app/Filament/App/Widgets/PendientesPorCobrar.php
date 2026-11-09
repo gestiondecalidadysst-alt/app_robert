@@ -63,7 +63,7 @@ class PendientesPorCobrar extends TableWidget
                     ->icon(fn (string $state) => str_starts_with($state, 'Vencido') ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-clock'),
             ])
             ->recordActions([
-                Action::make('cobrar')->label('Registrar pago')->icon('heroicon-o-banknotes')->button()->size('sm')
+                Action::make('cobrar')->iconButton()->label('Registrar pago')->icon('heroicon-o-banknotes')->button()->size('sm')
                     ->visible(fn () => auth()->user()->can('crear_pagos_contrato'))
                     ->url(fn (Contrato $record) => ContratoResource::getUrl('view', ['record' => $record, 'relation' => 'pagos'])),
             ]);

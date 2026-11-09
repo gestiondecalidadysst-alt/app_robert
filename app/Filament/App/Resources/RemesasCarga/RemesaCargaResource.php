@@ -76,8 +76,8 @@ class RemesaCargaResource extends Resource
             ])
             ->recordActions([
                 AccionesRndc::grupo(),
-                EditAction::make()->visible(fn (RemesaCarga $r) => ! $r->manifiesto_id && ! $r->anulado()),
-                Action::make('cumplir')->label('Cumplir / Tiempos')->icon('heroicon-o-check-circle')->color('success')
+                EditAction::make()->iconButton()->visible(fn (RemesaCarga $r) => ! $r->manifiesto_id && ! $r->anulado()),
+                Action::make('cumplir')->iconButton()->label('Cumplir / Tiempos')->icon('heroicon-o-check-circle')->color('success')
                     ->visible(fn (RemesaCarga $r) => auth()->user()?->can('crear_cumplidos_carga') && ! $r->anulado())
                     ->fillForm(fn (RemesaCarga $r) => [
                         'tipo' => $r->cumplido?->tipo ?? 'C',

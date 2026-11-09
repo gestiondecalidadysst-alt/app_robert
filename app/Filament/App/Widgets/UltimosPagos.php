@@ -56,7 +56,7 @@ class UltimosPagos extends TableWidget
                 TextColumn::make('metodo')->label('Método')->badge()->color('gray')->visibleFrom('lg'),
             ])
             ->recordActions([
-                Action::make('recibo')->label('Recibo')->icon('heroicon-o-arrow-down-tray')->color('gray')
+                Action::make('recibo')->iconButton()->label('Recibo')->icon('heroicon-o-arrow-down-tray')->color('gray')
                     ->url(fn (PagoContrato $record) => $record->urlPdf(), shouldOpenInNewTab: true),
             ]);
     }

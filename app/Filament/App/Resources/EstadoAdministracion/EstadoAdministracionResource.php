@@ -100,7 +100,7 @@ class EstadoAdministracionResource extends Resource
                         ->whereDate('periodo', '<', now()->startOfMonth()->toDateString())),
             ])
             ->recordActions([
-                Action::make('pagar')
+                Action::make('pagar')->iconButton()
                     ->label('Registrar pago')
                     ->icon('heroicon-o-banknotes')
                     ->color('primary')

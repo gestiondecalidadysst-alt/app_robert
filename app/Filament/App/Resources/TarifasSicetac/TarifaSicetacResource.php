@@ -91,7 +91,7 @@ class TarifaSicetacResource extends Resource
                 CreateAction::make()->label('Nuevo costo mínimo'),
                 ImportarSicetac::accion(),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([EditAction::make()->iconButton(), DeleteAction::make()->iconButton()])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }
 

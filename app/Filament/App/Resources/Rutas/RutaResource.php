@@ -144,9 +144,9 @@ class RutaResource extends Resource
             ])
             ->filters([TernaryFilter::make('activo')->default(true)])
             ->recordActions([
-                Action::make('pdf')->label('Rutograma')->icon('heroicon-o-arrow-down-tray')->color('gray')
+                Action::make('pdf')->iconButton()->label('Rutograma')->icon('heroicon-o-arrow-down-tray')->color('gray')
                     ->action(fn (Ruta $record) => response()->streamDownload(fn () => print (PdfPlanViaje::rutograma($record)), 'rutograma-'.Str::slug($record->nombre).'.pdf', ['Content-Type' => 'application/pdf'])),
-                EditAction::make(),
+                EditAction::make()->iconButton(),
             ]);
     }
 

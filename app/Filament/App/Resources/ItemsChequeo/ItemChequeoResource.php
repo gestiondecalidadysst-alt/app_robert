@@ -82,8 +82,8 @@ class ItemChequeoResource extends Resource
                 SelectFilter::make('critico')->label('Crítico')->options([1 => 'Sí', 0 => 'No']),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make()->modalDescription('Las inspecciones ya registradas conservan este ítem. Si solo quiere dejar de pedirlo, desactívelo.'),
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton()->modalDescription('Las inspecciones ya registradas conservan este ítem. Si solo quiere dejar de pedirlo, desactívelo.'),
             ]);
     }
 

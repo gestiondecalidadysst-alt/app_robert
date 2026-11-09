@@ -61,7 +61,7 @@ class RegistroRndcResource extends Resource
                 SelectFilter::make('proceso')->options(CatalogoRndc::PROCESOS),
             ])
             ->recordActions([
-                Action::make('detalle')->label('Ver')->icon('heroicon-o-eye')->color('gray')
+                Action::make('detalle')->iconButton()->label('Ver')->icon('heroicon-o-eye')->color('gray')
                     ->modalHeading('Registro en el RNDC')
                     ->modalContent(fn (RegistroRndc $record) => view('filament.app.carga.detalle-registro-rndc', ['r' => $record]))
                     ->modalSubmitAction(false)->modalCancelActionLabel('Cerrar'),

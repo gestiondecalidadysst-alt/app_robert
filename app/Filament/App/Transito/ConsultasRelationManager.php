@@ -53,7 +53,7 @@ class ConsultasRelationManager extends RelationManager
                     ->placeholder(fn (ConsultaTransito $record) => $record->origen === 'automatica' ? 'Automática' : '—'),
             ])
             ->recordActions([
-                Action::make('ver')->label('Ver resultado')->icon('heroicon-o-eye')->color('gray')
+                Action::make('ver')->iconButton()->label('Ver resultado')->icon('heroicon-o-eye')->color('gray')
                     ->visible(fn (ConsultaTransito $record) => $record->tieneConstancia())
                     ->modalHeading(fn (ConsultaTransito $record) => $record->tipo->getLabel().' · '.$record->created_at->timezone(config('app.timezone'))->format('d/m/Y h:i a'))
                     ->modalContent(fn (ConsultaTransito $record) => view('filament.app.transito.detalle-consulta', ['c' => $record]))
@@ -61,7 +61,7 @@ class ConsultasRelationManager extends RelationManager
                     ->extraModalFooterActions(fn (ConsultaTransito $record) => [
                         Action::make('pdf_modal')->label('Descargar constancia')->icon('heroicon-o-arrow-down-tray')->url($record->urlPdf(), shouldOpenInNewTab: true),
                     ]),
-                Action::make('constancia')->label('Constancia')->icon('heroicon-o-document-arrow-down')
+                Action::make('constancia')->iconButton()->label('Constancia')->icon('heroicon-o-document-arrow-down')
                     ->visible(fn (ConsultaTransito $record) => $record->tieneConstancia())
                     ->url(fn (ConsultaTransito $record) => $record->urlPdf(), shouldOpenInNewTab: true),
             ]);

@@ -66,8 +66,8 @@ class OficinaResource extends Resource
                 TernaryFilter::make('activa'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton(),
             ]);
     }
 

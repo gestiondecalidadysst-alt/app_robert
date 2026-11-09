@@ -122,7 +122,7 @@ class CumplidoManifiestoResource extends Resource
                     ->numeric(thousandsSeparator: '.')->prefix('$ ')->alignEnd(),
                 AccionesRndc::columnaEstado(),
             ])
-            ->recordActions([AccionesRndc::grupo(), EditAction::make()]);
+            ->recordActions([AccionesRndc::grupo(), EditAction::make()->iconButton()]);
     }
 
     public static function getPages(): array

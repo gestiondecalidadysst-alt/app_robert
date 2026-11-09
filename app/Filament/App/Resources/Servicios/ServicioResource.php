@@ -96,7 +96,7 @@ class ServicioResource extends Resource
                         ($data['hasta'] ?? null) ? 'Hasta '.Carbon::parse($data['hasta'])->format('d/m/Y') : null,
                     ])),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([ViewAction::make()->iconButton()]);
     }
 
     public static function getPages(): array

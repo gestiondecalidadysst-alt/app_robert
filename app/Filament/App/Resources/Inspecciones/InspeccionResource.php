@@ -96,7 +96,7 @@ class InspeccionResource extends Resource
                     ])),
             ])
             ->recordActions([
-                ViewAction::make(),
+                ViewAction::make()->iconButton(),
                 self::accionPdf()->iconButton()->tooltip('PDF'),
             ]);
     }

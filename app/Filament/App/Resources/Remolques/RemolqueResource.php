@@ -110,7 +110,7 @@ class RemolqueResource extends Resource
                 AccionesRndc::columnaEstado(),
             ])
             ->filters([TernaryFilter::make('activo')])
-            ->recordActions([AccionesRndc::grupo(), EditAction::make(), DeleteAction::make()])
+            ->recordActions([AccionesRndc::grupo(), EditAction::make()->iconButton(), DeleteAction::make()->iconButton()])
             ->toolbarActions([BulkActionGroup::make([AccionesRndc::fichasMasivas()])]);
     }
 

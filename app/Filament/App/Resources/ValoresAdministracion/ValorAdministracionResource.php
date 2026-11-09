@@ -104,8 +104,8 @@ class ValorAdministracionResource extends Resource
                     ->options(fn () => ClaseVehiculo::query()->orderBy('nombre')->pluck('nombre', 'id')),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton(),
             ]);
     }
 

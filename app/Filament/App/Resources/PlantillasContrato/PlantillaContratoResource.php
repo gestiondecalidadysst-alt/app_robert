@@ -148,7 +148,7 @@ class PlantillaContratoResource extends Resource
                 TextColumn::make('usuario.name')->label('Creada por')->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('created_at')->label('Fecha')->dateTime('d/m/Y h:i a')->visibleFrom('md'),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([ViewAction::make()->iconButton()]);
     }
 
     public static function canEdit(Model $record): bool

@@ -74,7 +74,7 @@ class ReciboAdministracionResource extends Resource
                     ->default(),
             ])
             ->recordActions([
-                Action::make('recibo')
+                Action::make('recibo')->iconButton()
                     ->label('Recibo')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('gray')
@@ -83,7 +83,7 @@ class ReciboAdministracionResource extends Resource
                         PdfReciboAdministracion::nombreRecibo($record),
                         ['Content-Type' => 'application/pdf'],
                     )),
-                Action::make('anular')
+                Action::make('anular')->iconButton()
                     ->label('Anular')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')

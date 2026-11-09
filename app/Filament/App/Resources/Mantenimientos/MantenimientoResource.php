@@ -159,7 +159,7 @@ class MantenimientoResource extends Resource
                         ->when($data['desde'] ?? null, fn ($q, $d) => $q->whereDate('fecha', '>=', $d))
                         ->when($data['hasta'] ?? null, fn ($q, $d) => $q->whereDate('fecha', '<=', $d))),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([ViewAction::make()->iconButton()]);
     }
 
     public static function infolist(Schema $schema): Schema

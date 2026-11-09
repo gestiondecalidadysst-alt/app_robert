@@ -109,7 +109,7 @@ class PlanAccionResource extends Resource
                 SelectFilter::make('vehiculo_id')->label('Vehículo')->searchable()
                     ->options(fn () => Vehiculo::query()->orderBy('placa')->pluck('placa', 'id')),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([ViewAction::make()->iconButton()]);
     }
 
     public static function infolist(Schema $schema): Schema

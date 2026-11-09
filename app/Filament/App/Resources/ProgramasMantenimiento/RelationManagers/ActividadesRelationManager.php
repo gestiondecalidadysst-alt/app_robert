@@ -87,12 +87,12 @@ class ActividadesRelationManager extends RelationManager
                     ->query(fn (Builder $query, array $data) => filled($data['value'] ?? null) ? $query->whereMonth('fecha_programada', $data['value']) : $query),
             ])
             ->recordActions([
-                Action::make('ejecutar')
+                Action::make('ejecutar')->iconButton()
                     ->label('Registrar')
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->visible(fn (ActividadMantenimiento $r) => $r->estado === EstadoActividad::Programada && auth()->user()?->can('crear_mantenimientos'))
                     ->url(fn (ActividadMantenimiento $r) => MantenimientoResource::getUrl('create', ['vehiculo' => $r->vehiculo_id, 'rutina' => $r->rutina_mantenimiento_id])),
-                Action::make('reprogramar')
+                Action::make('reprogramar')->iconButton()
                     ->icon('heroicon-o-calendar')
                     ->color('gray')
                     ->visible(fn (ActividadMantenimiento $r) => $r->estado === EstadoActividad::Programada && $editable())
@@ -104,7 +104,7 @@ class ActividadesRelationManager extends RelationManager
                     ->action(function (ActividadMantenimiento $record, array $data, Action $action): void {
                         ErroresDeNegocio::intentar($action, fn () => ProgramaAnual::reprogramar($record, $data['fecha'], $data['motivo'], auth()->user()));
                     }),
-                Action::make('cancelar')
+                Action::make('cancelar')->iconButton()
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
                     ->visible(fn (ActividadMantenimiento $r) => $r->estado === EstadoActividad::Programada && $editable())
@@ -112,7 +112,7 @@ class ActividadesRelationManager extends RelationManager
                     ->action(function (ActividadMantenimiento $record, array $data, Action $action): void {
                         ErroresDeNegocio::intentar($action, fn () => ProgramaAnual::cancelar($record, $data['motivo'], auth()->user()));
                     }),
-                Action::make('historial')
+                Action::make('historial')->iconButton()
                     ->icon('heroicon-o-clock')
                     ->color('gray')
                     ->iconButton()

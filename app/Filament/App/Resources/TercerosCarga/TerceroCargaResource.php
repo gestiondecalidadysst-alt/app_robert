@@ -100,7 +100,7 @@ class TerceroCargaResource extends Resource
                     ->query(fn (Builder $query, array $data) => $data['value'] ? $query->whereJsonContains('roles', $data['value']) : $query),
                 TernaryFilter::make('activo'),
             ])
-            ->recordActions([AccionesRndc::grupo(), EditAction::make(), DeleteAction::make()])
+            ->recordActions([AccionesRndc::grupo(), EditAction::make()->iconButton(), DeleteAction::make()->iconButton()])
             ->toolbarActions([BulkActionGroup::make([AccionesRndc::fichasMasivas()])]);
     }
 

@@ -113,7 +113,7 @@ class ManifiestoCargaResource extends Resource
             ])
             ->recordActions([
                 AccionesRndc::grupo(),
-                Action::make('remesas')->label('Remesas')->icon('heroicon-o-paper-clip')
+                Action::make('remesas')->iconButton()->label('Remesas')->icon('heroicon-o-paper-clip')
                     ->color(fn (ManifiestoCarga $m) => $m->remesas()->count() === 0 ? 'danger' : 'gray')
                     ->modalHeading('Remesas del manifiesto')
                     ->modalSubmitActionLabel('Asociar')
@@ -145,11 +145,11 @@ class ManifiestoCargaResource extends Resource
                             ->title($asociadas === 1 ? 'Remesa asociada' : $asociadas.' remesas asociadas')
                             ->body('Vuelva a descargar el PDF: ya saldrá la mercancía.')->send();
                     }),
-                Action::make('pdf')->label('Manifiesto (PDF)')->icon('heroicon-o-document-arrow-down')
+                Action::make('pdf')->iconButton()->label('Manifiesto (PDF)')->icon('heroicon-o-document-arrow-down')
                     ->url(fn (ManifiestoCarga $m) => $m->urlPdf(), shouldOpenInNewTab: true),
                 // A la página completa, no a un modal: el asistente son 4 pasos y en el
                 // modal la barra de pasos se corta y aparecen dos juegos de botones.
-                EditAction::make()->url(fn (ManifiestoCarga $m) => EditarManifiesto::getUrl(['record' => $m]))
+                EditAction::make()->iconButton()->url(fn (ManifiestoCarga $m) => EditarManifiesto::getUrl(['record' => $m]))
                     ->visible(fn (ManifiestoCarga $m) => ! $m->anulado() && $m->estadoRndc() !== 'registrado'),
                 AnularConRndc::manifiesto(),
             ]);

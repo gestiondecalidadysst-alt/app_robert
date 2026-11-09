@@ -130,7 +130,7 @@ class PagosRelationManager extends RelationManager
                     ->successNotification(null),
             ])
             ->recordActions([
-                Action::make('recibo')
+                Action::make('recibo')->iconButton()
                     ->label('Recibo')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('gray')

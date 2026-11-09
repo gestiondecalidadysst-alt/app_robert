@@ -147,7 +147,7 @@ class VencimientoResource extends Resource
                 SelectFilter::make('tipo')->label('Documento')->options(TipoDocumentoVehiculo::class)->multiple(),
             ])
             ->recordActions([
-                Action::make('renovar')
+                Action::make('renovar')->iconButton()
                     ->label('Renovar')
                     ->icon('heroicon-o-arrow-path')
                     ->authorize(fn () => auth()->user()->can('create', DocumentoVehiculo::class))

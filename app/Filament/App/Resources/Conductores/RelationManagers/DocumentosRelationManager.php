@@ -80,14 +80,14 @@ class DocumentosRelationManager extends RelationManager
                     ->after(fn () => $this->avisarCambio()),
             ])
             ->recordActions([
-                Action::make('archivo')
+                Action::make('archivo')->iconButton()
                     ->label('Ver archivo')
                     ->icon('heroicon-o-paper-clip')
                     ->color('gray')
                     ->visible(fn (DocumentoConductor $r) => $r->tieneArchivo())
                     ->url(fn (DocumentoConductor $r) => $r->urlArchivo())
                     ->openUrlInNewTab(),
-                Action::make('renovar')
+                Action::make('renovar')->iconButton()
                     ->label('Renovar')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(fn (DocumentoConductor $r) => $this->esVigente($r) && auth()->user()->can('create', DocumentoConductor::class))
@@ -104,8 +104,8 @@ class DocumentosRelationManager extends RelationManager
                     })
                     ->modalSubmitActionLabel('Guardar renovación')
                     ->successNotificationTitle('Documento renovado'),
-                EditAction::make()->after(fn () => $this->avisarCambio()),
-                DeleteAction::make()->after(fn () => $this->avisarCambio()),
+                EditAction::make()->iconButton()->after(fn () => $this->avisarCambio()),
+                DeleteAction::make()->iconButton()->after(fn () => $this->avisarCambio()),
             ]);
     }
 

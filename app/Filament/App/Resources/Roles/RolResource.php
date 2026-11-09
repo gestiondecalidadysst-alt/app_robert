@@ -113,8 +113,8 @@ class RolResource extends Resource
                     ->formatStateUsing(fn (int $state) => $state.' de '.count(Permisos::todos())),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make()
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton()
                     ->hidden(fn (Rol $record) => $record->name === Rol::ADMINISTRADOR || $record->users_count > 0),
             ]);
     }

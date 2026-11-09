@@ -119,7 +119,7 @@ class PropietarioResource extends Resource
             ->toolbarActions([BulkActionGroup::make([AccionesRndc::fichasMasivas()])])
             ->recordActions([
                 AccionesRndc::grupo(),
-                Action::make('vehiculos')
+                Action::make('vehiculos')->iconButton()
                     ->label('Vehículos')
                     ->icon('heroicon-o-truck')
                     ->color('gray')
@@ -127,8 +127,8 @@ class PropietarioResource extends Resource
                     ->url(fn (Propietario $record) => VehiculoResource::getUrl('index', [
                         'filters' => ['propietario_id' => ['value' => $record->getKey()]],
                     ])),
-                EditAction::make(),
-                DeleteAction::make()
+                EditAction::make()->iconButton(),
+                DeleteAction::make()->iconButton()
                     ->before(function (Propietario $record, DeleteAction $action): void {
                         if ($record->vehiculos()->exists()) {
                             Notification::make()
