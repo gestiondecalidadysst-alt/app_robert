@@ -2,6 +2,7 @@
 
 namespace App\Actions\Operacion;
 
+use App\Enums\ObjetoContrato;
 use App\Enums\TipoDocumentoVehiculo;
 use App\Models\Conductor;
 use App\Models\Contrato;
@@ -84,6 +85,11 @@ class ExpedirFuec
             $fuec->conductores()->attach(
                 $conductores->values()->mapWithKeys(fn (Conductor $c, int $i) => [$c->id => ['orden' => $i + 1]])->all()
             );
+
+            // Turismo y Grupo específico llevan listado de pasajeros (autorregistro por enlace).
+            if (in_array($contrato->objeto, [ObjetoContrato::Turismo, ObjetoContrato::GrupoEspecifico], true)) {
+                $fuec->abrirListadoPasajeros();
+            }
 
             // Todo extracto aparece en el planeador: enlaza el servicio planificado o crea uno.
             app(PlanificarServicio::class)->desdeFuec($fuec, filled($datos['servicio_id'] ?? null) ? (int) $datos['servicio_id'] : null);

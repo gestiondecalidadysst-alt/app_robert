@@ -135,6 +135,13 @@ class FuecResource extends Resource
         return false;
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            \App\Filament\App\Resources\Fuecs\RelationManagers\PasajerosRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [

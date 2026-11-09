@@ -10,6 +10,7 @@ use App\Http\Controllers\Conductor\PushController;
 use App\Http\Controllers\Conductor\PwaController;
 use App\Http\Controllers\Conductor\ViajeController;
 use App\Http\Controllers\EvidenciaController;
+use App\Http\Controllers\RegistroPasajerosController;
 use App\Http\Controllers\FirmaContratoController;
 use App\Http\Controllers\ReciboAdministracionController;
 use App\Http\Controllers\VerificarConsultaTransitoController;
@@ -43,6 +44,13 @@ Route::middleware('throttle:firma')->where(['token' => '[A-Za-z0-9]{22}', 'codig
     Route::get('/verificar/contrato/{codigo}', [VerificarContratoController::class, 'mostrar'])->name('contrato.verificar');
     Route::post('/verificar/contrato/{codigo}', [VerificarContratoController::class, 'archivo'])
         ->middleware('throttle:verificar-archivo')->name('contrato.verificar.archivo');
+});
+
+// Autorregistro de pasajeros al listado de un FUEC (el cliente comparte este enlace con los pasajeros).
+Route::middleware('throttle:firma')->where(['token' => '[A-Za-z0-9]{32}'])->group(function () {
+    Route::get('/p/{token}', [RegistroPasajerosController::class, 'mostrar'])->name('pasajeros.registro');
+    Route::post('/p/{token}', [RegistroPasajerosController::class, 'registrar'])
+        ->middleware('throttle:firma-firmar')->name('pasajeros.registrar');
 });
 
 // Verificación pública de un preoperacional o inspección (código QR del PDF).
