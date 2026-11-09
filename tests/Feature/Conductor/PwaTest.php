@@ -12,7 +12,8 @@ class PwaTest extends TestCase
 {
     public function test_el_service_worker_es_publico_y_es_javascript(): void
     {
-        $respuesta = $this->get('/conductor/sw.js');
+        // El registro del service worker pide Accept: */* (no es una navegación): recibe el JS.
+        $respuesta = $this->get('/conductor/sw.js', ['Accept' => '*/*']);
 
         $respuesta->assertOk();
         $this->assertStringContainsString('javascript', strtolower($respuesta->headers->get('content-type') ?? ''));
@@ -24,6 +25,11 @@ class PwaTest extends TestCase
     {
         // Una navegación del usuario (Sec-Fetch-Dest: document) no debe mostrar el código.
         $this->get('/conductor/sw.js', ['Sec-Fetch-Dest' => 'document'])
+            ->assertRedirect(route('conductor.inicio'));
+
+        // Aunque el proxy (Traefik/Easypanel) quite Sec-Fetch-Dest, una navegación pide
+        // Accept: text/html: también se redirige al portal en vez de mostrar el código.
+        $this->get('/conductor/sw.js', ['Accept' => 'text/html,application/xhtml+xml'])
             ->assertRedirect(route('conductor.inicio'));
     }
 

@@ -16,9 +16,13 @@ class PwaController extends Controller
     public function serviceWorker(Request $request): SymfonyResponse
     {
         // Red de seguridad: si alguien abre esta URL como página (navegación), lo mandamos al
-        // portal en vez de mostrar el código. El registro del service worker usa Sec-Fetch-Dest
-        // "serviceworker", no "document", así que ese sí recibe el JavaScript.
-        if ($request->header('Sec-Fetch-Dest') === 'document') {
+        // portal en vez de mostrar el código. Una navegación del navegador pide `Accept: text/html`;
+        // el registro del service worker pide `Accept: */*` y `Sec-Fetch-Dest: serviceworker`.
+        // Miramos ambos porque algunos proxies (p. ej. Traefik/Easypanel) quitan `Sec-Fetch-Dest`.
+        $esNavegacion = $request->header('Sec-Fetch-Dest') === 'document'
+            || str_contains((string) $request->header('Accept'), 'text/html');
+
+        if ($esNavegacion) {
             return redirect()->route('conductor.inicio');
         }
 
