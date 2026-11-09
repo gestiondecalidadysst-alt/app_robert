@@ -61,7 +61,8 @@
     .items .det { color: #4b5563; width: 23%; }
     .items .val { text-align: right; font-weight: bold; width: 18%; white-space: nowrap; }
     .items tr { page-break-inside: avoid; }
-    .items .descuento td { color: #b91c1c; }
+    .items .descuento .ruta { color: {{ $oscuro }}; }
+    .items .descuento .val { color: #374151; }
 
     .total { margin-top: 8px; background: {{ $lima }}; color: #fff; padding: 12px 18px; }
     .total .lbl { font-size: 11px; letter-spacing: 2px; font-weight: bold; }

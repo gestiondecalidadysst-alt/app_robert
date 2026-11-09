@@ -104,15 +104,15 @@ class CotizacionResource extends Resource
                 SelectFilter::make('estado')->options(EstadoCotizacion::class),
             ])
             ->recordActions([
-                EditAction::make()->label('Editar')
+                EditAction::make()->label('Editar')->iconButton()
                     ->visible(fn (Cotizacion $record) => ! $record->anulada() && ! $record->convertida()),
-                Action::make('pdf')->label('PDF')->icon('heroicon-o-document-arrow-down')->color('gray')
+                Action::make('pdf')->label('PDF')->icon('heroicon-o-document-arrow-down')->color('gray')->iconButton()
                     ->action(fn (Cotizacion $record) => response()->streamDownload(
                         fn () => print (PdfCotizacion::generar($record)),
                         PdfCotizacion::nombre($record),
                         ['Content-Type' => 'application/pdf'],
                     )),
-                Action::make('enviar')->label('Enviar')->icon('heroicon-o-paper-airplane')->color('primary')
+                Action::make('enviar')->label('Enviar')->icon('heroicon-o-paper-airplane')->color('primary')->iconButton()
                     ->visible(fn (Cotizacion $record) => ! $record->anulada()
                         && Filament::auth()->user()?->can('enviar_cotizaciones'))
                     ->requiresConfirmation()
@@ -143,18 +143,18 @@ class CotizacionResource extends Resource
                         }
                         Notification::make()->success()->title('Cotización enviada')->body('Se encoló el correo para '.$correo.'.')->send();
                     }),
-                Action::make('aceptada')->label('Aceptada')->icon('heroicon-o-check')->color('success')
+                Action::make('aceptada')->label('Aceptada')->icon('heroicon-o-check')->color('success')->iconButton()
                     ->visible(fn (Cotizacion $record) => ! $record->anulada() && ! $record->convertida()
                         && $record->estado !== EstadoCotizacion::Aceptada)
                     ->action(fn (Cotizacion $record) => $record->forceFill(['estado' => EstadoCotizacion::Aceptada])->save())
                     ->successNotificationTitle('Marcada como aceptada'),
-                Action::make('rechazada')->label('Rechazada')->icon('heroicon-o-x-mark')->color('danger')
+                Action::make('rechazada')->label('Rechazada')->icon('heroicon-o-x-mark')->color('danger')->iconButton()
                     ->visible(fn (Cotizacion $record) => ! $record->anulada() && ! $record->convertida()
                         && $record->estado !== EstadoCotizacion::Rechazada)
                     ->requiresConfirmation()
                     ->action(fn (Cotizacion $record) => $record->forceFill(['estado' => EstadoCotizacion::Rechazada])->save())
                     ->successNotificationTitle('Marcada como rechazada'),
-                Action::make('convertir')->label('Convertir en contrato')->icon('heroicon-o-document-plus')->color('primary')
+                Action::make('convertir')->label('Convertir en contrato')->icon('heroicon-o-document-plus')->color('primary')->iconButton()
                     ->visible(fn (Cotizacion $record) => ! $record->anulada() && ! $record->convertida())
                     ->modalHeading(fn (Cotizacion $record) => 'Convertir '.$record->numero_formateado.' en contrato')
                     ->modalDescription('El contrato toma el cliente, el asunto y el valor total de la cotización. Completa los datos propios del contrato.')
@@ -178,7 +178,7 @@ class CotizacionResource extends Resource
                             ->body('Desde la cotización '.$record->numero_formateado.'. Ya puedes expedir su FUEC.')
                             ->send();
                     }),
-                Action::make('anular')->label('Anular')->icon('heroicon-o-trash')->color('danger')
+                Action::make('anular')->label('Anular')->icon('heroicon-o-trash')->color('danger')->iconButton()
                     ->visible(fn (Cotizacion $record) => ! $record->anulada() && ! $record->convertida()
                         && Filament::auth()->user()?->can('anular_cotizaciones'))
                     ->requiresConfirmation()
