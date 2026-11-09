@@ -38,7 +38,7 @@ class AccesoYClaveTempTest extends ConfiguracionTestCase
         );
 
         $clave = null;
-        Mail::assertSent(CorreoCredencialesEmpresa::class, function (CorreoCredencialesEmpresa $correo) use (&$clave) {
+        Mail::assertQueued(CorreoCredencialesEmpresa::class, function (CorreoCredencialesEmpresa $correo) use (&$clave) {
             $clave = $correo->claveTemporal;
 
             return $correo->correo === 'ana@nuevos.test' && $correo->hasTo('ana@nuevos.test');
@@ -129,7 +129,7 @@ class AccesoYClaveTempTest extends ConfiguracionTestCase
             ['name' => 'Admin Demo', 'email' => 'admin@demo.test'],
         );
 
-        Mail::assertNotSent(CorreoCredencialesEmpresa::class);
+        Mail::assertNotQueued(CorreoCredencialesEmpresa::class);
         $this->assertSame($claveAnterior, $existente->fresh()->password);
         $this->assertFalse($existente->fresh()->debe_cambiar_clave);
     }

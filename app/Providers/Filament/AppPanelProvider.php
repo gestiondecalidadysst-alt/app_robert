@@ -9,6 +9,7 @@ use App\Http\Middleware\ForzarCambioClave;
 use App\Http\Middleware\PrepararEmpresaActiva;
 use App\Models\Empresa;
 use App\Providers\Filament\Concerns\EstiloRuta;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -39,6 +40,8 @@ class AppPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->profile(isSimple: false)
+            // 2FA opcional (TOTP) con códigos de recuperación: cada usuario lo activa desde su perfil.
+            ->multiFactorAuthentication(AppAuthentication::make())
             ->tenant(Empresa::class, slugAttribute: 'slug', ownershipRelationship: 'empresa')
             ->tenantProfile(EditarEmpresa::class)
             ->databaseNotifications()

@@ -90,10 +90,10 @@ class CrearEmpresa
             return ['empresa' => $empresa, 'correoCredenciales' => $correo];
         });
 
-        // El correo se envía fuera de la transacción: si falla el envío, la empresa ya
-        // quedó creada y el superadministrador puede reenviar las credenciales.
+        // El correo se encola fuera de la transacción: no bloquea la creación de la empresa y
+        // el worker lo reintenta. Si aun así falla, el superadministrador puede reenviar las credenciales.
         if ($resultado['correoCredenciales'] !== null) {
-            Mail::to($administrador['email'])->send($resultado['correoCredenciales']);
+            Mail::to($administrador['email'])->queue($resultado['correoCredenciales']);
         }
 
         return $resultado['empresa'];

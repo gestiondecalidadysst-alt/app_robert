@@ -112,6 +112,59 @@
         });
     }
 
+    // Cola de envíos sin conexión (p. ej. el preoperacional): se guardan y se reenvían solos al volver la señal.
+    window.RutaCola = (function () {
+        var LLAVE = 'ruta-cola-envios';
+        function leer() { try { return JSON.parse(localStorage.getItem(LLAVE) || '[]'); } catch (e) { return []; } }
+        function guardar(l) { try { localStorage.setItem(LLAVE, JSON.stringify(l)); } catch (e) {} }
+        function encolar(item) { var l = leer(); l.push(item); guardar(l); }
+        function pendientes() { return leer().length; }
+
+        function aviso(texto, color) {
+            var b = document.createElement('div');
+            b.textContent = texto;
+            b.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:50;max-width:608px;margin:0 auto;'
+                + 'background:' + (color || '#065f46') + ';color:#fff;padding:12px 14px;border-radius:10px;'
+                + 'font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.2)';
+            document.body.appendChild(b);
+            setTimeout(function () { b.remove(); }, 5000);
+        }
+
+        function enviar() {
+            if (!navigator.onLine) return;
+            var l = leer();
+            if (!l.length) return;
+            var item = l[0];
+            fetch(item.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                body: item.body,
+                credentials: 'same-origin',
+                redirect: 'follow',
+            }).then(function (r) {
+                if (r.ok || r.redirected || (r.status >= 200 && r.status < 400)) {
+                    var resto = leer(); resto.shift(); guardar(resto);
+                    aviso((item.titulo || 'Formulario') + ' enviado correctamente.');
+                    enviar();
+                } else if (r.status === 419 || r.status === 401 || r.status === 403) {
+                    // Sesión vencida: se conserva en la cola; se reintenta tras iniciar sesión.
+                    aviso('Vuelve a iniciar sesión para enviar lo que quedó pendiente.', '#9a3412');
+                } else if (r.status >= 400 && r.status < 500) {
+                    // No se puede resolver reintentando (p. ej. ya estaba hecho): se descarta.
+                    var l2 = leer(); l2.shift(); guardar(l2);
+                    aviso('No se pudo enviar un formulario pendiente; revísalo en la app.', '#9a3412');
+                    enviar();
+                }
+                // 5xx o red: se queda en la cola para el próximo intento.
+            }).catch(function () {});
+        }
+
+        window.addEventListener('online', enviar);
+        window.addEventListener('load', enviar);
+
+        return { encolar: encolar, enviar: enviar, pendientes: pendientes };
+    })();
+
     // Aviso de "Instalar app". En Android/Chrome usa el diálogo nativo; en iPhone muestra el instructivo.
     (function () {
         var barra = document.getElementById('barra-instalar');

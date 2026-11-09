@@ -3,14 +3,19 @@
 namespace Tests\Feature\Operacion;
 
 use App\Actions\Operacion\AnularFuec;
+use App\Actions\Operacion\EnviarEnlacePasajeros;
 use App\Actions\Operacion\ExpedirFuec;
+use App\Actions\Operacion\ImportarPasajeros;
 use App\Enums\ObjetoContrato;
+use App\Mail\CorreoListadoPasajeros;
 use App\Models\Conductor;
 use App\Models\Contrato;
 use App\Models\Fuec;
 use App\Models\Municipio;
 use App\Models\Vehiculo;
+use App\Support\Pdf\PdfFuec;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Mail;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
 
 /**
@@ -179,5 +184,63 @@ class PasajerosFuecTest extends ConfiguracionTestCase
 
         $this->get(route('listado.verificar', $fuec->pasajeros_codigo))
             ->assertOk()->assertSee('ANULADO');
+    }
+
+    public function test_envia_el_enlace_de_registro_al_cliente_del_contrato(): void
+    {
+        Mail::fake();
+        $this->entrarComo('admin@demo.test');
+        $this->contrato()->forceFill(['objeto' => ObjetoContrato::Turismo])->save();
+        $this->contrato()->cliente->forceFill(['email' => 'cliente@demo.test'])->save();
+        $fuec = app(ExpedirFuec::class)($this->demo, $this->datos());
+
+        $canales = app(EnviarEnlacePasajeros::class)($fuec);
+
+        $this->assertNotEmpty($canales);
+        Mail::assertSent(CorreoListadoPasajeros::class, fn (CorreoListadoPasajeros $c) => $c->hasTo('cliente@demo.test')
+            && str_contains($c->enlace, $fuec->pasajeros_token));
+    }
+
+    public function test_el_pdf_del_fuec_incluye_el_anexo_de_pasajeros(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->entrarComo('admin@demo.test');
+        $this->contrato()->forceFill(['objeto' => ObjetoContrato::Turismo])->save();
+        $fuec = app(ExpedirFuec::class)($this->demo, $this->datos());
+        $this->post(route('pasajeros.registrar', $fuec->pasajeros_token), [
+            'nombre' => 'Ana Gómez', 'tipo_documento' => 'CC', 'documento' => '123456789',
+        ]);
+
+        // El anexo no debe romper la generación del PDF y debe producir un PDF válido.
+        $pdf = PdfFuec::generar($fuec->fresh());
+        $this->assertStringStartsWith('%PDF', $pdf);
+        $this->assertGreaterThan(3000, strlen($pdf));
+    }
+
+    public function test_importa_pasajeros_desde_csv_con_reglas(): void
+    {
+        $this->entrarComo('admin@demo.test');
+        $this->contrato()->forceFill(['objeto' => ObjetoContrato::Turismo])->save();
+        $fuec = app(ExpedirFuec::class)($this->demo, $this->datos());
+
+        $csv = "nombre,tipo_documento,documento,telefono,es_menor,acudiente_nombre\n"
+            ."Ana Gómez,CC,111,3001112233,,\n"
+            ."Pedro Niño,TI,222,,si,María Niño\n"
+            ."Sin Acudiente,TI,333,,si,\n"   // menor sin acudiente: se omite
+            ."Ana Gómez,CC,111,,,\n";        // documento duplicado: se omite
+
+        $ruta = sys_get_temp_dir().'/pax_'.uniqid().'.csv';
+        file_put_contents($ruta, $csv);
+
+        $resultado = app(ImportarPasajeros::class)($fuec, $ruta);
+        @unlink($ruta);
+
+        $this->assertSame(2, $resultado['importados']);
+        $this->assertSame(2, $resultado['omitidos']);
+        $this->assertSame(2, $fuec->pasajeros()->count());
+
+        $menor = $fuec->pasajeros()->where('documento', '222')->first();
+        $this->assertTrue($menor->es_menor);
+        $this->assertSame('María Niño', $menor->acudiente_nombre);
     }
 }

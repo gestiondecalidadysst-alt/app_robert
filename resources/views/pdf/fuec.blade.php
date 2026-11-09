@@ -257,5 +257,40 @@
         </p>
     </div>
 </div>
+@if ($pasajeros->isNotEmpty())
+<div class="pagina2">
+    <div class="sl">Listado de pasajeros — FUEC {{ $fuec->numero_formateado }}</div>
+    <table style="font-size: 10px">
+        <thead>
+            <tr>
+                <th style="width: 4%; text-align: center">#</th>
+                <th>Nombre</th>
+                <th style="width: 24%">Documento</th>
+                <th style="width: 16%">Teléfono</th>
+                <th style="width: 10%; text-align: center">Tipo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($pasajeros as $i => $p)
+                <tr>
+                    <td style="text-align: center">{{ $i + 1 }}</td>
+                    <td>
+                        {{ $p->nombre }}
+                        @if ($p->es_menor)
+                            <br><span class="k">Menor · acudiente: {{ $p->acudiente_nombre }}{{ $p->acudiente_documento ? ' ('.$p->acudiente_documento.')' : '' }}</span>
+                        @endif
+                    </td>
+                    <td>{{ $p->tipo_documento }} {{ $p->documento }}</td>
+                    <td>{{ $p->telefono ?: '—' }}</td>
+                    <td style="text-align: center">{{ $p->es_menor ? 'Menor' : 'Adulto' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    <div class="k" style="margin-top: 10px">
+        Total de pasajeros: {{ $pasajeros->count() }}{{ $fuec->listadoCerrado() ? ' · Listado cerrado' : ' · Listado abierto' }}
+    </div>
+</div>
+@endif
 </body>
 </html>

@@ -87,6 +87,39 @@
 (function () {
     var form = document.getElementById('form-preop');
     var items = Array.prototype.slice.call(form.querySelectorAll('[data-item]'));
+
+    // Borrador: conserva lo diligenciado aunque se recargue la página o se pierda la señal.
+    var BORRADOR = 'preop-borrador:' + form.action;
+    function guardarBorrador() {
+        try {
+            var fd = new FormData(form), obj = {};
+            fd.forEach(function (v, k) {
+                if (k === '_token' || k === 'declaro' || k === 'latitud' || k === 'longitud') return;
+                if (obj[k] !== undefined) { if (!Array.isArray(obj[k])) obj[k] = [obj[k]]; obj[k].push(v); }
+                else obj[k] = v;
+            });
+            localStorage.setItem(BORRADOR, JSON.stringify(obj));
+        } catch (e) {}
+    }
+    function limpiarBorrador() { try { localStorage.removeItem(BORRADOR); } catch (e) {} }
+    (function restaurar() {
+        var d; try { d = JSON.parse(localStorage.getItem(BORRADOR) || 'null'); } catch (e) { return; }
+        if (!d) return;
+        Object.keys(d).forEach(function (name) {
+            var valores = Array.isArray(d[name]) ? d[name] : [d[name]];
+            var campos;
+            try { campos = form.querySelectorAll('[name="' + CSS.escape(name) + '"]'); } catch (e) { return; }
+            if (!campos.length) return;
+            if (campos[0].type === 'radio') {
+                Array.prototype.forEach.call(campos, function (r) { if (valores.indexOf(r.value) !== -1) r.checked = true; });
+            } else {
+                campos[0].value = valores[0];
+            }
+        });
+    })();
+    form.addEventListener('input', guardarBorrador);
+    form.addEventListener('change', guardarBorrador);
+
     function actualizar() {
         var hechos = 0;
         items.forEach(function (it) {
@@ -117,6 +150,19 @@
             caja.innerHTML = errores.filter(function (v, i, a) { return a.indexOf(v) === i; }).join('<br>');
             caja.style.display = 'block';
             if (primero) primero.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // Sin errores de validación. Limpia el borrador; si no hay señal, lo guarda para reenviar solo.
+        limpiarBorrador();
+        if (!navigator.onLine && window.RutaCola) {
+            e.preventDefault();
+            try {
+                var cuerpo = new URLSearchParams(new FormData(form)).toString();
+                window.RutaCola.encolar({ url: form.action, body: cuerpo, titulo: 'Preoperacional', ts: Date.now() });
+            } catch (x) {}
+            form.innerHTML = '<div class="aviso" style="margin:0">Guardado sin conexión. Se enviará automáticamente cuando vuelva la señal. Puedes cerrar la app.</div>';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
 

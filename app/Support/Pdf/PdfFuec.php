@@ -26,6 +26,8 @@ final class PdfFuec
                 $datos['empresa']['firma_representante_path'] ?? $fuec->empresa?->firma_representante_path,
                 'local',
             ),
+            // Anexo: el listado de pasajeros viene de la relación viva (se registran tras expedir).
+            'pasajeros' => $fuec->tieneListadoPasajeros() ? $fuec->pasajeros()->get() : collect(),
         ])->render();
 
         return Pdf::loadHTML($html)

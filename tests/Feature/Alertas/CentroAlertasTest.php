@@ -10,6 +10,7 @@ use App\Models\Propietario;
 use App\Models\Vehiculo;
 use App\Support\Alertas\CentroAlertas;
 use App\Support\Modulos;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
 
@@ -103,29 +104,41 @@ class CentroAlertasTest extends ConfiguracionTestCase
         Mail::assertNothingSent();
     }
 
-    public function test_el_aviso_diario_solo_incluye_lo_que_vence_hoy(): void
+    public function test_el_aviso_diario_incluye_hoy_y_los_hitos_de_anticipacion(): void
     {
         Mail::fake();
-        $propietario = $this->propietarioConVehiculoPendiente();
+        $this->propietarioConVehiculoPendiente();
         $vehiculo = Vehiculo::query()->deEmpresa($this->demo)->where('placa', 'DMO103')->firstOrFail();
 
-        // Un documento que vence HOY (queda como el vigente de su tipo por ser el más nuevo).
-        $vehiculo->documentos()->create([
-            'empresa_id' => $this->demo->id,
-            'tipo' => TipoDocumentoVehiculo::Soat,
-            'numero' => 'SOA-HOY',
-            'entidad' => 'Aseguradora demo',
-            'fecha_expedicion' => today()->subYear(),
-            'fecha_vencimiento' => today(),
-        ]);
+        // Parte de cero para que cada documento creado sea el vigente de su tipo.
+        $vehiculo->documentos()->forceDelete();
+
+        // Vigentes de su tipo: hoy, un hito (15 días) y un día fuera de hito (10).
+        $this->documentoVehiculo($vehiculo, TipoDocumentoVehiculo::Soat, 'SOA-HOY', today());
+        $this->documentoVehiculo($vehiculo, TipoDocumentoVehiculo::Tecnomecanica, 'RTM-15', today()->addDays(15));
+        $this->documentoVehiculo($vehiculo, TipoDocumentoVehiculo::TarjetaOperacion, 'TO-10', today()->addDays(10));
 
         $this->artisan('ruta:alertas --modo=diario')->assertSuccessful();
 
         Mail::assertSent(CorreoAlertas::class, function (CorreoAlertas $correo) {
-            // Solo el que vence hoy: todos los items deben decir "Vence hoy".
+            $detalles = collect($correo->items)->pluck('detalle')->implode(' | ');
+
             return $correo->hasTo('dueno103@demo.test')
-                && collect($correo->items)->every(fn (array $i) => str_contains($i['detalle'], 'Vence hoy'));
+                && str_contains($detalles, 'Vence hoy')        // día 0
+                && str_contains($detalles, 'en 15 día')        // hito de anticipación
+                && ! str_contains($detalles, 'en 10 día');     // fuera de hito: no se incluye
         });
-        $this->assertNotNull($propietario);
+    }
+
+    private function documentoVehiculo(Vehiculo $vehiculo, TipoDocumentoVehiculo $tipo, string $numero, Carbon $vence): void
+    {
+        $vehiculo->documentos()->create([
+            'empresa_id' => $this->demo->id,
+            'tipo' => $tipo,
+            'numero' => $numero,
+            'entidad' => 'Entidad demo',
+            'fecha_expedicion' => today()->subYear(),
+            'fecha_vencimiento' => $vence,
+        ]);
     }
 }

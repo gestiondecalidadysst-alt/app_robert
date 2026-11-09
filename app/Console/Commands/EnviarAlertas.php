@@ -29,6 +29,9 @@ class EnviarAlertas extends Command
 
     protected $description = 'Envía los avisos de documentos por vencer/vencidos y administración en mora.';
 
+    /** Días de anticipación para el aviso puntual (además del día del vencimiento). */
+    private const HITOS_AVISO = [30, 15, 7];
+
     public function handle(): int
     {
         $modo = $this->option('modo') === 'diario' ? 'diario' : 'semanal';
@@ -58,13 +61,22 @@ class EnviarAlertas extends Command
 
     private function diario(Empresa $empresa): void
     {
+        // Avisos puntuales: lo que vence HOY y los hitos de anticipación (faltan 30, 15 o 7 días).
+        // Cada hito cae un único día, así que cada documento genera a lo sumo un aviso por hito.
+        $fechas = collect([today()])
+            ->merge(collect(self::HITOS_AVISO)->map(fn (int $dias) => today()->addDays($dias)));
+
+        $enHito = fn ($query) => $query->where(
+            fn ($q) => $fechas->each(fn ($f) => $q->orWhereDate('fecha_vencimiento', $f)),
+        );
+
         $docsVehiculo = DocumentoVehiculo::query()->deEmpresa($empresa)->vigentes()
-            ->whereDate('fecha_vencimiento', today())
+            ->tap($enHito)
             ->whereHas('vehiculo', fn ($q) => $q->enFlota())
             ->with('vehiculo.propietario')->get();
 
         $docsConductor = DocumentoConductor::query()->deEmpresa($empresa)->vigentes()
-            ->whereDate('fecha_vencimiento', today())
+            ->tap($enHito)
             ->whereHas('conductor', fn ($q) => $q->vinculados())
             ->with('conductor')->get();
 
@@ -72,10 +84,10 @@ class EnviarAlertas extends Command
             return;
         }
 
-        $this->avisarPropietarios($empresa, $docsVehiculo, collect(), 'Un documento de su vehículo vence hoy',
-            'Hoy vence el siguiente documento:');
-        $this->avisarConductores($empresa, $docsConductor, 'Un documento suyo vence hoy',
-            'Hoy vence el siguiente documento:');
+        $this->avisarPropietarios($empresa, $docsVehiculo, collect(), 'Documentos de su vehículo por vencer',
+            'Estos documentos vencen hoy o en los próximos días:');
+        $this->avisarConductores($empresa, $docsConductor, 'Documentos suyos por renovar',
+            'Estos documentos suyos vencen hoy o en los próximos días:');
 
         // Recordatorio push del preoperacional a los conductores con servicio hoy.
         NotificarConductor::preoperacionalPendiente($empresa);

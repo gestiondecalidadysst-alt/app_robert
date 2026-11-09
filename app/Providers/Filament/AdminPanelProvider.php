@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Admin\Pages\Inicio;
 use App\Http\Middleware\AutenticarPanel;
 use App\Providers\Filament\Concerns\EstiloRuta;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -32,6 +33,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile(isSimple: false)
+            // 2FA opcional (TOTP) para el superadministrador de la plataforma.
+            ->multiFactorAuthentication(AppAuthentication::make())
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.partes.version'))
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.partes.version'))
             ->brandName('Ruta · Plataforma')

@@ -44,13 +44,38 @@ class ActividadResource extends Resource
 
     protected static ?string $tenantRelationshipName = 'actividades';
 
-    /** Nombres legibles de los registros auditados. */
+    /** Nombres legibles de los registros auditados (coinciden con class_basename del modelo). */
     public const REGISTROS = [
-        'Empresa' => 'Empresa',
+        'Vehiculo' => 'Vehículo',
+        'Conductor' => 'Conductor',
+        'Contrato' => 'Contrato',
+        'Fuec' => 'FUEC',
+        'Cotizacion' => 'Cotización',
+        'Cliente' => 'Cliente',
+        'Propietario' => 'Propietario',
+        'DocumentoVehiculo' => 'Documento de vehículo',
+        'DocumentoConductor' => 'Documento de conductor',
+        'DocumentoContrato' => 'Documento de contrato',
+        'PagoContrato' => 'Pago de contrato',
+        'PlantillaContrato' => 'Plantilla de contrato',
+        'Servicio' => 'Servicio',
+        'AsignacionVehiculo' => 'Asignación de vehículo',
+        'Ruta' => 'Ruta',
+        'Inspeccion' => 'Inspección',
+        'ItemChequeo' => 'Ítem de chequeo',
+        'Mantenimiento' => 'Mantenimiento',
+        'ProgramaMantenimiento' => 'Programa de mantenimiento',
+        'RutinaMantenimiento' => 'Rutina de mantenimiento',
+        'PlantillaMantenimiento' => 'Plantilla de mantenimiento',
+        'NovedadConductor' => 'Novedad de conductor',
+        'NovedadVehiculo' => 'Novedad de vehículo',
+        'PlanAccion' => 'Plan de acción',
         'Oficina' => 'Oficina',
         'User' => 'Usuario',
         'ValorAdministracion' => 'Valor de administración',
         'EmpresaConvenio' => 'Empresa en convenio',
+        'Empresa' => 'Empresa',
+        'Catalogo' => 'Catálogo',
     ];
 
     public static function infolist(Schema $schema): Schema

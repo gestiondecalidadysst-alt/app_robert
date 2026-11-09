@@ -28,7 +28,8 @@ class PwaController extends Controller
 
         $js = <<<'JS'
 // Service worker del portal del conductor (Ruta): instalable + arranque rápido + respaldo offline + push.
-const CACHE = 'conductor-v2';
+const CACHE = 'conductor-v3';
+const CACHE_PAGINAS = 'conductor-paginas-v1';
 const PRECARGA = ['/conductor/offline', '/images/conductor-192.png', '/images/conductor-512.png', '/conductor.webmanifest'];
 
 self.addEventListener('install', (e) => {
@@ -38,7 +39,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys()
-            .then((claves) => Promise.all(claves.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+            .then((claves) => Promise.all(claves.filter((k) => ![CACHE, CACHE_PAGINAS].includes(k)).map((k) => caches.delete(k))))
             .then(() => self.clients.claim())
     );
 });
@@ -49,9 +50,20 @@ self.addEventListener('fetch', (e) => {
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return;
 
-    // Navegaciones del portal: la red primero; si no hay conexión, la página de respaldo.
+    // Navegaciones del portal: la red primero; se guarda una copia para poder abrir la página
+    // (p. ej. el preoperacional) sin señal. Sin conexión: la copia guardada o la página de respaldo.
     if (req.mode === 'navigate') {
-        e.respondWith(fetch(req).catch(() => caches.match('/conductor/offline')));
+        e.respondWith(
+            fetch(req)
+                .then((resp) => {
+                    if (resp && resp.ok && resp.type === 'basic') {
+                        const copia = resp.clone();
+                        caches.open(CACHE_PAGINAS).then((c) => c.put(req, copia)).catch(() => {});
+                    }
+                    return resp;
+                })
+                .catch(() => caches.match(req).then((r) => r || caches.match('/conductor/offline')))
+        );
         return;
     }
 

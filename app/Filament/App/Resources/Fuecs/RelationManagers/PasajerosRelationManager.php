@@ -2,16 +2,20 @@
 
 namespace App\Filament\App\Resources\Fuecs\RelationManagers;
 
+use App\Actions\Operacion\EnviarEnlacePasajeros;
+use App\Actions\Operacion\ImportarPasajeros;
 use App\Models\Fuec;
 use App\Models\PasajeroFuec;
 use App\Support\Pdf\Imagenes;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Listado de pasajeros del FUEC (Turismo / Grupo específico). Los pasajeros se autorregistran
@@ -76,6 +80,65 @@ class PasajerosRelationManager extends RelationManager
                         'abierto' => $this->fuec()->listadoAbierto(),
                         'cupos' => $this->fuec()->cuposDisponibles(),
                     ])),
+                Action::make('enviarCliente')
+                    ->label('Enviar al cliente')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('primary')
+                    ->visible(fn () => $this->fuec()->listadoAbierto())
+                    ->requiresConfirmation()
+                    ->modalHeading('Enviar el enlace al cliente del contrato')
+                    ->modalDescription('Se enviará el enlace de registro por correo y/o SMS al cliente, para que lo comparta con los pasajeros.')
+                    ->action(function (): void {
+                        try {
+                            $canales = app(EnviarEnlacePasajeros::class)($this->fuec());
+                            Notification::make()->success()
+                                ->title('Enlace enviado')
+                                ->body('Se envió por '.implode(' y ', $canales).'.')
+                                ->send();
+                        } catch (ValidationException $e) {
+                            Notification::make()->danger()
+                                ->title('No se pudo enviar')
+                                ->body(collect($e->errors())->flatten()->first())
+                                ->send();
+                        }
+                    }),
+                Action::make('importar')
+                    ->label('Importar Excel')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('gray')
+                    ->visible(fn () => $this->fuec()->listadoAbierto())
+                    ->modalHeading('Importar pasajeros desde Excel o CSV')
+                    ->modalDescription('Columnas: nombre, tipo_documento, documento, telefono, es_menor, acudiente_nombre, acudiente_documento. La primera fila puede ser el encabezado.')
+                    ->schema([
+                        FileUpload::make('archivo')
+                            ->label('Archivo (.xlsx o .csv)')
+                            ->acceptedFileTypes([
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'text/csv', 'text/plain', 'application/csv',
+                            ])
+                            ->storeFiles(false)
+                            ->required(),
+                    ])
+                    ->action(function (array $data): void {
+                        $archivo = $data['archivo'];
+                        $ruta = is_array($archivo) ? reset($archivo) : $archivo;
+
+                        $resultado = app(ImportarPasajeros::class)(
+                            $this->fuec(),
+                            $ruta->getRealPath(),
+                        );
+
+                        $cuerpo = "Importados: {$resultado['importados']} · Omitidos: {$resultado['omitidos']}.";
+                        if ($resultado['errores'] !== []) {
+                            $cuerpo .= ' '.implode(' ', array_slice($resultado['errores'], 0, 3));
+                        }
+
+                        Notification::make()
+                            ->title($resultado['importados'] > 0 ? 'Importación completada' : 'No se importaron pasajeros')
+                            ->body($cuerpo)
+                            ->color($resultado['importados'] > 0 ? 'success' : 'warning')
+                            ->send();
+                    }),
                 Action::make('cerrar')
                     ->label('Cerrar listado')
                     ->icon('heroicon-o-lock-closed')
