@@ -32,7 +32,7 @@ class RegistroPasajerosController extends Controller
     {
         $fuec = Fuec::porTokenPasajeros($token) ?? abort(404);
 
-        if (! $fuec->listadoAbierto()) {
+        if ($fuec->anulado() || ! $fuec->listadoAbierto()) {
             return redirect()->route('pasajeros.registro', $token)->with('estado', 'cerrado');
         }
 
@@ -55,9 +55,8 @@ class RegistroPasajerosController extends Controller
         $documento = preg_replace('/\s+/', '', $datos['documento']);
         $esMenor = (bool) ($datos['es_menor'] ?? false);
 
-        // Cupo: no exceder la capacidad declarada del vehículo.
-        $cupos = $fuec->cuposDisponibles();
-        if ($cupos !== null && $cupos <= 0) {
+        // Cupo: respeta la capacidad del vehículo y un tope de seguridad aunque no haya capacidad declarada.
+        if ($fuec->pasajeros()->count() >= $fuec->limitePasajeros()) {
             return redirect()->route('pasajeros.registro', $token)->with('estado', 'lleno');
         }
 
@@ -94,7 +93,7 @@ class RegistroPasajerosController extends Controller
 
         return [
             'token' => $token,
-            'abierto' => $fuec->listadoAbierto(),
+            'abierto' => $fuec->listadoAbierto() && ! $fuec->anulado(),
             'cupos' => $fuec->cuposDisponibles(),
             'registrados' => $fuec->pasajeros()->count(),
             'empresa' => $d['empresa']['razon_social'] ?? '',

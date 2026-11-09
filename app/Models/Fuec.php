@@ -109,12 +109,23 @@ class Fuec extends Model
         return $this->vehiculo?->capacidad_pasajeros;
     }
 
-    /** Cupos que quedan por registrar (null si no hay capacidad declarada). */
+    /** Tope de seguridad absoluto de pasajeros por listado, aunque el vehículo no declare capacidad. */
+    public const TOPE_PASAJEROS = 80;
+
+    /** Cupos que quedan por registrar (null si no hay capacidad declarada: solo para mostrar). */
     public function cuposDisponibles(): ?int
     {
         $cap = $this->capacidadPasajeros();
 
         return $cap === null ? null : max(0, $cap - $this->pasajeros()->count());
+    }
+
+    /** Máximo de pasajeros que se admiten: la capacidad del vehículo, siempre acotada por el tope. */
+    public function limitePasajeros(): int
+    {
+        $cap = $this->capacidadPasajeros();
+
+        return $cap !== null ? min($cap, self::TOPE_PASAJEROS) : self::TOPE_PASAJEROS;
     }
 
     public function urlListadoPasajeros(): ?string

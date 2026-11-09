@@ -20,6 +20,7 @@ class VerificarListadoController extends Controller
 
         return view('listado.verificar', [
             'fuec' => $fuec,
+            'anulado' => $fuec->anulado(),
             'empresa' => $d['empresa']['razon_social'] ?? $fuec->empresa?->razon_social ?? '',
             'ruta' => trim(($d['origen'] ?? '').' – '.($d['destino'] ?? ''), ' –'),
         ]);

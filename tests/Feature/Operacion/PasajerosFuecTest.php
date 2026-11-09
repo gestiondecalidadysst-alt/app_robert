@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Operacion;
 
+use App\Actions\Operacion\AnularFuec;
 use App\Actions\Operacion\ExpedirFuec;
 use App\Enums\ObjetoContrato;
 use App\Models\Conductor;
 use App\Models\Contrato;
+use App\Models\Fuec;
 use App\Models\Municipio;
 use App\Models\Vehiculo;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -144,5 +146,38 @@ class PasajerosFuecTest extends ConfiguracionTestCase
             ->assertSee('Ana Gómez')
             ->assertSee('789')
             ->assertDontSee('123456789');
+    }
+
+    public function test_hay_tope_de_seguridad_aunque_el_vehiculo_no_tenga_capacidad(): void
+    {
+        $this->entrarComo('admin@demo.test');
+        $this->contrato()->forceFill(['objeto' => ObjetoContrato::Turismo])->save();
+        Vehiculo::query()->deEmpresa($this->demo)->where('placa', 'DMO101')->firstOrFail()
+            ->forceFill(['capacidad_pasajeros' => null])->save();
+        $fuec = app(ExpedirFuec::class)($this->demo, $this->datos());
+
+        // Sin capacidad no se muestra cupo, pero el límite real es finito (tope de seguridad).
+        $this->assertNull($fuec->cuposDisponibles());
+        $this->assertSame(Fuec::TOPE_PASAJEROS, $fuec->limitePasajeros());
+    }
+
+    public function test_un_fuec_anulado_no_acepta_registros_y_se_marca_en_la_verificacion(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        $this->entrarComo('admin@demo.test');
+        $this->contrato()->forceFill(['objeto' => ObjetoContrato::Turismo])->save();
+        $fuec = app(ExpedirFuec::class)($this->demo, $this->datos());
+        $token = $fuec->pasajeros_token;
+
+        app(AnularFuec::class)($fuec, 'Prueba de anulación');
+        $this->assertTrue($fuec->fresh()->listadoCerrado());
+
+        $this->post(route('pasajeros.registrar', $token), [
+            'nombre' => 'Tarde', 'tipo_documento' => 'CC', 'documento' => '9',
+        ])->assertSessionHas('estado', 'cerrado');
+        $this->assertSame(0, $fuec->pasajeros()->count());
+
+        $this->get(route('listado.verificar', $fuec->pasajeros_codigo))
+            ->assertOk()->assertSee('ANULADO');
     }
 }

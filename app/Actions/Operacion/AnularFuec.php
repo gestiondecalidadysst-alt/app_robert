@@ -27,6 +27,11 @@ class AnularFuec
             'anulado_por' => auth()->id(),
         ])->save();
 
+        // Si llevaba listado de pasajeros, se cierra: nadie más puede autorregistrarse.
+        if ($fuec->tieneListadoPasajeros()) {
+            $fuec->cerrarListadoPasajeros(auth()->id());
+        }
+
         // Su servicio del planeador queda cancelado con el mismo motivo.
         $servicio = Servicio::query()->deEmpresa($fuec->empresa_id)->where('fuec_id', $fuec->id)->first();
         if ($servicio) {

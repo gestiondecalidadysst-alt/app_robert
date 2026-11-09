@@ -45,12 +45,20 @@
 <div class="wrap">
     <div class="card">
         <div class="top">
-            <span class="ok">&#10003; Listado verificado</span>
+            @if ($anulado)
+                <span class="ok" style="background:rgba(185,28,28,.25);color:#fecaca">&#9888; Extracto ANULADO</span>
+            @else
+                <span class="ok">&#10003; Listado verificado</span>
+            @endif
             <h1>Listado de pasajeros</h1>
             @if ($empresa)
                 <div class="emp">{{ $empresa }}</div>
             @endif
         </div>
+
+        @if ($anulado)
+            <div style="background:#fef2f2;color:#991b1b;padding:10px 18px;font-size:13px;font-weight:600;border-bottom:1px solid #fecaca">Este extracto (FUEC) fue anulado por la empresa. El listado no es válido.</div>
+        @endif
 
         <div class="meta">
             <div><span class="k">FUEC No.</span><span class="v">{{ $fuec->numero }}</span></div>
