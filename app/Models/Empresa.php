@@ -36,6 +36,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         // Cotizaciones (diseño del PDF por empresa)
         'cotizacion_color', 'cotizacion_color_acento', 'cotizacion_validez_dias', 'cotizacion_incluye',
         'cotizacion_equipo', 'cotizacion_telefono_2', 'cotizacion_instagram', 'cotizacion_certificados',
+        'cotizacion_sello_path',
         // Integraciones (pantalla Configuración → Integraciones)
         'sms_habilitado', 'onurix_cliente', 'onurix_clave', 'sms_limite_mensual', 'sms_precio',
         'firma_envio_automatico', 'firma_dias_enlace', 'firma_dias_recordatorio',
@@ -117,6 +118,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
             'telefono_2' => $this->cotizacion_telefono_2,
             'instagram' => $this->cotizacion_instagram,
             'certificados' => $this->cotizacion_certificados ?: [],
+            'sello_path' => $this->cotizacion_sello_path,
         ];
     }
 

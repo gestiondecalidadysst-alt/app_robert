@@ -138,6 +138,10 @@ final class FormularioEmpresa
                     TagsInput::make('cotizacion_equipo')->label('"Nuestro equipo automotor"')
                         ->placeholder('Agregar ítem')->columnSpanFull()
                         ->helperText('Vacío = Tarjeta y SOAT al día, Tecnomecánica vigente, Póliza RC, Conductores certificados.'),
+                    FileUpload::make('cotizacion_sello_path')->label('Sello Vigilado SuperTransporte')
+                        ->image()->disk('public')->directory('cotizacion-sello')->maxSize(512)
+                        ->helperText('Escudo/sello oficial que aparece en el encabezado, junto a "Vigilado SuperTransporte". Súbelo en PNG con fondo transparente.')
+                        ->columnSpanFull(),
                     FileUpload::make('cotizacion_certificados')->label('Logos de certificación (validez)')
                         ->image()->multiple()->disk('public')->directory('cotizacion-certificados')->maxSize(512)
                         ->helperText('ICONTEC, IQNET, etc. Aparecen en la franja de validez.')->columnSpanFull(),

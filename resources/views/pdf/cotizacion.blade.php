@@ -21,17 +21,19 @@
     body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1f2937; margin: 0; }
     .px { padding-left: 40px; padding-right: 40px; }
 
-    /* Encabezado fijo */
-    .cab { position: fixed; top: -156px; left: 0; right: 0; height: 156px; background: {{ $oscuro }}; color: #fff; }
-    .cab .fila1 { padding: 22px 40px 0 40px; }
+    /* Encabezado fijo: banda oscura (logo + número) y, debajo, fila blanca (sello Vigilado + NIT). */
+    .cab { position: fixed; top: -156px; left: 0; right: 0; height: 156px; background: #fff; }
+    .cab .banda { background: {{ $oscuro }}; color: #fff; height: 96px; }
+    .cab .fila1 { padding: 24px 40px 0 40px; }
     .cab .marca { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
     .cab .marca img { max-height: 42px; max-width: 230px; }
     .cab .titulo { color: {{ $lima }}; font-size: 10px; font-weight: bold; letter-spacing: 3px; }
     .cab .numero { font-size: 19px; font-weight: bold; }
-    .cab .fila2 { padding: 14px 40px 0 40px; }
-    .cab .sello { font-size: 9px; color: #e5e7eb; }
-    .cab .sello b { color: {{ $lima }}; }
-    .cab .nit { color: {{ $lima }}; font-size: 11px; letter-spacing: 2px; font-weight: bold; }
+    .cab .fila2 { padding: 12px 40px 0 40px; }
+    .cab .escudo { height: 40px; vertical-align: middle; margin-right: 10px; }
+    .cab .sello { font-size: 12px; color: #6b7280; vertical-align: middle; }
+    .cab .sello b { color: {{ $oscuro }}; }
+    .cab .nit { color: #6b7280; font-size: 11px; letter-spacing: 2px; font-weight: bold; }
     .cab .linea { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: {{ $lima }}; }
 
     /* Pie fijo */
@@ -43,10 +45,11 @@
     table { width: 100%; border-collapse: collapse; }
     td, th { vertical-align: top; }
 
-    .dest .senores { color: {{ $lima }}; font-size: 8px; letter-spacing: 3px; font-weight: bold; }
+    .dest .senores { color: #9ca3af; font-size: 8px; letter-spacing: 3px; font-weight: bold; }
     .dest .nombre { font-size: 20px; font-weight: bold; color: {{ $oscuro }}; }
-    .dest .fecha { color: #6b7280; font-size: 10px; text-align: right; }
-    .asunto { color: #4b5563; font-size: 10px; margin: 10px 0 0; line-height: 1.4; }
+    .dest .fecha { color: #6b7280; font-size: 10px; text-align: right; vertical-align: middle; }
+    .asunto { color: #4b5563; font-size: 10px; margin: 12px 0 0; line-height: 1.5; }
+    .asunto strong { color: {{ $oscuro }}; }
 
     .items { margin-top: 14px; }
     .items thead th { background: {{ $oscuro }}; color: #fff; font-size: 8px; letter-spacing: 2px; font-weight: bold;
@@ -86,19 +89,23 @@
 
 {{-- Encabezado --}}
 <div class="cab">
-    <table class="fila1"><tr>
-        <td style="width: 55%">
-            @if ($logo)<span class="marca"><img src="{{ $logo }}" alt=""></span>
-            @else<span class="marca">{{ mb_strtoupper($marca) }}</span>@endif
-        </td>
-        <td style="width: 45%; text-align: right">
-            <div class="titulo">COTIZACIÓN DE TRANSPORTE ESPECIAL</div>
-            <div class="numero">{{ $c->numero_formateado }}</div>
-        </td>
-    </tr></table>
+    <div class="banda">
+        <table class="fila1"><tr>
+            <td style="width: 55%">
+                @if ($logo)<span class="marca"><img src="{{ $logo }}" alt=""></span>
+                @else<span class="marca">{{ mb_strtoupper($marca) }}</span>@endif
+            </td>
+            <td style="width: 45%; text-align: right">
+                <div class="titulo">COTIZACIÓN DE TRANSPORTE ESPECIAL</div>
+                <div class="numero">{{ $c->numero_formateado }}</div>
+            </td>
+        </tr></table>
+    </div>
     <table class="fila2"><tr>
-        <td style="width: 55%"><span class="sello"><b>Vigilado</b> SuperTransporte</span></td>
-        <td style="width: 45%; text-align: right">
+        <td style="width: 60%; vertical-align: middle">
+            @if ($sello)<img src="{{ $sello }}" class="escudo" alt="">@endif<span class="sello"><b>Vigilado</b> SuperTransporte</span>
+        </td>
+        <td style="width: 40%; text-align: right; vertical-align: middle">
             @if ($empresa->nit_formateado)<span class="nit">NIT {{ $empresa->nit_formateado }}</span>@endif
         </td>
     </tr></table>

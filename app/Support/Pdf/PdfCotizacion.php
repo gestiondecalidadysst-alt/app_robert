@@ -24,6 +24,7 @@ final class PdfCotizacion
             'empresa' => $empresa,
             'config' => $config,
             'logo' => Imagenes::deDisco($empresa->logo_path, 'public'),
+            'sello' => Imagenes::deDisco($config['sello_path'], 'public'),
             'certificados' => collect($config['certificados'])
                 ->map(fn ($ruta) => Imagenes::deDisco($ruta, 'public'))->filter()->values()->all(),
         ])->render();
