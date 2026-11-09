@@ -61,7 +61,8 @@ final class CotizacionForm
                 ]),
 
             Section::make('Servicios')
-                ->description('Cada fila es una línea de la tabla: Fecha · Ruta · Duración · Valor.')
+                ->description('Cada servicio es una fila de la tabla de la cotización. Agrega una por traslado o recorrido.')
+                ->icon('heroicon-o-map')
                 ->schema([
                     Repeater::make('items')
                         ->relationship()
@@ -71,15 +72,26 @@ final class CotizacionForm
                         ->orderColumn('orden')
                         ->defaultItems(1)
                         ->addActionLabel('Agregar servicio')
+                        ->itemLabel(fn (array $state): ?string => $state['ruta'] ?? null)
+                        ->collapsible()
+                        ->cloneable()
                         ->schema([
-                            TextInput::make('fecha_texto')->label('Fecha')->placeholder('6 de octubre')
-                                ->columnSpan(['md' => 2]),
-                            TextInput::make('ruta')->label('Ruta')->required()
-                                ->placeholder('Aeropuerto Los Garzones – Hotel GHL')->columnSpan(['md' => 5]),
-                            TextInput::make('detalle')->label('Duración / detalle')
-                                ->placeholder('6 personas · 2 llegadas')->columnSpan(['md' => 3]),
-                            TextInput::make('valor')->label('Valor')->numeric()->prefix('$')->required()
-                                ->minValue(0)->columnSpan(['md' => 2]),
+                            DatePicker::make('fecha')->label('Fecha del servicio')
+                                ->native(false)->displayFormat('d/m/Y')->placeholder('Elegir en el calendario')
+                                ->closeOnDateSelection()
+                                ->helperText('Déjala vacía si el servicio no tiene un día fijo.')
+                                ->columnSpan(['md' => 4]),
+                            TextInput::make('valor')->label('Valor del servicio')->numeric()->prefix('$')
+                                ->required()->minValue(0)->placeholder('0')
+                                ->helperText('Sin puntos ni comas. Ej: 420000')
+                                ->columnSpan(['md' => 4]),
+                            TextInput::make('ruta')->label('Ruta / recorrido')->required()
+                                ->placeholder('Aeropuerto Los Garzones – Hotel GHL')
+                                ->columnSpan(['md' => 12]),
+                            TextInput::make('detalle')->label('Duración o detalle')
+                                ->placeholder('Ej: 6 personas · 2 llegadas · vehículo de 19 pasajeros')
+                                ->helperText('Lo que aparece bajo la ruta en el PDF: pasajeros, tipo de vehículo, horas, etc.')
+                                ->columnSpan(['md' => 12]),
                         ]),
                 ]),
 

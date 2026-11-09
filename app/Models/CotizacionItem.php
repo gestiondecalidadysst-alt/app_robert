@@ -14,11 +14,11 @@ class CotizacionItem extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['cotizacion_id', 'fecha_texto', 'ruta', 'detalle', 'valor', 'orden'];
+    protected $fillable = ['cotizacion_id', 'fecha', 'fecha_texto', 'ruta', 'detalle', 'valor', 'orden'];
 
     protected function casts(): array
     {
-        return ['valor' => 'integer', 'orden' => 'integer'];
+        return ['fecha' => 'date', 'valor' => 'integer', 'orden' => 'integer'];
     }
 
     public function cotizacion(): BelongsTo

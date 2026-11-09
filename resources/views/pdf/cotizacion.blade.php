@@ -136,7 +136,7 @@
         <tbody>
             @foreach ($c->items as $item)
                 <tr>
-                    <td class="fecha">{{ $item->fecha_texto }}</td>
+                    <td class="fecha">{{ $item->fecha?->translatedFormat('j \d\e F') ?: $item->fecha_texto }}</td>
                     <td class="ruta">{{ $item->ruta }}</td>
                     <td class="det">{{ $item->detalle }}</td>
                     <td class="val">{{ $money($item->valor) }}</td>
