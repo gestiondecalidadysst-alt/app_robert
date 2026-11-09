@@ -16,7 +16,7 @@
 <meta charset="utf-8">
 <title>Cotización {{ $c->numero_formateado }}</title>
 <style>
-    @page { margin: 156px 0 104px 0; }
+    @page { margin: 156px 0 170px 0; }
     * { box-sizing: border-box; }
     body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1f2937; margin: 0; }
     .px { padding-left: 40px; padding-right: 40px; }
@@ -35,7 +35,7 @@
     .cab .linea { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: {{ $lima }}; }
 
     /* Pie fijo */
-    .pie { position: fixed; bottom: -104px; left: 0; right: 0; height: 104px; background: {{ $oscuro }}; color: #fff; }
+    .pie { position: fixed; bottom: -170px; left: 0; right: 0; height: 104px; background: {{ $oscuro }}; color: #fff; }
     .pie .tel { font-size: 18px; font-weight: bold; }
     .pie .dato { font-size: 9.5px; color: #cbd5e1; }
     .pie .red { color: {{ $lima }}; font-size: 15px; font-weight: bold; text-align: right; }
@@ -72,10 +72,14 @@
     .card li { font-size: 10px; color: #374151; padding: 3px 0 3px 14px; position: relative; }
     .card li:before { content: '•'; color: {{ $lima }}; position: absolute; left: 0; font-weight: bold; }
 
-    .validez { margin-top: 10px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 16px; }
-    .validez .et { color: {{ $lima }}; font-size: 8px; letter-spacing: 2px; font-weight: bold; }
-    .validez .txt { color: #4b5563; font-size: 10px; margin-top: 3px; }
-    .validez .logos img { max-height: 34px; margin-left: 8px; }
+    /* Franja de certificados: fija al pie de TODAS las páginas, justo sobre el pie. */
+    .certs { position: fixed; bottom: -66px; left: 0; right: 0; height: 66px; }
+    .certs .box { margin: 8px 40px 0; border: 1px solid #e5e7eb; border-radius: 8px; padding: 7px 16px; background: #fff; }
+    .certs .et { color: {{ $lima }}; font-size: 8px; letter-spacing: 2px; font-weight: bold; }
+    .certs .txt { color: #4b5563; font-size: 10px; margin-top: 3px; }
+    .certs .logos { text-align: right; vertical-align: middle; width: 48%; }
+    /* Altura fija = todos los logos quedan parejos aunque se suban de tamaños distintos. */
+    .certs .logos img { height: 42px; width: auto; margin-left: 16px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -113,6 +117,21 @@
             @if ($config['instagram'])<div class="red">&#64;{{ ltrim($config['instagram'], '@') }}</div>@endif
         </td>
     </tr></table>
+</div>
+
+{{-- Franja de certificados: fija al pie de todas las páginas, por encima del pie --}}
+<div class="certs">
+    <div class="box">
+        <table><tr>
+            <td style="vertical-align: middle">
+                <div class="et">CERTIFICADOS POR</div>
+                <div class="txt">Oferta válida por {{ $config['validez_dias'] }} días a partir de la fecha de expedición.</div>
+            </td>
+            <td class="logos">
+                @foreach ($certificados as $logoCert)<img src="{{ $logoCert }}" alt="">@endforeach
+            </td>
+        </tr></table>
+    </div>
 </div>
 
 {{-- Cuerpo --}}
@@ -175,16 +194,6 @@
                 <h3>NUESTRO EQUIPO AUTOMOTOR</h3>
                 <ul>@foreach ($config['equipo'] as $i)<li>{{ $i }}</li>@endforeach</ul>
             </div>
-        </td>
-    </tr></table>
-
-    <table class="validez"><tr>
-        <td style="vertical-align: middle">
-            <div class="et">CERTIFICADOS POR</div>
-            <div class="txt">Oferta válida por {{ $config['validez_dias'] }} días a partir de la fecha de expedición.</div>
-        </td>
-        <td class="logos" style="text-align: right; vertical-align: middle; width: 40%">
-            @foreach ($certificados as $logoCert)<img src="{{ $logoCert }}" alt="">@endforeach
         </td>
     </tr></table>
 
