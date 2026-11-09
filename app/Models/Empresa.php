@@ -43,6 +43,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
         'km_diarios_defecto', 'mantenimiento_dias_aviso', 'recibo_prefijo', 'recibo_numero_inicial',
         'jornada_max_horas_dia', 'jornada_max_horas_continuas', 'jornada_descanso_horas', 'planeacion_antelacion_horas',
         'modulos', 'rndc_usuario', 'rndc_clave', 'rndc_ambiente', 'rndc_conectado', 'carga_rol', 'carga_cobro_modo', 'carga_cobro_valor', 'transito_habilitado', 'transito_precios', 'transito_tipos', 'transito_auto', 'transito_auto_tipos', 'transito_frecuencia_dias',
+        'exigir_contrato_firmado_fuec',
         'transito_tope_mensual', 'transito_bloquear_licencia', 'transito_bloquear_comparendos', 'transito_bloquear_desde', 'webhook_activo', 'webhook_url', 'webhook_secreto', 'webhook_eventos',
     ];
 
@@ -59,6 +60,7 @@ class Empresa extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
             'rndc_usuario' => 'encrypted',
             'rndc_clave' => 'encrypted',
             'rndc_conectado' => 'boolean',
+            'exigir_contrato_firmado_fuec' => 'boolean',
             'carga_cobro_valor' => 'decimal:2',
             'transito_habilitado' => 'boolean',
             'transito_precios' => 'array',

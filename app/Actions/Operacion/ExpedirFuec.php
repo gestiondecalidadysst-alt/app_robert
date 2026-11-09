@@ -151,6 +151,11 @@ class ExpedirFuec
             $agregar('fecha_fin', "La vigencia del FUEC debe estar dentro de la del contrato ({$contrato->vigencia}).");
         }
 
+        // Regla opcional por empresa: el contrato debe estar firmado por el cliente.
+        if ($contrato && ! $contrato->anulado() && $empresa->exigir_contrato_firmado_fuec && ! $contrato->firmado()) {
+            $agregar('contrato_id', "El contrato {$contrato->numero_formateado} aún no está firmado por el cliente. Debe estar firmado para poder expedir el FUEC.");
+        }
+
         // Vehículo
         $vehiculo = filled($datos['vehiculo_id'] ?? null)
             ? Vehiculo::query()->deEmpresa($empresa)->with('documentos')->find($datos['vehiculo_id'])

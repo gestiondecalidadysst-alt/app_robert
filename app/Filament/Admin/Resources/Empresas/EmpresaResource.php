@@ -53,6 +53,17 @@ class EmpresaResource extends Resource
         return $schema->components([
             ...FormularioEmpresa::componentes(),
 
+            Section::make('Reglas de operación')
+                ->columnSpanFull()
+                ->icon('heroicon-o-shield-check')
+                ->description('Controles que solo el administrador de la plataforma puede cambiar.')
+                ->schema([
+                    Toggle::make('exigir_contrato_firmado_fuec')
+                        ->label('Exigir contrato firmado para expedir FUEC')
+                        ->helperText('Si está activo, no se puede expedir un extracto (FUEC) mientras el contrato no esté firmado por el cliente.')
+                        ->inline(false),
+                ]),
+
             Section::make('Primer administrador')
                 ->columnSpanFull()
                 ->description('Usuario que podrá entrar y configurar la empresa. Si el correo ya existe, se vincula ese usuario.')

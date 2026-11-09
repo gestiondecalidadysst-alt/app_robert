@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EstadoFirma;
 use App\Enums\EstadoVigencia;
 use App\Enums\FormaPago;
 use App\Enums\ObjetoContrato;
@@ -99,6 +100,12 @@ class Contrato extends Model
     public function anulado(): bool
     {
         return $this->anulado_at !== null;
+    }
+
+    /** True si el contrato tiene un documento activo firmado por el cliente. */
+    public function firmado(): bool
+    {
+        return $this->documentoActivo()?->estado === EstadoFirma::Firmado;
     }
 
     public function estado(?\DateTimeInterface $hoy = null): EstadoVigencia

@@ -8,6 +8,7 @@ use App\Actions\Operacion\AnularFuec;
 use App\Actions\Operacion\CrearContrato;
 use App\Actions\Operacion\ExpedirFuec;
 use App\Actions\Operacion\RegistrarPago;
+use App\Enums\EstadoFirma;
 use App\Enums\EstadoVigencia;
 use App\Enums\MetodoPago;
 use App\Enums\ObjetoContrato;
@@ -190,6 +191,34 @@ class OperacionTest extends ConfiguracionTestCase
 
         $this->expectException(ValidationException::class);
         $expedir($this->demo, $this->datosFuec());
+    }
+
+    public function test_exige_contrato_firmado_cuando_la_empresa_lo_activa(): void
+    {
+        $this->entrarComo('admin@demo.test');
+        $expedir = app(ExpedirFuec::class);
+        $contrato = $this->contratoVigente();
+
+        // Por defecto la regla está desactivada: no bloquea por firma.
+        $this->assertArrayNotHasKey('contrato_id', $expedir->validar($this->demo, $this->datosFuec()));
+
+        // Activada y sin documento firmado: bloquea con mensaje claro.
+        $this->demo->forceFill(['exigir_contrato_firmado_fuec' => true])->save();
+        $errores = $expedir->validar($this->demo->refresh(), $this->datosFuec());
+        $this->assertStringContainsString('no está firmado', implode(' ', $errores['contrato_id'] ?? ['']));
+        $this->assertThrows(fn () => $expedir($this->demo, $this->datosFuec()), ValidationException::class);
+
+        // Con el contrato firmado por el cliente, deja de bloquear.
+        $contrato->documentos()->create([
+            'empresa_id' => $this->demo->id,
+            'version_plantilla' => 1,
+            'contenido' => '<p>Contrato de prueba</p>',
+            'datos' => [],
+            'huella_contenido' => str_repeat('a', 64),
+            'codigo_verificacion' => 'TESTFIRMA'.$contrato->id,
+            'estado' => EstadoFirma::Firmado,
+        ]);
+        $this->assertArrayNotHasKey('contrato_id', $expedir->validar($this->demo->refresh(), $this->datosFuec()));
     }
 
     public function test_expedir_desde_la_pantalla(): void
