@@ -48,8 +48,8 @@
     .dest .senores { color: #9ca3af; font-size: 8px; letter-spacing: 3px; font-weight: bold; }
     .dest .nombre { font-size: 20px; font-weight: bold; color: {{ $oscuro }}; }
     .dest .fecha { color: #6b7280; font-size: 10px; text-align: right; vertical-align: middle; }
-    .asunto { color: #4b5563; font-size: 10px; margin: 12px 0 0; line-height: 1.5; }
-    .asunto strong { color: {{ $oscuro }}; }
+    .asunto { color: #3b6a5e; font-size: 10px; margin: 12px 0 0; line-height: 1.5; }
+    .asunto strong { color: #3b6a5e; }
 
     .items { margin-top: 14px; }
     .items thead th { background: {{ $oscuro }}; color: #fff; font-size: 8px; letter-spacing: 2px; font-weight: bold;
@@ -148,7 +148,7 @@
             <div class="senores">SEÑORES</div>
             <div class="nombre">{{ mb_strtoupper($c->destinatarioNombre()) }}</div>
         </td>
-        <td style="width: 40%">
+        <td style="width: 40%; vertical-align: middle">
             <div class="fecha">{{ collect([$c->ciudad, $c->fecha->translatedFormat('d \d\e F \d\e Y')])->filter()->implode(', ') }}</div>
         </td>
     </tr></table>
