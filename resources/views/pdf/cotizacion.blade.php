@@ -16,7 +16,7 @@
 <meta charset="utf-8">
 <title>Cotización {{ $c->numero_formateado }}</title>
 <style>
-    @page { margin: 156px 0 170px 0; }
+    @page { margin: 156px 0 186px 0; }
     * { box-sizing: border-box; }
     body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1f2937; margin: 0; }
     .px { padding-left: 40px; padding-right: 40px; }
@@ -37,7 +37,7 @@
     .cab .linea { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: {{ $lima }}; }
 
     /* Pie fijo */
-    .pie { position: fixed; bottom: -170px; left: 0; right: 0; height: 104px; background: {{ $oscuro }}; color: #fff; }
+    .pie { position: fixed; bottom: -186px; left: 0; right: 0; height: 104px; background: {{ $oscuro }}; color: #fff; }
     .pie .tel { font-size: 18px; font-weight: bold; }
     .pie .dato { font-size: 9.5px; color: #cbd5e1; }
     .pie .red { color: {{ $lima }}; font-size: 15px; font-weight: bold; text-align: right; }
