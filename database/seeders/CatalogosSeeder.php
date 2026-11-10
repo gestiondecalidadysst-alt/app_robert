@@ -45,7 +45,18 @@ class CatalogosSeeder extends Seeder
         }
 
         $this->simples(ClaseVehiculo::class, ['Automóvil', 'Bus', 'Buseta', 'Microbús', 'Camioneta', 'Campero', 'Van', 'Camión']);
-        $this->simples(Carroceria::class, ['Cerrada', 'Sedán', 'Van', 'Wagon', 'Doble cabina', 'Cabinado', 'Pick-up']);
+        // Carrocerías por uso. El catálogo es editable desde el panel: cada empresa puede ajustar
+        // los nombres a lo que diga la tarjeta de propiedad de sus vehículos.
+        $this->simples(Carroceria::class, [
+            // Pasajeros (transporte especial).
+            'Bus', 'Buseta', 'Microbús', 'Ambulancia',
+            // Livianos.
+            'Cerrada', 'Sedán', 'Coupé', 'Hatchback', 'Wagon', 'Van', 'Panel', 'Convertible',
+            'Limusina', 'Buggy', 'Pick-up', 'Doble cabina', 'Doble cabina con platón', 'Cabinado',
+            // Carga.
+            'Furgón', 'Estacas', 'Estibas', 'Volco', 'Tanque', 'Planchón', 'Tolva', 'Niñera',
+            'Portacontenedor', 'Cama baja', 'Compactador', 'Refrigerado', 'Mixer', 'Grúa',
+        ]);
         $this->simples(Combustible::class, ['Diésel (ACPM)', 'Gasolina', 'Gas natural', 'Eléctrico', 'Híbrido']);
         $this->simples(TipoServicio::class, ['Especial', 'Público', 'Particular', 'Oficial']);
         $this->simples(NivelAcademico::class, ['Primaria', 'Bachillerato', 'Técnico', 'Tecnólogo', 'Profesional', 'Posgrado']);
