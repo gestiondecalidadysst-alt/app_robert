@@ -53,11 +53,11 @@ return [
                 'ignore_unreadable_directories' => false,
 
                 /*
-                 * This path is used to make directories in resulting zip-file relative
-                 * Set to `null` to include complete absolute path
-                 * Example: base_path()
+                 * Rutas relativas a la raíz del proyecto: dentro del ZIP los archivos quedan en
+                 * `storage/app/...` y no en `var/www/html/storage/app/...`, así una restauración
+                 * se copia directamente sobre el proyecto.
                  */
-                'relative_path' => null,
+                'relative_path' => base_path(),
             ],
 
             /*

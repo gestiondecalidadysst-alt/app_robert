@@ -42,9 +42,37 @@ Solo se notifica por correo cuando un respaldo **falla**, no está sano o la lim
 (sin spam de éxito diario).
 
 ## Cómo restaurar
-1. Descarga el ZIP del día desde el bucket R2 (panel de Cloudflare o `aws s3` apuntando al endpoint).
-2. Descompártelo con la contraseña (`BACKUP_ARCHIVE_PASSWORD`).
-3. Base de datos: importa el `.sql` → `mysql -u USUARIO -p BASE < db-dumps/....sql`.
-4. Archivos: copia el contenido de `storage/app/private` y `storage/app/public` a su ruta.
+
+> **El ZIP está cifrado con AES-256: el `unzip` clásico NO lo abre** (responde
+> `need PK compat. v5.1`). Hay que usar `7z` (la imagen trae `p7zip-full`), **7-Zip** en Windows,
+> **Keka** en macOS, o PHP (`ZipArchive::setPassword`). WinRAR también sirve.
+
+1. Descarga el ZIP del día desde el bucket R2 (panel de Cloudflare), o tráelo al contenedor:
+   ```bash
+   php artisan tinker --execute="
+   \$f = collect(Storage::disk('r2')->allFiles('cootrasec'))->last();
+   file_put_contents('/tmp/respaldo.zip', Storage::disk('r2')->get(\$f));
+   echo \$f.PHP_EOL;"
+   ```
+2. Ábrelo con la contraseña (`BACKUP_ARCHIVE_PASSWORD`):
+   ```bash
+   7z x -p'CONTRASEÑA' /tmp/respaldo.zip -o/tmp/prueba
+   ```
+3. Base de datos: `mysql -h "$DB_HOST" -u USUARIO -p --skip-ssl BASE < /tmp/prueba/db-dumps/mysql-base.sql`
+   (`--skip-ssl` por el certificado autofirmado de la red interna).
+4. Archivos: copia `storage/app/private` y `storage/app/public` del ZIP sobre el proyecto
+   (las rutas dentro del ZIP son relativas a la raíz, así que se copian tal cual).
+5. Borra lo extraído: contiene cédulas, firmas y contratos en claro.
+
+### Probar el respaldo sin tocar producción
+Importa en una base desechable al lado de la real y compara conteos:
+```bash
+mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" --skip-ssl -e "CREATE DATABASE prueba_restauracion"
+mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" --skip-ssl prueba_restauracion < /tmp/prueba/db-dumps/mysql-base.sql
+mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" --skip-ssl -e "
+  SELECT COUNT(*) FROM prueba_restauracion.empresas;
+  SELECT COUNT(*) FROM prueba_restauracion.users;"
+mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" --skip-ssl -e "DROP DATABASE prueba_restauracion"
+```
 
 > Prueba una restauración al menos una vez para confirmar que el respaldo sirve de verdad.

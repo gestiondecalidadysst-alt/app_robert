@@ -1,6 +1,8 @@
 # Ruta – imagen de producción (Laravel 13 + Filament 5) para Easypanel.
-# Incluye el cliente de MySQL (mysqldump) porque los respaldos volcan la base, y la extensión
-# redis como requisito (sesión, caché y colas van por Redis: si falla, debe fallar el build).
+# Incluye el cliente de MySQL (mysqldump) porque los respaldos volcan la base, p7zip-full para
+# poder abrir el ZIP cifrado con AES en una restauración de urgencia (el `unzip` clásico no sabe
+# descifrar AES), y la extensión redis como requisito (sesión, caché y colas van por Redis: si
+# falla, debe fallar el build).
 # El mismo contenedor sirve la web (CONTAINER_ROLE=web, por defecto)
 # o procesa colas y tareas programadas (CONTAINER_ROLE=worker).
 
@@ -21,7 +23,7 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev unzip \
-      default-mysql-client \
+      default-mysql-client p7zip-full \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install -j"$(nproc)" intl zip gd pdo_mysql bcmath exif pcntl opcache \
  && (yes '' | pecl install redis) && docker-php-ext-enable redis \
