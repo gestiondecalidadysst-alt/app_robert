@@ -101,6 +101,8 @@ tareas programadas. Esa variable solo se pone en `false` el día que exista un s
 | Log: `Skipping [...] because the command already ran on another server` | hay dos contenedores con `schedule:work` (dos réplicas); `onOneServer()` evita la doble ejecución | no es un fallo; bajar a una réplica si no era intencional |
 | Un cambio de variable «no surte efecto» | la configuración se cachea al arrancar | redeploy del servicio |
 
-> Los chequeos de proveedor (`proveedor_correo`, `proveedor_sms`) cuentan envíos **registrados**
-> que fallaron: no validan las credenciales. Una clave SMTP inválida que nadie ha ejercido aparece
-> como `ok`.
+> `proveedor_sms` cuenta envíos **registrados** que fallaron: no valida las credenciales de Onurix.
+> `proveedor_correo` sí las valida: además de contar fallos, abre la conexión SMTP y autentica sin
+> enviar nada (resultado cacheado 15 minutos si está sano, 2 si falla, para que un arreglo se vea
+> pronto). Se añadió porque una API key puesta por error en `MAIL_PASSWORD` tuvo el chequeo en `ok`
+> mientras el correo estaba caído.

@@ -6,8 +6,11 @@ use App\Models\EnvioMensaje;
 use App\Models\WebhookEntrega;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\Mailer\Transport\Smtp\SmtpTransport;
+use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
 use Throwable;
 
 /**
@@ -37,7 +40,7 @@ final class Salud
             self::programadas(),
             self::cola(),
             self::trabajosFallidos(),
-            self::proveedor('correo', 'Correo (Brevo)'),
+            self::proveedorCorreo(),
             self::proveedor('sms', 'SMS (Onurix)'),
             self::webhooks(),
             self::respaldos(),
@@ -158,6 +161,70 @@ final class Salud
     }
 
     /** Salud de un proveedor de envíos: se mide por los fallos recientes, no por llamarlo. */
+    /** Segundos que puede tardar el saludo SMTP antes de darlo por fallido. */
+    private const SEGUNDOS_SMTP = 5;
+
+    /**
+     * Correo: a los envíos fallidos registrados se suma una comprobación real de las credenciales.
+     * Sin ella, una clave SMTP inválida que nadie ha ejercido todavía aparecería como sana —y eso
+     * es peor que no tener chequeo, porque tranquiliza en falso.
+     */
+    private static function proveedorCorreo(): array
+    {
+        $envios = self::proveedor('correo', 'Correo (Brevo)');
+        $credenciales = self::credencialesCorreo();
+
+        if ($credenciales === null || $credenciales['ok']) {
+            return $envios;
+        }
+
+        return self::resultado('proveedor_correo', 'Correo (Brevo)', false, $credenciales['detalle']);
+    }
+
+    /**
+     * Abre la conexión SMTP y autentica, sin enviar nada. Se cachea para no saludar al proveedor en
+     * cada consulta a /salud: el resultado sano dura 15 minutos y el fallido 2, para que un arreglo
+     * se refleje pronto. Devuelve null cuando no hay nada que comprobar (correo por log o array).
+     *
+     * @return array{ok:bool, detalle:string}|null
+     */
+    private static function credencialesCorreo(): ?array
+    {
+        if (! in_array(config('mail.default'), ['smtp', 'ses', 'postmark', 'resend'], true)) {
+            return null;
+        }
+
+        if ($guardado = Cache::get('salud.smtp')) {
+            return $guardado;
+        }
+
+        $resultado = rescue(function (): array {
+            $transporte = Mail::mailer()->getSymfonyTransport();
+
+            if (! $transporte instanceof SmtpTransport) {
+                return ['ok' => true, 'detalle' => 'Sin fallos en la última hora.'];
+            }
+
+            $flujo = $transporte->getStream();
+
+            if ($flujo instanceof SocketStream) {
+                $flujo->setTimeout(self::SEGUNDOS_SMTP);
+            }
+
+            $transporte->start();
+            $transporte->stop();
+
+            return ['ok' => true, 'detalle' => 'Sin fallos en la última hora.'];
+        }, fn (Throwable $e) => [
+            'ok' => false,
+            'detalle' => 'El proveedor rechaza la conexión o las credenciales: '.Str::limit($e->getMessage(), 200),
+        ], report: false);
+
+        Cache::put('salud.smtp', $resultado, now()->addMinutes($resultado['ok'] ? 15 : 2));
+
+        return $resultado;
+    }
+
     private static function proveedor(string $canal, string $nombre): array
     {
         try {

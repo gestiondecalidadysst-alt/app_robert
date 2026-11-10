@@ -6,6 +6,8 @@ use App\Jobs\EnviarAvisoPlataforma;
 use App\Support\Sistema\Latidos;
 use App\Support\Sistema\RegistroErrores;
 use App\Support\Sistema\Salud;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\Feature\Configuracion\ConfiguracionTestCase;
@@ -76,5 +78,28 @@ class SaludTest extends ConfiguracionTestCase
         RegistroErrores::registrar(new RuntimeException('Falla sin webhook'));
 
         Queue::assertNotPushed(EnviarAvisoPlataforma::class);
+    }
+
+    public function test_el_chequeo_de_correo_falla_si_el_proveedor_rechaza_la_conexion(): void
+    {
+        // Puerto cerrado: el saludo SMTP falla de inmediato, como con una clave inválida.
+        config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => '127.0.0.1', 'mail.mailers.smtp.port' => 1]);
+        Cache::forget('salud.smtp');
+        Mail::purge('smtp');
+
+        $correo = collect(Salud::chequeos())->firstWhere('clave', 'proveedor_correo');
+
+        $this->assertFalse($correo['ok']);
+        $this->assertStringContainsString('rechaza', $correo['detalle']);
+    }
+
+    public function test_el_chequeo_de_correo_no_comprueba_credenciales_sin_smtp(): void
+    {
+        config(['mail.default' => 'array']);
+        Cache::forget('salud.smtp');
+
+        $correo = collect(Salud::chequeos())->firstWhere('clave', 'proveedor_correo');
+
+        $this->assertTrue($correo['ok']);
     }
 }
