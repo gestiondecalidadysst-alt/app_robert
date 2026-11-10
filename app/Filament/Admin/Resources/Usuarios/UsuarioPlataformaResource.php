@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\Usuarios;
 
 use App\Filament\Admin\Resources\Usuarios\Pages\GestionarUsuarios;
+use App\Models\Rol;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -12,12 +13,16 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /**
- * Todos los usuarios de la plataforma. Los roles por empresa se asignan dentro de cada empresa.
+ * Usuarios de la plataforma. Por defecto muestra solo las cuentas administrativas: los
+ * administradores de cada empresa y los superadministradores. El resto de usuarios (operarios,
+ * auxiliares, conductores) los gestiona cada empresa en su panel, y se ven quitando el filtro.
  */
 class UsuarioPlataformaResource extends Resource
 {
@@ -74,12 +79,36 @@ class UsuarioPlataformaResource extends Resource
                 TextColumn::make('ultimo_acceso_at')->label('Último acceso')->since()->placeholder('Nunca')->sortable(),
             ])
             ->filters([
+                Filter::make('solo_administradores')
+                    ->label('Solo administradores')
+                    ->toggle()
+                    ->default()
+                    ->query(fn (Builder $query) => static::soloAdministradores($query)),
                 TernaryFilter::make('es_superadmin')->label('Superadministrador'),
                 TernaryFilter::make('activo'),
             ])
             ->recordActions([
                 EditAction::make(),
             ]);
+    }
+
+    /**
+     * Cuentas administrativas: superadministradores o usuarios con el rol «Administrador» en
+     * alguna empresa. Consulta el pivote directamente para no depender de la empresa activa.
+     */
+    protected static function soloAdministradores(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->where('users.es_superadmin', true)
+                ->orWhereExists(function ($sub) {
+                    $sub->selectRaw('1')
+                        ->from('model_has_roles as mhr')
+                        ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+                        ->whereColumn('mhr.model_id', 'users.id')
+                        ->where('mhr.model_type', (new User)->getMorphClass())
+                        ->where('r.name', Rol::ADMINISTRADOR);
+                });
+        });
     }
 
     public static function getPages(): array
