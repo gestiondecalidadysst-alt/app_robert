@@ -32,7 +32,15 @@ abstract class ConfiguracionTestCase extends TestCase
 
     protected function usuario(string $email): User
     {
-        return User::query()->withoutGlobalScopes()->where('email', $email)->firstOrFail();
+        $usuario = User::query()->withoutGlobalScopes()->where('email', $email)->firstOrFail();
+
+        // El panel admin exige 2FA: el superadministrador de prueba ya lo tiene configurado,
+        // para que sus pruebas evalúen la pantalla objetivo y no la configuración del segundo factor.
+        if ($usuario->es_superadmin && ! $usuario->getAppAuthenticationSecret()) {
+            $usuario->saveAppAuthenticationSecret('TOTPDEPRUEBASUPERADMIN');
+        }
+
+        return $usuario;
     }
 
     /** Simula estar dentro del panel de empresa con la empresa indicada. */

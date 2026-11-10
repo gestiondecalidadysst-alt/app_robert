@@ -34,8 +34,9 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->profile(isSimple: false)
-            // 2FA opcional (TOTP) para el superadministrador de la plataforma.
-            ->multiFactorAuthentication(AppAuthentication::make())
+            // 2FA obligatorio (TOTP) para el superadministrador de la plataforma: en el primer
+            // ingreso se exige configurar la app autenticadora, con códigos de recuperación.
+            ->multiFactorAuthentication(AppAuthentication::make(), isRequired: true)
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.partes.version'))
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.partes.version'))
             ->brandName('Ruta · Plataforma')
