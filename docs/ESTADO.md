@@ -41,7 +41,9 @@
 - [x] Dockerfile de producción (`Dockerfile`, `docker/`), con los pasos de arranque probados en modo producción; indicador de versión del build (`.build`/`.version`) para confirmar el despliegue.
 - [x] **Cotizador de servicios (Operación):** cotizaciones de transporte especial con líneas Fecha/Ruta/Duración/Valor, descuento e IVA opcional; PDF con la marca de la empresa idéntico al formato aprobado (encabezado, tabla, total, bloques "incluye"/"equipo", validez con logos de certificación, pie), configurable por empresa (colores, textos, validez, pie, logos) en Configuración → Mi empresa → Cotizaciones; envío por correo al cliente con el PDF adjunto; y conversión de la cotización aceptada en contrato (de ahí sale el FUEC). Destinatario cliente o prospecto. Permiso `cotizaciones`, módulo Pasajeros.
 - [x] **Centro de alertas:** bandeja unificada en el inicio (documentos de vehículos y conductores por vencer/vencidos y administración en mora, con conteo, color y enlace a su listado) y avisos automáticos por correo al propietario/conductor afectado — resumen semanal (lunes) y aviso puntual el día del vencimiento — más campana al equipo con permiso. Comando `ruta:alertas` (modos diario y semanal).
-- [x] Suite completa en verde: 302 pruebas (SQLite y MySQL).
+- [x] Suite completa en verde: 329 pruebas (SQLite y MySQL).
+- [x] **Endurecimiento para producción (2026-11-09):** 2FA (TOTP) opcional en empresas y **obligatorio para el superadministrador**; **tablero del panel de plataforma** (resumen, estado del sistema, últimas empresas, altas por mes) con badges en el menú y ficha de empresa con resumen; **auditoría global** de plataforma; lista de usuarios de plataforma **solo administradores** por defecto; **firma del representante solo en el panel de la empresa**; avisos de vencimiento a **30/15/7 días**; **listado de pasajeros etapa 2** (enlace al cliente, anexo en el PDF del FUEC, importación Excel/CSV); correo de credenciales en cola; **suite de aislamiento multiempresa**; y el pie del menú lateral se oculta al colapsar.
+- [x] **Respaldos automáticos a Cloudflare R2** (`spatie/laravel-backup`): BD + archivos subidos en ZIP cifrado, diarios, fuera del servidor, con retención y aviso de fallo. Falta configurar las llaves de R2 en Easypanel (ver Pendiente). Detalle en `docs/integraciones/respaldos-r2.md`.
 - [x] Código en GitHub: `gestiondecalidadysst-alt/app_robert` (rama `main`). Es la fuente oficial desde el 2026-10-30; `solucionesappcontact-jpg/app_operation` queda como repositorio anterior y `Escritorio\APP` como copia local.
 
 ## Módulos que faltan por construir
@@ -75,6 +77,7 @@ Para después (sin fecha):
 - [ ] Consultas de tránsito: poner la API key de PlacApi y los precios en `/admin/consultas-transito`, habilitar el módulo por empresa y revisar la primera respuesta real.
 - [ ] Activar por empresa los módulos opcionales que vayan a usar (carga, consultas de tránsito, **pagos de administración**).
 - [ ] En «Mi empresa»: completar código territorial, resolución y año de habilitación (sin ellos no se expide FUEC); subir la firma del representante, la cédula "expedida en", el sitio web y la imagen del pie (certificaciones).
+- [ ] **Respaldos a Cloudflare R2:** crear el bucket R2 privado y un API Token; poner `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET`, `R2_REGION=auto`, `BACKUP_ARCHIVE_PASSWORD` y `BACKUP_NOTIFICATION_EMAIL` en Easypanel; probar con `php artisan backup:run` y `backup:list`. Guardar la contraseña del ZIP aparte. Requiere el servicio scheduler corriendo. Detalle en `docs/integraciones/respaldos-r2.md`.
 
 ### Carga – conexión real al RNDC
 - [ ] Poner el usuario del RNDC de la empresa y confirmar el formato del web service en la primera conexión real. Todo el código (registro, remesas, manifiestos, cumplidos, anulaciones, tiempos) ya está; falta conectarlo y probar contra el ambiente real.
@@ -98,6 +101,7 @@ Pendiente (configuración/infra en Easypanel, por orden de impacto):
 
 ## Siguiente paso
 1. Redesplegar (web, worker y scheduler) con el volumen de `storage/app`, completar Mi empresa e Integraciones (Brevo, Onurix), y probar correo y SMS.
+2. Configurar los respaldos: crear el bucket de Cloudflare R2 y sus llaves, ponerlas en Easypanel y verificar el primer `backup:run`.
 2. Siguiente módulo sugerido: **Combustible y liquidación de vehículos**. Después: planillas, tiquetes y caja.
 3. En cada vehículo: definir el valor de administración (por clase o ajuste) y generar las cuotas del mes; registrar el punto de partida del plan de mantenimiento y aprobar el programa anual; configurar el webhook de n8n en Integraciones.
 4. Crear los rutogramas de las rutas frecuentes y poner la política de jornada de la empresa en Integraciones → Planeador de servicios.
