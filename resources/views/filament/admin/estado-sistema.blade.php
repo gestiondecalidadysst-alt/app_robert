@@ -7,6 +7,28 @@
             En Easypanel, agregue <code>APP_URL=https://su-dominio</code> en las variables de entorno del servicio web, del worker y del scheduler, y redespliegue.
         </div>
     @endif
+    @php $fallando = collect($salud)->where('ok', false)->count(); @endphp
+    <x-filament::section
+        :heading="'Salud de los servicios' . ($fallando ? ' · ' . $fallando . ' con problemas' : '')"
+        description="Chequeo en vivo de la app y de los servicios de los que depende. Un monitor externo puede consultarlo en /salud."
+        collapsible
+        :collapsed="$fallando === 0"
+    >
+        <div style="display: grid; gap: .5rem">
+            @foreach ($salud as $c)
+                <div style="display: grid; grid-template-columns: 1.5rem 14rem 1fr; gap: .6rem; align-items: start; padding: .35rem 0; border-bottom: 1px solid rgba(148,163,184,.15)">
+                    <x-filament::icon
+                        :icon="$c['ok'] ? 'heroicon-m-check-circle' : 'heroicon-m-x-circle'"
+                        @class(['fi-icon'])
+                        style="width:1.15rem;height:1.15rem;color: {{ $c['ok'] ? 'rgb(22 163 74)' : 'rgb(220 38 38)' }}"
+                    />
+                    <strong style="font-size: .875rem">{{ $c['nombre'] }}</strong>
+                    <span style="font-size: .8rem; color: rgb(100 116 139)">{{ $c['detalle'] }}</span>
+                </div>
+            @endforeach
+        </div>
+    </x-filament::section>
+
     <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))">
         @foreach ($procesos as [$nombre, $ultimo, $vivo, $ayuda])
             <x-filament::section>

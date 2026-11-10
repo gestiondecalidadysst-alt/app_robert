@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Error inesperado agrupado por huella (ver App\Support\Sistema\RegistroErrores). */
 class ErrorSistema extends Model
@@ -28,6 +29,12 @@ class ErrorSistema extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /** Historial de cada vez que ocurrió, de la más reciente a la más antigua. */
+    public function ocurrencias(): HasMany
+    {
+        return $this->hasMany(OcurrenciaError::class, 'error_sistema_id')->orderByDesc('ocurrio_at');
     }
 
     public function empresa(): BelongsTo

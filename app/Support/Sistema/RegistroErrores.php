@@ -3,6 +3,7 @@
 namespace App\Support\Sistema;
 
 use App\Models\ErrorSistema;
+use App\Models\OcurrenciaError;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -21,6 +22,9 @@ use Throwable;
 final class RegistroErrores
 {
     public const MINUTOS_ENTRE_ALERTAS = 60;
+
+    /** Ocurrencias que se conservan por error (las más recientes); evita que la tabla crezca sin fin. */
+    public const OCURRENCIAS_POR_ERROR = 50;
 
     private static bool $registrando = false;
 
@@ -65,6 +69,8 @@ final class RegistroErrores
             }
             $error->save();
 
+            self::guardarOcurrencia($error);
+
             if ($alertar) {
                 self::alertar($error, $nuevo);
             }
@@ -74,6 +80,32 @@ final class RegistroErrores
             return null;
         } finally {
             self::$registrando = false;
+        }
+    }
+
+    /**
+     * Guarda el rastro de esta ocurrencia (para diagnosticar y para poder buscar por cualquier
+     * referencia que reporte un usuario) y poda las más antiguas.
+     */
+    private static function guardarOcurrencia(ErrorSistema $error): void
+    {
+        OcurrenciaError::query()->create([
+            'error_sistema_id' => $error->id,
+            'referencia' => $error->referencia,
+            'url' => $error->url,
+            'metodo' => $error->metodo,
+            'user_id' => $error->user_id,
+            'empresa_id' => $error->empresa_id,
+            'ocurrio_at' => $error->ultima_vez,
+        ]);
+
+        $sobran = $error->ocurrencias()->count() - self::OCURRENCIAS_POR_ERROR;
+
+        if ($sobran > 0) {
+            $viejas = OcurrenciaError::query()->where('error_sistema_id', $error->id)
+                ->orderBy('ocurrio_at')->limit($sobran)->pluck('id');
+
+            OcurrenciaError::query()->whereIn('id', $viejas)->delete();
         }
     }
 
@@ -97,6 +129,20 @@ final class RegistroErrores
             } catch (Throwable) {
             }
         }
+
+        AvisoPlataforma::enviar(AvisoPlataforma::ERROR, $titulo, [
+            'referencia' => $error->referencia,
+            'clase' => $error->clase_corta,
+            'mensaje' => Str::limit($error->mensaje, 300),
+            'donde' => "{$error->archivo}:{$error->linea}",
+            'url' => $error->url,
+            'metodo' => $error->metodo,
+            'ocurrencias' => $error->ocurrencias,
+            'nuevo' => $nuevo,
+            'empresa_id' => $error->empresa_id,
+            'user_id' => $error->user_id,
+            'detalle' => url('/admin/estado-sistema'),
+        ]);
     }
 
     private static function empresaActual(): ?int

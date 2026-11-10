@@ -7,6 +7,8 @@ use App\Models\ErrorSistema;
 use App\Models\WebhookEntrega;
 use App\Support\Sistema\EstadoColas;
 use App\Support\Sistema\Latidos;
+use App\Support\Sistema\RegistroErrores;
+use App\Support\Sistema\Salud;
 use App\Support\Sistema\UrlApp;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -18,6 +20,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -76,6 +79,7 @@ class EstadoSistema extends Page implements HasTable
     {
         return [
             'urlSinConfigurar' => UrlApp::sinConfigurar() ? (string) config('app.url') : null,
+            'salud' => Salud::chequeos(),
             'procesos' => [
                 ['Worker de la cola', Latidos::ultimo(Latidos::WORKER), Latidos::vivo(Latidos::WORKER),
                     'Servicio con CONTAINER_ROLE=worker. Envía SMS, correos y webhooks.'],
@@ -133,7 +137,13 @@ class EstadoSistema extends Page implements HasTable
             ->emptyStateHeading('Sin errores registrados')
             ->emptyStateIcon('heroicon-o-check-badge')
             ->columns([
-                TextColumn::make('referencia')->searchable()->weight('bold')->copyable()
+                // Busca también en el historial: así cualquier REF que reporte un usuario
+                // encuentra su error, aunque después se haya repetido con otra referencia.
+                TextColumn::make('referencia')
+                    ->searchable(query: fn (Builder $query, string $search) => $query
+                        ->where('referencia', 'like', "%{$search}%")
+                        ->orWhereHas('ocurrencias', fn (Builder $q) => $q->where('referencia', 'like', "%{$search}%")))
+                    ->weight('bold')->copyable()
                     ->description(fn (ErrorSistema $r) => $r->resuelto_at ? 'Resuelto' : null),
                 TextColumn::make('mensaje')->searchable()->limit(70)->wrap()
                     ->description(fn (ErrorSistema $r) => "{$r->clase_corta} · {$r->archivo}:{$r->linea}"),
@@ -159,6 +169,16 @@ class EstadoSistema extends Page implements HasTable
                         .'<div><b>Petición:</b> '.e(trim("{$r->metodo} {$r->url}")).'</div>'
                         .'<div><b>Empresa / usuario:</b> '.e(($r->empresa?->razon_social ?? '—').' / '.($r->usuario?->name ?? '—')).'</div>'
                         .'<div><b>Ocurrencias:</b> '.$r->ocurrencias.' · primera '.$r->primera_vez->timezone(config('app.timezone'))->format('d/m/Y h:i a').' · última '.$r->ultima_vez->timezone(config('app.timezone'))->format('d/m/Y h:i a').'</div>'
+                        .'<div><b>Historial (últimas '.RegistroErrores::OCURRENCIAS_POR_ERROR.' ocurrencias):</b></div>'
+                        .'<div style="max-height:14rem;overflow:auto;border:1px solid rgba(148,163,184,.25);border-radius:.5rem">'
+                        .($r->ocurrencias()->with('usuario')->limit(15)->get()
+                            ->map(fn ($o) => '<div style="display:grid;grid-template-columns:7rem 10rem 1fr 9rem;gap:.5rem;padding:.3rem .6rem;border-bottom:1px solid rgba(148,163,184,.15)">'
+                                .'<code>'.e($o->referencia).'</code>'
+                                .'<span>'.e($o->ocurrio_at->timezone(config('app.timezone'))->format('d/m/Y h:i a')).'</span>'
+                                .'<span style="color:#6b7280;overflow:hidden;text-overflow:ellipsis">'.e(trim(($o->metodo ?? '').' '.Str::limit((string) $o->url, 70))).'</span>'
+                                .'<span style="color:#6b7280">'.e($o->usuario?->name ?? '—').'</span>'
+                                .'</div>')->implode('') ?: '<div style="padding:.6rem;color:#6b7280">Sin historial todavía.</div>')
+                        .'</div>'
                         .'<pre style="white-space:pre-wrap;font-size:.72rem;background:rgba(148,163,184,.12);padding:.75rem;border-radius:.5rem;max-height:24rem;overflow:auto">'.e($r->traza).'</pre>'
                         .'</div>')),
                 Action::make('resolver')->label('Resuelto')->icon('heroicon-o-check')->color('success')

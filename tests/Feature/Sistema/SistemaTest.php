@@ -97,11 +97,13 @@ class SistemaTest extends ConfiguracionTestCase
     public function test_latidos_y_vigilante(): void
     {
         $antes = $this->avisos();
+        // El vigilante ahora revisa la salud completa: hay que dar señales de los dos procesos.
         Latidos::marcar(Latidos::WORKER, true);
+        Latidos::marcar(Latidos::PROGRAMADAS, true);
         $this->assertTrue(Latidos::vivo(Latidos::WORKER));
 
         $this->artisan('ruta:vigilar')->assertSuccessful();
-        $this->assertSame($antes, $this->avisos(), 'Con el worker vivo y sin fallidos no avisa.');
+        $this->assertSame($antes, $this->avisos(), 'Con los procesos vivos y sin fallidos no avisa.');
 
         $this->travel(11)->minutes();
         $this->assertFalse(Latidos::vivo(Latidos::WORKER));
@@ -109,10 +111,10 @@ class SistemaTest extends ConfiguracionTestCase
             'payload' => json_encode(['displayName' => EnviarWebhook::class]), 'exception' => "RuntimeException: caído\n#0", 'failed_at' => now()]);
 
         $this->artisan('ruta:vigilar')->assertSuccessful();
-        $this->assertSame($antes + 2, $this->avisos(), 'Worker caído y un trabajo fallido.');
+        $this->assertSame($antes + 3, $this->avisos(), 'Worker caído, tareas programadas caídas y un trabajo fallido.');
 
         $this->artisan('ruta:vigilar')->assertSuccessful();
-        $this->assertSame($antes + 2, $this->avisos(), 'No repite el aviso dentro de la hora.');
+        $this->assertSame($antes + 3, $this->avisos(), 'No repite el aviso dentro de la hora.');
     }
 
     public function test_pantalla_estado_del_sistema(): void
