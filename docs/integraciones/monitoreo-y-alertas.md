@@ -27,13 +27,15 @@ referencia (`REF-XXXXXX`), la URL, el método, el usuario y la empresa, y cuánd
 | Tareas programadas | Latido reciente del servicio `scheduler` |
 | Cola de trabajos | Que no haya trabajos atascados |
 | Trabajos fallidos | Que no queden fallidos sin revisar |
-| Correo (Brevo) | Fallos de envío en la última hora |
+| Correo (Brevo) | Fallos de envío en la última hora **y** que las credenciales SMTP autentiquen |
 | SMS (Onurix) | Fallos de envío en la última hora |
 | Webhooks | Entregas pendientes acumuladas |
 | Respaldos | Antigüedad del último respaldo en R2 (si está configurado) |
 
-Los proveedores se miden por **fallos recientes**, no llamándolos: es gratis y detecta igual una
-caída o la falta de saldo.
+El SMS se mide por **fallos recientes**, sin llamar al proveedor: es gratis y detecta igual una
+caída o la falta de saldo. El correo, además, **abre la conexión SMTP y autentica** (sin enviar
+nada, cacheado 15 min si está sano y 2 si falla), porque contar fallos no detecta una credencial
+inválida que nadie ha ejercido todavía.
 
 ### Endpoint para monitores externos
 
