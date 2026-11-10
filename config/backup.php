@@ -297,12 +297,14 @@ return [
      * If a backup does not meet the specified requirements the
      * UnHealthyBackupWasFound event will be fired.
      */
+    // Debe apuntar al mismo destino que se respalda arriba; si no, `backup:list` y `backup:monitor`
+    // vigilarían una carpeta vacía y darían una falsa alarma (o una falsa tranquilidad).
     'monitor_backups' => [
         [
-            'name' => env('APP_NAME', 'laravel-backup'),
-            'disks' => ['local'],
+            'name' => env('BACKUP_NAME', 'cootrasec'),
+            'disks' => ['r2'],
             'health_checks' => [
-                MaximumAgeInDays::class => 1,
+                MaximumAgeInDays::class => 2,
                 MaximumStorageInMegabytes::class => 5000,
             ],
         ],
