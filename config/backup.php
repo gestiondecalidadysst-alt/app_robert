@@ -237,11 +237,13 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => env('BACKUP_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS')),
+            // Debe ser SIEMPRE un correo válido: spatie lo valida al arrancar y, sin .env
+            // (por ejemplo durante la construcción de la imagen), un valor vacío rompe el arranque.
+            'to' => env('BACKUP_NOTIFICATION_EMAIL') ?: (env('MAIL_FROM_ADDRESS') ?: 'no-reply@example.com'),
 
             'from' => [
-                'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-                'name' => env('MAIL_FROM_NAME', 'Example'),
+                'address' => env('MAIL_FROM_ADDRESS') ?: 'no-reply@example.com',
+                'name' => env('MAIL_FROM_NAME') ?: 'Respaldos',
             ],
         ],
 
