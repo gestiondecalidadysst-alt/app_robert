@@ -4,6 +4,7 @@
 !.env.example
 node_modules
 vendor
+bootstrap/cache/*
 storage/logs/*
 storage/framework/cache/data/*
 storage/framework/sessions/*

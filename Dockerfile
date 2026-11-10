@@ -39,8 +39,12 @@ ARG APP_VERSION=desconocida
 RUN date -u '+%d/%m/%Y %H:%M UTC' > /var/www/html/.build \
  && echo "${APP_VERSION}" > /var/www/html/.version
 
-RUN php artisan filament:assets \
- && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache \
+# Primero los directorios, luego se limpian cachés que pudieran venir del contexto de build
+# (un packages.php viejo haría que Laravel busque providers de desarrollo que no existen con
+# --no-dev) y por último se publican los assets de Filament.
+RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache \
+ && rm -f bootstrap/cache/*.php \
+ && php artisan filament:assets \
  && chown -R www-data:www-data storage bootstrap/cache \
  && chmod +x docker/entrypoint.sh
 
