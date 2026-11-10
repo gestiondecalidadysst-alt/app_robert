@@ -141,7 +141,7 @@ final class RegistroErrores
             'nuevo' => $nuevo,
             'empresa_id' => $error->empresa_id,
             'user_id' => $error->user_id,
-            'detalle' => url('/admin/estado-sistema'),
+            'panel' => url('/admin/estado-sistema'),
         ]);
     }
 
