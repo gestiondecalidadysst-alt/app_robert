@@ -35,3 +35,7 @@ Schedule::command('ruta:generar-cuotas-administracion')->monthlyOn(1, '06:30')->
 // Centro de alertas: aviso puntual de lo que vence hoy (diario) y resumen los lunes (semanal).
 Schedule::command('ruta:alertas --modo=diario')->dailyAt('06:40')->withoutOverlapping()->onOneServer();
 Schedule::command('ruta:alertas --modo=semanal')->weeklyOn(1, '07:00')->withoutOverlapping()->onOneServer();
+
+// Respaldos (base de datos + archivos subidos) a Cloudflare R2: limpieza y respaldo diario de madrugada.
+Schedule::command('backup:clean')->dailyAt('02:10')->withoutOverlapping()->onOneServer();
+Schedule::command('backup:run')->dailyAt('02:30')->withoutOverlapping()->onOneServer();
