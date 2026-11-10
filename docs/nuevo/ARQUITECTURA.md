@@ -4,7 +4,7 @@
 - **Backend:** Laravel 13, PHP 8.3+.
 - **Panel:** Filament 5 (Livewire + Alpine.js + Tailwind CSS). El tema propio es CSS puro (`resources/css/ruta.css`), sin compilación.
 - **Base de datos:** MySQL 8 (o MariaDB 10.11+). En desarrollo y pruebas se usa SQLite.
-- **Colas y caché:** driver `database`; Redis es opcional más adelante.
+- **Colas, caché y sesión:** Redis (filas `alta`, `default`, `baja`).
 - **Paquetes previstos:**
   - `spatie/laravel-permission` con *teams*, donde el team es la empresa.
   - `spatie/laravel-activitylog` para auditoría.
@@ -12,7 +12,7 @@
 - **Despliegue:** VPS con Easypanel, desde el repositorio de GitHub `gestiondecalidadysst-alt/app_robert` (rama `main`) con el `Dockerfile` del proyecto (PHP 8.3 + Apache, puerto 80). Pasos y variables en `README.md`.
   - Servicio **web** (`CONTAINER_ROLE=web`): al arrancar, `docker/entrypoint.sh` espera la base de datos, migra, carga catálogos y permisos, crea el superadmin (`SUPERADMIN_*`), carga la demo si `SEED_DEMO=true` y optimiza. Salud: `/up`.
   - Servicio **worker** (`CONTAINER_ROLE=worker`): `queue:work` + `schedule:work`.
-  - MySQL. Sesión, caché y colas usan la base de datos, sin Redis.
+  - MySQL y Redis (sesión, caché y colas).
   - Volumen persistente en `/var/www/html/storage/app`.
   - Pruebas automáticas en GitHub Actions (`.github/workflows/tests.yml`).
 

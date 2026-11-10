@@ -77,3 +77,30 @@ ALERTAS_WEBHOOK_URL=       # webhook que recibe errores y salud
 ALERTAS_WEBHOOK_SECRETO=   # firma HMAC del webhook
 SALUD_TOKEN=               # token del endpoint /salud
 ```
+
+## Fallos de despliegue frecuentes
+
+`CONTAINER_ROLE` es la **única** diferencia entre los servicios: la imagen es la misma y el rol
+decide si el contenedor sirve la web o procesa la cola. Con un solo worker, **no** se pone
+`SCHEDULE_EN_WORKER`: su valor por defecto (`true`) es lo que hace que el worker corra también las
+tareas programadas. Esa variable solo se pone en `false` el día que exista un servicio
+`CONTAINER_ROLE=scheduler` aparte.
+
+| Servicio | `CONTAINER_ROLE` | `SCHEDULE_EN_WORKER` |
+|---|---|---|
+| web | `web` (o sin la variable) | no se pone |
+| worker | `worker` | no se pone |
+| scheduler (solo si existe) | `scheduler` | en el worker: `false` |
+
+| Síntoma | Causa | Arreglo |
+|---|---|---|
+| «Service is not reachable» en la web | el servicio web quedó con `CONTAINER_ROLE=worker`: no levanta Apache | dejar `web` o borrar la variable |
+| `/salud` → `worker` sin señales, trabajos encolados que no bajan | el worker quedó sin `CONTAINER_ROLE` (por defecto arranca como `web`) | poner `worker` |
+| `/salud` → `programadas` sin señales | `SCHEDULE_EN_WORKER=false` sin servicio scheduler | borrar esa variable |
+| `/salud` vacío al consultarlo con `curl` | se consultó desde el worker, donde no hay Apache | consultar desde el servicio web o por el dominio público |
+| Log: `Skipping [...] because the command already ran on another server` | hay dos contenedores con `schedule:work` (dos réplicas); `onOneServer()` evita la doble ejecución | no es un fallo; bajar a una réplica si no era intencional |
+| Un cambio de variable «no surte efecto» | la configuración se cachea al arrancar | redeploy del servicio |
+
+> Los chequeos de proveedor (`proveedor_correo`, `proveedor_sms`) cuentan envíos **registrados**
+> que fallaron: no validan las credenciales. Una clave SMTP inválida que nadie ha ejercido aparece
+> como `ok`.
