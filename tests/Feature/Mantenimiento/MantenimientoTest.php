@@ -305,4 +305,36 @@ class MantenimientoTest extends ConfiguracionTestCase
             'pageClass' => VerVehiculo::class,
         ])->assertSee('Plan preventivo')->assertSee('95.000 km')->assertSee('Cambio de aceite sintético');
     }
+
+    public function test_el_plan_abierto_del_vehiculo_se_ofrece_al_registrar_un_mantenimiento(): void
+    {
+        $conductor = $this->conductor();
+        $critico = ItemChequeo::query()->deEmpresa($this->demo)->deTipo(TipoInspeccion::Preoperacional)->where('critico', true)->firstOrFail();
+        $respuestas = array_replace(
+            ItemChequeo::query()->deEmpresa($this->demo)->deTipo(TipoInspeccion::Preoperacional)->activos()->pluck('id')->mapWithKeys(fn ($id) => [$id => ['respuesta' => 'si']])->all(),
+            [$critico->id => ['respuesta' => 'no', 'observacion' => 'Falla de prueba']],
+        );
+
+        app(RegistrarInspeccion::class)($this->demo, TipoInspeccion::Preoperacional, $this->vehiculo(),
+            $respuestas, conductor: $conductor, kilometraje: 126000, usuario: $conductor->usuario);
+
+        $plan = PlanAccion::query()->deEmpresa($this->demo)->where('vehiculo_id', $this->vehiculo()->id)->pendientes()->firstOrFail();
+
+        $this->entrarComo('admin@demo.test');
+
+        Livewire::test(PaginaRegistrar::class)
+            ->fillForm(['vehiculo_id' => $this->vehiculo()->id])
+            ->assertSchemaComponentExists('plan_accion_id', checkComponentUsing: fn ($componente) => array_key_exists($plan->id, $componente->getOptions()))
+            ->fillForm([
+                'tipo' => 'correctivo',
+                'accion' => 'reparacion',
+                'kilometraje' => 126100,
+                'actividad' => 'Se corrige la falla',
+                'plan_accion_id' => $plan->id,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(EstadoPlan::PorVerificar, $plan->refresh()->estado);
+    }
 }
