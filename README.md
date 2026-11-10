@@ -27,7 +27,8 @@ La clave de los usuarios demo es `Ruta2026*`.
    - Cree un servicio **App** con origen GitHub, que apunte a este repositorio (rama `main`).
    - En *Build* elija **Dockerfile**.
    - En *Domains*, el puerto interno es **80**.
-3. **Variables de entorno** (*Environment*):
+3. **Variables de entorno** (*Environment*). La lista completa y qué va en cada servicio está en
+   **`docs/integraciones/variables-de-entorno.md`**; lo mínimo para arrancar:
    ```
    APP_NAME="Ruta"
    APP_ENV=production
