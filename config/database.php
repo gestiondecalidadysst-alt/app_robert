@@ -62,6 +62,17 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+
+            // Opciones del volcado que hace el respaldo (spatie/laravel-backup):
+            // - skip_ssl: la base vive en la red privada de Docker y nunca sale a internet; el
+            //   cliente rechaza su certificado autofirmado. Con DB_DUMP_SSL=true se exige TLS.
+            // - single transaction: volcado consistente sin bloquear tablas con la app en uso.
+            'dump' => [
+                'skip_ssl' => ! env('DB_DUMP_SSL', false),
+                // El cliente de la imagen es el de MariaDB: entiende «skip-ssl», no «ssl-mode».
+                'ssl_flag' => env('DB_DUMP_SSL_FLAG', 'skip-ssl'),
+                'use_single_transaction',
+            ],
         ],
 
         'mariadb' => [

@@ -26,7 +26,16 @@ Retención: 2 días completos, 7 diarios, 4 semanales, 4 mensuales, 2 anuales. S
    - `R2_REGION` = `auto`
    - `BACKUP_ARCHIVE_PASSWORD` = contraseña del ZIP (**guárdala aparte; sin ella no se restaura**)
    - `BACKUP_NOTIFICATION_EMAIL` = correo que recibe el aviso si un respaldo falla
-3. Verifica manualmente: `php artisan backup:run` y luego `php artisan backup:list`.
+3. Las mismas variables deben estar en los tres servicios (`web`, `worker`, `scheduler`): quien
+   corre el respaldo es el **scheduler**, y sin ellas falla con «bucket must be of type string».
+4. Verifica manualmente, **dentro del servicio `scheduler`**: `php artisan backup:run` y luego
+   `php artisan backup:list`.
+
+### Volcado de la base
+El volcado va **sin TLS** (`connections.mysql.dump` en `config/database.php`): la base está en la
+red privada de Docker con certificado autofirmado y `mysqldump` lo rechaza. Se fuerza el flag
+`skip-ssl` porque el cliente de la imagen es el de MariaDB y no entiende `ssl-mode=DISABLED`.
+Si algún día la base queda accesible desde internet, pon `DB_DUMP_SSL=true` para volver a exigir TLS.
 
 ## Avisos
 Solo se notifica por correo cuando un respaldo **falla**, no está sano o la limpieza falla
