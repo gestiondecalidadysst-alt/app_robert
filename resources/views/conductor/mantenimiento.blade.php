@@ -67,7 +67,7 @@
                 <span class="estado {{ $m->tipo->value === 'preventivo' ? 'info' : 'pend' }}">{{ $m->tipo->getLabel() }}</span>
             </div>
             <p class="dato">{{ \Illuminate\Support\Str::limit($m->actividad, 120) }}</p>
-            <p class="tenue" style="font-size:13px; margin:0">{{ $m->evidencias_count }} {{ $m->evidencias_count === 1 ? 'evidencia' : 'evidencias' }}{{ $m->plan ? ' · plan '.$m->plan->numero : '' }}</p>
+            <p class="tenue" style="font-size:13px; margin:0">{{ $m->evidencias_count }} {{ $m->evidencias_count === 1 ? 'evidencia' : 'evidencias' }}{{ $m->plan ? ' · plan '.$m->plan->numero_formateado : '' }}</p>
         </div>
     @endforeach
 @endif

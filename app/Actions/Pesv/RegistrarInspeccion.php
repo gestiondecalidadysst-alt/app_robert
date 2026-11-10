@@ -157,7 +157,7 @@ class RegistrarInspeccion
                 'kilometraje' => $kilometraje,
                 'resultado' => $noApto ? ResultadoInspeccion::NoApto : ResultadoInspeccion::Apto,
                 'respuestas' => $copia,
-                'datos' => [...self::datos($empresa, $vehiculo, $conductor, $fuec, $usuario), 'plan_pendiente' => $planAlta?->numero],
+                'datos' => [...self::datos($empresa, $vehiculo, $conductor, $fuec, $usuario), 'plan_pendiente' => $planAlta?->numero_formateado],
                 'observaciones' => filled($observaciones) ? Str::limit(trim($observaciones), 2000, '') : null,
                 'firma_path' => $firma,
                 'codigo_verificacion' => $codigo,

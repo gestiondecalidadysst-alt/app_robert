@@ -43,7 +43,7 @@ class PlanesAccionRelationManager extends RelationManager
             ->emptyStateHeading('Sin planes de acción')
             ->recordUrl(fn (PlanAccion $r) => PlanAccionResource::getUrl('view', ['record' => $r]))
             ->columns([
-                TextColumn::make('numero')->label('No.')->weight('bold'),
+                TextColumn::make('numero')->label('No.')->weight('bold')->formatStateUsing(fn (PlanAccion $record) => $record->numero_formateado),
                 TextColumn::make('titulo')->label('Hallazgo')->wrap()->limit(80),
                 TextColumn::make('prioridad')->badge(),
                 TextColumn::make('estado')->badge(),

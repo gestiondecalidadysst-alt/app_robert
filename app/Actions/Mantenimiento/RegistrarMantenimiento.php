@@ -164,14 +164,14 @@ class RegistrarMantenimiento
             'rutinas' => $mantenimiento->rutinas->pluck('nombre')->all(),
             'evidencias' => $mantenimiento->evidencias()->count(),
             'registrado_por' => $conductor ? "Conductor {$conductor->nombre_completo}" : $usuario?->name,
-            'plan_accion' => $plan?->numero,
+            'plan_accion' => $plan?->numero_formateado,
         ]);
 
         if ($plan) {
             Webhooks::emitir($empresa, 'plan_accion.por_verificar', self::datosPlan($plan->refresh(), $vehiculo));
             Avisos::aQuienPueda($empresa, 'editar_planes_accion', Notification::make()
                 ->info()
-                ->title("Plan {$plan->numero} ({$vehiculo->placa}) por verificar")
+                ->title("Plan {$plan->numero_formateado} ({$vehiculo->placa}) por verificar")
                 ->body(($conductor ? "{$conductor->nombre_completo} registró" : 'Se registró').' el mantenimiento con su evidencia. Revíselo y ciérrelo.'));
         }
 
@@ -184,7 +184,7 @@ class RegistrarMantenimiento
     public static function datosPlan(PlanAccion $plan, ?Vehiculo $vehiculo = null): array
     {
         return [
-            'plan' => $plan->numero,
+            'plan' => $plan->numero_formateado,
             'placa' => ($vehiculo ?? $plan->vehiculo)?->placa,
             'titulo' => $plan->titulo,
             'origen' => $plan->origen->value,

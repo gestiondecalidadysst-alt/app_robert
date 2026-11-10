@@ -14,7 +14,7 @@ class VerPlanAccion extends ViewRecord
     {
         $r = $this->getRecord();
 
-        return "{$r->numero} · {$r->vehiculo?->placa}";
+        return "{$r->numero_formateado} · {$r->vehiculo?->placa}";
     }
 
     public function getSubheading(): ?string

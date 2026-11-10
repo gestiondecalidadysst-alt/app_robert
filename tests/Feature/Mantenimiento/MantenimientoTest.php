@@ -270,7 +270,7 @@ class MantenimientoTest extends ConfiguracionTestCase
 
         $this->post('/conductor/ingresar', ['documento' => '20000001', 'clave' => 'Ruta2026*']);
         $this->get('/conductor/mantenimiento')->assertOk()->assertSee('Espejo roto')->assertSee('Registrar arreglo con evidencia');
-        $this->get(route('conductor.mantenimiento.registrar', ['vehiculo' => $vehiculo->id, 'plan' => $plan->id]))->assertOk()->assertSee($plan->numero);
+        $this->get(route('conductor.mantenimiento.registrar', ['vehiculo' => $vehiculo->id, 'plan' => $plan->id]))->assertOk()->assertSee($plan->numero_formateado);
 
         // Sin evidencia no se registra.
         $this->post(route('conductor.mantenimiento.guardar', $vehiculo), [
@@ -336,5 +336,26 @@ class MantenimientoTest extends ConfiguracionTestCase
             ->assertHasNoFormErrors();
 
         $this->assertSame(EstadoPlan::PorVerificar, $plan->refresh()->estado);
+    }
+
+    public function test_los_planes_de_accion_se_numeran_por_empresa(): void
+    {
+        $vehiculo = $this->vehiculo();
+        $datos = fn (int $empresa) => [
+            'empresa_id' => $empresa,
+            'vehiculo_id' => $vehiculo->id,
+            'origen' => OrigenPlan::Manual,
+            'prioridad' => PrioridadPlan::Media,
+            'titulo' => 'Hallazgo de prueba',
+        ];
+
+        $primeroDemo = PlanAccion::query()->withoutGlobalScopes()->create($datos($this->demo->id));
+        $primeroOtra = PlanAccion::query()->withoutGlobalScopes()->create($datos($this->otra->id));
+        $segundoOtra = PlanAccion::query()->withoutGlobalScopes()->create($datos($this->otra->id));
+
+        // Cada empresa lleva su propio consecutivo: el de una no corre el de la otra.
+        $this->assertSame($primeroOtra->numero + 1, $segundoOtra->numero);
+        $this->assertSame(1, PlanAccion::query()->withoutGlobalScopes()->where('empresa_id', $this->otra->id)->min('numero'));
+        $this->assertSame('PA-'.str_pad((string) $primeroDemo->numero, 5, '0', STR_PAD_LEFT), $primeroDemo->numero_formateado);
     }
 }

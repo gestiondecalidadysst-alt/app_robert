@@ -29,7 +29,7 @@
             <select id="plan_accion_id" name="plan_accion_id">
                 <option value="">No</option>
                 @foreach ($planes as $p)
-                    <option value="{{ $p->id }}" @selected((int) old('plan_accion_id', $plan?->id) === $p->id)>{{ $p->numero }} · {{ \Illuminate\Support\Str::limit($p->titulo, 60) }}</option>
+                    <option value="{{ $p->id }}" @selected((int) old('plan_accion_id', $plan?->id) === $p->id)>{{ $p->numero_formateado }} · {{ \Illuminate\Support\Str::limit($p->titulo, 60) }}</option>
                 @endforeach
             </select>
         </div>

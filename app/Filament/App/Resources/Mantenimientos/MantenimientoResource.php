@@ -85,7 +85,7 @@ class MantenimientoResource extends Resource
                     Select::make('plan_accion_id')->label('Atiende el plan de acción')
                         ->options(fn (Get $get) => $get('vehiculo_id')
                             ? PlanAccion::query()->where('vehiculo_id', $get('vehiculo_id'))->pendientes()->latest('id')->get()
-                                ->mapWithKeys(fn (PlanAccion $p) => [$p->id => "{$p->numero} · {$p->titulo}"])
+                                ->mapWithKeys(fn (PlanAccion $p) => [$p->id => "{$p->numero_formateado} · {$p->titulo}"])
                             : [])
                         ->placeholder('Ninguno')
                         ->helperText('El plan pasa a «Por verificar».'),
@@ -180,7 +180,7 @@ class MantenimientoResource extends Resource
                     TextEntry::make('responsable')->label('Responsable')
                         ->state(fn (Mantenimiento $r) => trim(($r->responsable_nombre ?? '').($r->responsable_documento ? ' · '.$r->responsable_documento : '')) ?: null)
                         ->placeholder('—'),
-                    TextEntry::make('plan.numero')->label('Plan de acción')->placeholder('—')
+                    TextEntry::make('plan.numero_formateado')->label('Plan de acción')->placeholder('—')
                         ->url(fn (Mantenimiento $r) => $r->plan ? PlanAccionResource::getUrl('view', ['record' => $r->plan]) : null),
                     TextEntry::make('registro')->label('Registró')
                         ->state(fn (Mantenimiento $r) => $r->conductor ? 'Conductor · '.$r->conductor->nombre_completo.' (portal)' : ($r->usuario?->name ?? '—'))

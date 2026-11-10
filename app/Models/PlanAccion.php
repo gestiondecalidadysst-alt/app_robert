@@ -43,7 +43,19 @@ class PlanAccion extends Model
             'fecha_limite' => 'date',
             'cerrado_at' => 'datetime',
             'reincidencias' => 'integer',
+            'numero' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Consecutivo por empresa, como contratos, cotizaciones, remesas y pagos.
+        static::creating(function (self $plan): void {
+            if (! $plan->numero) {
+                $plan->numero = ((int) self::query()->withoutGlobalScopes()
+                    ->where('empresa_id', $plan->empresa_id)->max('numero')) + 1;
+            }
+        });
     }
 
     public function vehiculo(): BelongsTo
@@ -86,9 +98,10 @@ class PlanAccion extends Model
         return $this->pendiente() && $this->fecha_limite !== null && $this->fecha_limite->lt(today());
     }
 
-    public function getNumeroAttribute(): string
+    /** Número visible: PA-00001, PA-00245… Es consecutivo por empresa, no de toda la plataforma. */
+    public function getNumeroFormateadoAttribute(): string
     {
-        return 'PA-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+        return 'PA-'.str_pad((string) $this->numero, 5, '0', STR_PAD_LEFT);
     }
 
     public function scopePendientes(Builder $query): Builder

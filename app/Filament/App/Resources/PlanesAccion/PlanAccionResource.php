@@ -91,7 +91,7 @@ class PlanAccionResource extends Resource
             ->modifyQueryUsing(fn (Builder $query) => $query->with('vehiculo')->withCount('evidencias'))
             ->defaultSort(fn (Builder $query) => $query->orderByRaw("case prioridad when 'alta' then 0 when 'media' then 1 else 2 end")->orderByDesc('id'))
             ->columns([
-                TextColumn::make('numero')->label('No.')->weight('bold'),
+                TextColumn::make('numero')->label('No.')->weight('bold')->formatStateUsing(fn (PlanAccion $record) => $record->numero_formateado),
                 TextColumn::make('vehiculo.placa')->label('Vehículo')->weight('bold')->searchable(),
                 TextColumn::make('titulo')->label('Hallazgo')->wrap()->limit(70)->searchable()
                     ->description(fn (PlanAccion $r) => $r->origen->getLabel().($r->reincidencias ? " · {$r->reincidencias} reincidencia(s)" : '')),
@@ -195,7 +195,7 @@ class PlanAccionResource extends Resource
                     ->helperText('Obligatoria si el plan no tiene evidencias ni mantenimientos.')])
                 ->action(function (PlanAccion $record, array $data, Action $action): void {
                     ErroresDeNegocio::intentar($action, fn () => GestionarPlanAccion::cerrar($record, $data['observacion'] ?? null, auth()->user()));
-                    Notification::make()->success()->title("Plan {$record->numero} cerrado")->send();
+                    Notification::make()->success()->title("Plan {$record->numero_formateado} cerrado")->send();
                 }),
         ];
     }

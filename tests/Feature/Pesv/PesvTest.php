@@ -209,7 +209,7 @@ class PesvTest extends ConfiguracionTestCase
         $bloqueada = app(RegistrarInspeccion::class)($this->demo, TipoInspeccion::Preoperacional, $this->vehiculo(), $this->respuestas(),
             conductor: $conductor, kilometraje: 2, usuario: $conductor->usuario);
         $this->assertFalse($bloqueada->apta());
-        $this->assertSame($plan->numero, $bloqueada->datos['plan_pendiente']);
+        $this->assertSame($plan->numero_formateado, $bloqueada->datos['plan_pendiente']);
 
         // Cerrado el plan, un no crítico que falla no bloquea (queda como novedad en el plan).
         GestionarPlanAccion::cerrar($plan, 'Corregido y verificado.');
