@@ -16,10 +16,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Backup\Events\BackupWasSuccessful;
+use Spatie\Backup\Events\CleanupWasSuccessful;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
         if (! $this->app->runningInConsole() && UrlApp::sinConfigurar()) {
             config(['filesystems.disks.public.url' => request()->getSchemeAndHttpHost().'/storage']);
         }
+
+        // El chequeo de salud de los respaldos consulta el destino remoto y se guarda en caché una
+        // hora; al terminar un respaldo se limpia para que el estado se vea al instante.
+        Event::listen([BackupWasSuccessful::class, CleanupWasSuccessful::class],
+            fn () => rescue(fn () => Cache::forget('salud.ultimo_respaldo'), report: false));
 
         // Cola: latido del worker (Estado del sistema) y referencia de error nueva por cada trabajo.
         Queue::looping(fn () => Latidos::marcar(Latidos::WORKER));
