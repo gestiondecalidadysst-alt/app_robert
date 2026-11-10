@@ -88,10 +88,11 @@ class AppServiceProvider extends ServiceProvider
             return $user->es_superadmin ? true : null;
         });
 
-        // Pie del menú lateral: nombre de la plataforma.
+        // Pie del menú lateral: nombre de la plataforma. Se oculta cuando el menú está colapsado
+        // (igual que las etiquetas de Filament) y se mantiene en el drawer móvil abierto.
         FilamentView::registerRenderHook(
             PanelsRenderHook::SIDEBAR_FOOTER,
-            fn (): string => Blade::render('<div class="ruta-sidebar-footer">Plataforma de transporte · SolucionesApp</div>'),
+            fn (): string => Blade::render('<div class="ruta-sidebar-footer" x-show="$store.sidebar.isOpen || $store.sidebar.isOpenMobile">Plataforma de transporte · SolucionesApp</div>'),
         );
     }
 }

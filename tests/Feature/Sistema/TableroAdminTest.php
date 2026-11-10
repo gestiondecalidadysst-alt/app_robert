@@ -56,7 +56,10 @@ class TableroAdminTest extends ConfiguracionTestCase
 
     public function test_la_pantalla_de_inicio_del_admin_abre(): void
     {
-        $this->get('/admin')->assertOk();
+        $this->get('/admin')
+            ->assertOk()
+            // El pie del menú lateral se oculta al colapsar (ligado al estado del sidebar).
+            ->assertSee('x-show="$store.sidebar.isOpen || $store.sidebar.isOpenMobile"', false);
     }
 
     public function test_el_resumen_de_una_empresa_muestra_su_estado(): void
