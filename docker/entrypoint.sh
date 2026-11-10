@@ -26,6 +26,7 @@ if [ "$ROLE" = "web" ]; then
   php artisan db:seed --class=PermisosSeeder --force
   php artisan db:seed --class=PlantillasContratoSeeder --force
   php artisan db:seed --class=ItemsChequeoSeeder --force
+  php artisan db:seed --class=ManualSeeder --force
   php artisan ruta:superadmin --si-no-existe || true
 
   if [ "${SEED_DEMO:-false}" = "true" ]; then
