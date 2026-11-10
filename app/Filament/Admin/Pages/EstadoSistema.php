@@ -41,6 +41,11 @@ class EstadoSistema extends Page implements HasTable
 
     protected static ?string $title = 'Estado del sistema';
 
+    public function getSubheading(): ?string
+    {
+        return 'Procesos de fondo (worker y tareas programadas), trabajos fallidos y errores recientes de la plataforma.';
+    }
+
     protected static ?string $slug = 'estado-sistema';
 
     protected static ?int $navigationSort = 90;
@@ -48,7 +53,8 @@ class EstadoSistema extends Page implements HasTable
     public static function getNavigationBadge(): ?string
     {
         $abiertos = ErrorSistema::query()->abiertos()->count();
-        $problemas = $abiertos + (Latidos::vivo(Latidos::WORKER) ? 0 : 1) + (Latidos::vivo(Latidos::PROGRAMADAS) ? 0 : 1);
+        $fallidos = DB::table('failed_jobs')->count();
+        $problemas = $abiertos + $fallidos + (Latidos::vivo(Latidos::WORKER) ? 0 : 1) + (Latidos::vivo(Latidos::PROGRAMADAS) ? 0 : 1);
 
         return $problemas ? (string) $problemas : null;
     }

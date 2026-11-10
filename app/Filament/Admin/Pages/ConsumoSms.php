@@ -29,6 +29,11 @@ class ConsumoSms extends Page
 
     protected static ?string $navigationLabel = 'Consumo de SMS';
 
+    public function getSubheading(): ?string
+    {
+        return 'Mensajes enviados por cada empresa en el mes y el valor a cobrarle. Los precios generales se definen en «Mensajes de texto».';
+    }
+
     protected static ?string $title = 'Consumo de SMS';
 
     protected static ?string $slug = 'consumo-sms';

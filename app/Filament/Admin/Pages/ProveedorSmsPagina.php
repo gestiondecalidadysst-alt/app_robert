@@ -37,6 +37,11 @@ class ProveedorSmsPagina extends Page implements HasSchemas
 
     protected static ?string $title = 'SMS: cuenta y precios';
 
+    public function getSubheading(): ?string
+    {
+        return 'Credenciales del proveedor de SMS de la plataforma y el precio general por segmento que se cobra a las empresas.';
+    }
+
     protected static ?string $slug = 'proveedor-sms';
 
     /** @var array<string, mixed> */

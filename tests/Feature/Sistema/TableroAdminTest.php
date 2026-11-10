@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Sistema;
 
+use App\Filament\Admin\Resources\Empresas\EmpresaResource;
 use App\Filament\Admin\Widgets\AltasEmpresasChart;
 use App\Filament\Admin\Widgets\EstadoPlataforma;
+use App\Filament\Admin\Widgets\ResumenEmpresa;
 use App\Filament\Admin\Widgets\ResumenPlataforma;
 use App\Filament\Admin\Widgets\UltimasEmpresas;
 use Filament\Facades\Filament;
@@ -55,5 +57,19 @@ class TableroAdminTest extends ConfiguracionTestCase
     public function test_la_pantalla_de_inicio_del_admin_abre(): void
     {
         $this->get('/admin')->assertOk();
+    }
+
+    public function test_el_resumen_de_una_empresa_muestra_su_estado(): void
+    {
+        Livewire::test(ResumenEmpresa::class, ['record' => $this->demo])
+            ->assertOk()
+            ->assertSee('Estado')
+            ->assertSee('Usuarios')
+            ->assertSee('Consumo del mes');
+    }
+
+    public function test_la_ficha_de_empresa_abre_con_el_resumen(): void
+    {
+        $this->get(EmpresaResource::getUrl('edit', ['record' => $this->demo]))->assertOk();
     }
 }

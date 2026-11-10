@@ -38,6 +38,11 @@ class ConsumoConsultas extends Page implements HasTable
 
     protected static ?string $navigationLabel = 'Consumo de consultas';
 
+    public function getSubheading(): ?string
+    {
+        return 'Consultas de tránsito (comparendos, licencias, RUNT) hechas por cada empresa en el mes y su cobro.';
+    }
+
     protected static ?string $title = 'Consumo de consultas de tránsito';
 
     protected static ?string $slug = 'consumo-consultas';

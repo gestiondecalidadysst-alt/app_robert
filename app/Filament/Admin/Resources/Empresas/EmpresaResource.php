@@ -42,6 +42,16 @@ class EmpresaResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) Empresa::query()->withoutGlobalScopes()->count();
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Empresas registradas en la plataforma';
+    }
+
     protected static ?string $modelLabel = 'empresa';
 
     protected static ?string $pluralModelLabel = 'empresas';

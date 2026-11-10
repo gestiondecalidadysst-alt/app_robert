@@ -39,6 +39,11 @@ class ProveedorConsultas extends Page implements HasSchemas
 
     protected static ?string $title = 'Consultas de tránsito: proveedor y precios';
 
+    public function getSubheading(): ?string
+    {
+        return 'Credenciales del proveedor de consultas de tránsito y el precio general por consulta que se cobra a las empresas.';
+    }
+
     protected static ?string $slug = 'consultas-transito';
 
     public ?array $data = [];
