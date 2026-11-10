@@ -10,14 +10,15 @@ use App\Http\Controllers\Conductor\PushController;
 use App\Http\Controllers\Conductor\PwaController;
 use App\Http\Controllers\Conductor\ViajeController;
 use App\Http\Controllers\EvidenciaController;
-use App\Http\Controllers\RegistroPasajerosController;
-use App\Http\Controllers\VerificarListadoController;
 use App\Http\Controllers\FirmaContratoController;
+use App\Http\Controllers\ManualPdfController;
 use App\Http\Controllers\ReciboAdministracionController;
+use App\Http\Controllers\RegistroPasajerosController;
 use App\Http\Controllers\VerificarConsultaTransitoController;
 use App\Http\Controllers\VerificarContratoController;
 use App\Http\Controllers\VerificarFuecController;
 use App\Http\Controllers\VerificarInspeccionController;
+use App\Http\Controllers\VerificarListadoController;
 use App\Http\Controllers\VerificarManifiestoController;
 use App\Http\Controllers\VerificarReciboController;
 use App\Http\Middleware\SinCachePortal;
@@ -132,6 +133,10 @@ Route::get('/evidencias/{evidencia}', EvidenciaController::class)
 // Descarga del recibo de pago de administración (usuario del panel con permiso y de la empresa).
 Route::get('/administracion/recibo/{pago}', ReciboAdministracionController::class)
     ->middleware('auth')->whereNumber('pago')->name('administracion.recibo');
+
+// Manual de la plataforma en PDF (solo superadministrador).
+Route::get('/admin/manual/pdf', ManualPdfController::class)
+    ->middleware('auth')->name('admin.manual.pdf');
 
 // Cambio de clave obligatorio del panel /app (clave temporal del primer ingreso).
 // Ruta plana, fuera del panel, para no depender del enrutado por empresa de Filament.
