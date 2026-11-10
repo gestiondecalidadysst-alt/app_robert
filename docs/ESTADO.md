@@ -117,9 +117,9 @@ rotaron**. Lo que sí se rotó: contraseña de la base (`DB_PASSWORD`), clave SM
 
 Pendiente, por decisión del usuario (se deja para más adelante):
 
-- [ ] **Contraseña de `root` de MySQL.** Riesgo acotado mientras el servicio MySQL no exponga un
-  puerto público: solo se llega desde la red interna de Docker. Comprobar ese puerto antes de
-  bajarle prioridad. El botón de cambio de Easypanel **no sirve**: tiene guardado el usuario
+- [ ] **Contraseña de `root` de MySQL.** Riesgo acotado: **verificado el 10/11/2026 que el servicio
+  MySQL no expone puerto público**, así que solo se llega desde la red interna de Docker. Si algún
+  día se abre ese puerto, rotarla pasa a ser urgente. El botón de cambio de Easypanel **no sirve**: tiene guardado el usuario
   `mysql`, que no existe (el real es `robert`); hay que hacerlo por SQL.
 - [ ] **`APP_KEY`.** Cifra en la base las credenciales RNDC y Onurix, las llaves de proveedores de
   tránsito, los secretos de webhook, los tokens de firma de contratos y los secretos de 2FA.
