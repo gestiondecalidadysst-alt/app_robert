@@ -69,11 +69,14 @@ final class FormularioEmpresa
                             TextInput::make('representante_documento')->label('Cédula')->maxLength(20),
                             TextInput::make('representante_expedicion')->label('Expedida en')->maxLength(100),
                         ]),
+                        // La firma escaneada la gestiona la propia empresa (panel de empresa), no la
+                        // plataforma: por temas legales solo se ve y se carga donde hay empresa activa.
                         FileUpload::make('firma_representante_path')
                             ->label('Firma escaneada')
                             ->image()
                             ->disk('local')
                             ->visibility('private')
+                            ->visible(fn () => filament()->getTenant() !== null)
                             ->directory(fn () => 'firmas-representante/'.(filament()->getTenant()?->getKey() ?? 'plataforma'))
                             ->acceptedFileTypes(['image/png', 'image/jpeg'])
                             ->maxSize(512)
