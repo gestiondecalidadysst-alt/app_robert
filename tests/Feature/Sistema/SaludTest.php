@@ -101,5 +101,18 @@ class SaludTest extends ConfiguracionTestCase
         $correo = collect(Salud::chequeos())->firstWhere('clave', 'proveedor_correo');
 
         $this->assertTrue($correo['ok']);
+        $this->assertStringNotContainsString('Credenciales', $correo['detalle']);
+    }
+
+    public function test_el_detalle_dice_que_las_credenciales_se_comprobaron(): void
+    {
+        // Sin comprobación no se puede distinguir «autenticó» de «nadie ha enviado nada».
+        config(['mail.default' => 'smtp']);
+        Cache::put('salud.smtp', ['ok' => true, 'detalle' => ''], now()->addMinute());
+
+        $correo = collect(Salud::chequeos())->firstWhere('clave', 'proveedor_correo');
+
+        $this->assertTrue($correo['ok']);
+        $this->assertStringContainsString('Credenciales válidas', $correo['detalle']);
     }
 }

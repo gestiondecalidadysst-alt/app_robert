@@ -174,11 +174,15 @@ final class Salud
         $envios = self::proveedor('correo', 'Correo (Brevo)');
         $credenciales = self::credencialesCorreo();
 
-        if ($credenciales === null || $credenciales['ok']) {
+        if ($credenciales === null) {
             return $envios;
         }
 
-        return self::resultado('proveedor_correo', 'Correo (Brevo)', false, $credenciales['detalle']);
+        // El detalle dice siempre si las credenciales se comprobaron: si no lo dijera, un «ok» no
+        // distinguiría entre «autenticó contra el proveedor» y «nadie ha intentado enviar nada».
+        return $credenciales['ok']
+            ? self::resultado('proveedor_correo', 'Correo (Brevo)', $envios['ok'], 'Credenciales válidas. '.$envios['detalle'])
+            : self::resultado('proveedor_correo', 'Correo (Brevo)', false, $credenciales['detalle']);
     }
 
     /**
@@ -202,7 +206,7 @@ final class Salud
             $transporte = Mail::mailer()->getSymfonyTransport();
 
             if (! $transporte instanceof SmtpTransport) {
-                return ['ok' => true, 'detalle' => 'Sin fallos en la última hora.'];
+                return ['ok' => true, 'detalle' => ''];
             }
 
             $flujo = $transporte->getStream();
@@ -214,7 +218,7 @@ final class Salud
             $transporte->start();
             $transporte->stop();
 
-            return ['ok' => true, 'detalle' => 'Sin fallos en la última hora.'];
+            return ['ok' => true, 'detalle' => ''];
         }, fn (Throwable $e) => [
             'ok' => false,
             'detalle' => 'El proveedor rechaza la conexión o las credenciales: '.Str::limit($e->getMessage(), 200),
