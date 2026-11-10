@@ -95,7 +95,7 @@ Para después (sin fecha):
 Guía completa y cómo actuar: **`docs/nuevo/ESCALABILIDAD.md`**.
 Hecho en la app: la imagen ya trae la extensión `phpredis` y el `.env.example` documenta el salto a Redis; las tareas pesadas van a cola (worker); hay índices por `empresa_id`.
 Pendiente (configuración/infra en Easypanel, por orden de impacto):
-- [ ] **Redis para sesión, caché y cola:** levantar un servicio Redis y poner `SESSION_DRIVER=redis`, `CACHE_STORE=redis`, `QUEUE_CONNECTION=redis`, `REDIS_HOST=<redis>` en web y worker. Descarga la base de datos (hoy esas tres pegan a MySQL en cada clic) y es requisito para varias réplicas.
+- [x] **Redis para sesión, caché y cola:** en producción desde el 10/11/2026 (`/salud` → «Caché / Redis»). Descarga la base de datos y es requisito para varias réplicas.
 - [ ] **Varias réplicas del servicio web** detrás del balanceador de Easypanel (app sin estado: sesión en Redis y archivos en volumen compartido o S3). Con `FILESYSTEM_DISK=local` cada réplica tendría su disco: usar el MISMO volumen en todas, o `FILESYSTEM_DISK=s3`.
 - [ ] **Servidor web de mayor concurrencia:** Apache mod_php gasta mucha memoria por proceso; evaluar PHP-FPM + Nginx o Laravel Octane/FrankenPHP.
 - [ ] **Base de datos** (el techo real): instancia dedicada, afinar (buffer pool, conexiones), y réplicas de lectura para informes si hace falta.
@@ -108,3 +108,23 @@ Pendiente (configuración/infra en Easypanel, por orden de impacto):
 3. En cada vehículo: definir el valor de administración (por clase o ajuste) y generar las cuotas del mes; registrar el punto de partida del plan de mantenimiento y aprobar el programa anual; configurar el webhook de n8n en Integraciones.
 4. Crear los rutogramas de las rutas frecuentes y poner la política de jornada de la empresa en Integraciones → Planeador de servicios.
 5. Conectar el RNDC real (usuario de la empresa) y validar el web service.
+
+## Deuda consciente de seguridad (decidido el 10/11/2026)
+
+Varios secretos de producción se expusieron durante el trabajo del 10/11/2026 y **no todos se
+rotaron**. Lo que sí se rotó: contraseña de la base (`DB_PASSWORD`), clave SMTP de Brevo,
+`BACKUP_ARCHIVE_PASSWORD`, `SALUD_TOKEN`, `ALERTAS_WEBHOOK_SECRETO` y llaves VAPID.
+
+Pendiente, por decisión del usuario (se deja para más adelante):
+
+- [ ] **Contraseña de `root` de MySQL.** Riesgo acotado mientras el servicio MySQL no exponga un
+  puerto público: solo se llega desde la red interna de Docker. Comprobar ese puerto antes de
+  bajarle prioridad. El botón de cambio de Easypanel **no sirve**: tiene guardado el usuario
+  `mysql`, que no existe (el real es `robert`); hay que hacerlo por SQL.
+- [ ] **`APP_KEY`.** Cifra en la base las credenciales RNDC y Onurix, las llaves de proveedores de
+  tránsito, los secretos de webhook, los tokens de firma de contratos y los secretos de 2FA.
+  Rotarla obliga a volver a escribir todo eso a mano y **mata los enlaces de firma pendientes**,
+  que afectan a terceros. Hoy el costo es bajo porque casi no hay datos reales; crece con cada
+  empresa que entre. Antes de decidir, correr el inventario (cuenta cuántas filas cifradas hay) y
+  avisar a las empresas si hay contratos esperando firma.
+
