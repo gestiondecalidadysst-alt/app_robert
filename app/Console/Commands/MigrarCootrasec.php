@@ -75,6 +75,9 @@ class MigrarCootrasec extends Command
         $this->info('12. Cuotas y pagos de administración…');
         $this->migrarCobros($L);
 
+        $this->info('13. Reconstruyendo copia de datos de FUEC (estructura que lee la app)…');
+        $this->reconstruirDatosFuec();
+
         $this->cuadre($L);
 
         return self::SUCCESS;
@@ -517,6 +520,38 @@ class MigrarCootrasec extends Command
             }
         });
         $this->n['fuecs'] = $c;
+    }
+
+    /**
+     * Segundo paso: la app lee de fuecs.datos una copia con forma fija (empresa, contrato,
+     * vehiculo, conductores, origen, destino). La reconstruimos con el método real de la app
+     * para que las pantallas y PDFs de FUEC no fallen por claves ausentes.
+     */
+    private function reconstruirDatosFuec(): void
+    {
+        $accion = app(\App\Actions\Operacion\ExpedirFuec::class);
+        $empresa = \App\Models\Empresa::find($this->empresaId);
+        $empresa?->loadMissing('municipio.departamento');
+
+        $ok = 0;
+        \App\Models\Fuec::query()
+            ->where('empresa_id', $this->empresaId)
+            ->with([
+                'contrato.cliente.tipoIdentificacion', 'contrato.cliente.municipio',
+                'vehiculo.marca', 'vehiculo.linea', 'vehiculo.claseVehiculo', 'vehiculo.documentos',
+                'conductores.tipoIdentificacion',
+            ])
+            ->chunkById(300, function ($fuecs) use ($accion, $empresa, &$ok) {
+                foreach ($fuecs as $fuec) {
+                    if (! $fuec->contrato || ! $fuec->vehiculo) {
+                        continue;
+                    }
+                    $fuec->datos = $accion->copiaDeDatos($empresa, $fuec->contrato, $fuec->vehiculo, $fuec->conductores, $fuec);
+                    $fuec->saveQuietly();
+                    $ok++;
+                }
+            });
+        $this->n['fuecs_datos'] = $ok;
     }
 
     private function migrarInspecciones($L): void

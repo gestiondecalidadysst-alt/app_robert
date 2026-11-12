@@ -335,7 +335,7 @@ class ExpedirFuec
         return collect($ids)->map(fn ($id) => $encontrados->get((int) $id))->filter()->values();
     }
 
-    private function copiaDeDatos(Empresa $empresa, Contrato $contrato, Vehiculo $vehiculo, $conductores, Fuec $fuec): array
+    public function copiaDeDatos(Empresa $empresa, Contrato $contrato, Vehiculo $vehiculo, $conductores, Fuec $fuec): array
     {
         $empresa->loadMissing('municipio.departamento');
         $contrato->loadMissing('cliente.tipoIdentificacion', 'cliente.municipio');
