@@ -10,6 +10,7 @@ use App\Support\Sistema\UrlApp;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Facades\FilamentView;
+use Filament\Tables\Table;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -74,6 +75,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Fechas siempre como dd/mm/aaaa, sin depender del idioma del navegador.
         DatePicker::configureUsing(fn (DatePicker $campo) => $campo->native(false)->displayFormat('d/m/Y')->firstDayOfWeek(1));
+
+        // Todas las tablas se refrescan solas cada 15s: así los cambios de estado
+        // (p. ej. un contrato que pasa a "firmado") se ven sin tener que recargar la página.
+        Table::configureUsing(fn (Table $tabla) => $tabla->poll('15s'));
 
         Carbon::setLocale(config('app.locale'));
 
