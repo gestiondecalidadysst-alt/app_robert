@@ -13,7 +13,7 @@ class VerFuec extends ViewRecord
 
     public function getTitle(): string
     {
-        return 'FUEC '.$this->getRecord()->placa.' · '.$this->getRecord()->datos['contrato']['contratante'];
+        return 'FUEC '.$this->getRecord()->placa.' · '.($this->getRecord()->datos['contrato']['contratante'] ?? '—');
     }
 
     protected function getHeaderActions(): array
