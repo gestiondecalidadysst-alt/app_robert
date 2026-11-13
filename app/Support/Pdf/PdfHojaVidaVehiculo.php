@@ -30,7 +30,11 @@ final class PdfHojaVidaVehiculo
         // Historial amplio (servicios/preoperacionales/mantenimientos del año) = PDF grande;
         // dompdf consume bastante memoria, así que se amplían los límites del proceso.
         @ini_set('memory_limit', '768M');
-        @set_time_limit(180);
+        // En pruebas no se toca el límite de tiempo: la suite corre en un solo proceso y
+        // set_time_limit() lo reinicia a 180s, lo que puede matar la ejecución de otros tests.
+        if (! app()->runningUnitTests()) {
+            @set_time_limit(180);
+        }
 
         $vehiculo->loadMissing([
             'marca', 'linea', 'claseVehiculo', 'carroceria', 'combustible', 'tipoServicio',
