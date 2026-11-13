@@ -56,6 +56,10 @@ final class HojaVidaPdf
                 ->persistent()
                 ->send();
             $action->halt();
+
+            // halt() corta la ejecución (lanza Halt); este throw garantiza que el
+            // método siempre devuelve string o lanza, cumpliendo el tipo de retorno.
+            throw $e;
         }
     }
 
