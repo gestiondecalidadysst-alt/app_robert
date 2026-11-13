@@ -78,7 +78,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Todas las tablas se refrescan solas cada 15s: así los cambios de estado
         // (p. ej. un contrato que pasa a "firmado") se ven sin tener que recargar la página.
-        Table::configureUsing(fn (Table $tabla) => $tabla->poll('15s'));
+        // Se omite en pruebas: el polling es comportamiento de interfaz y no debe influir
+        // en el render durante los tests (evita re-render innecesario y tiempos de ejecución altos).
+        if (! $this->app->runningUnitTests()) {
+            Table::configureUsing(fn (Table $tabla) => $tabla->poll('15s'));
+        }
 
         Carbon::setLocale(config('app.locale'));
 

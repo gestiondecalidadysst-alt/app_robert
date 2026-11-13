@@ -32,5 +32,8 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
+      - name: Análisis estático (PHPStan/Larastan)
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
       - name: Ejecutar pruebas
         run: php artisan test

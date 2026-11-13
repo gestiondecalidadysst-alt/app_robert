@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+
+    paths:
+        - app
+
+    # Larastan entiende Eloquent y los modelos; esto mejora la detección
+    # de propiedades y relaciones inexistentes.
+    checkModelProperties: true
+
+    # No marcar como "error no usado" las entradas del baseline que ya no aplican,
+    # para que limpiar un error viejo no rompa el CI por sí solo.
+    reportUnmatchedIgnoredErrors: false
