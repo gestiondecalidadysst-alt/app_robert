@@ -1,0 +1,5 @@
+# Baseline de PHPStan: errores preexistentes que se ignoran para no bloquear el CI.
+# Regenéralo una vez con:  vendor/bin/phpstan analyse --generate-baseline
+# A partir de ahí, el CI solo falla con errores NUEVOS.
+parameters:
+    ignoreErrors: []
