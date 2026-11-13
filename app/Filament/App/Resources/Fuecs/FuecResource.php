@@ -50,7 +50,7 @@ class FuecResource extends Resource
 
     public static function getRecordTitle(?Model $record): string
     {
-        return $record ? 'FUEC '.($record->datos['vehiculo']['placa'] ?? '—').' · '.str_pad((string) $record->consecutivo, 4, '0', STR_PAD_LEFT) : 'FUEC';
+        return $record ? 'FUEC '.data_get($record->datos, 'vehiculo.placa', '—').' · '.str_pad((string) $record->consecutivo, 4, '0', STR_PAD_LEFT) : 'FUEC';
     }
 
     public static function form(Schema $schema): Schema
@@ -80,8 +80,8 @@ class FuecResource extends Resource
                     ->description(fn (Fuec $record) => count($record->datos['conductores'] ?? []) > 1 ? '+'.(count($record->datos['conductores']) - 1).' más' : null)
                     ->visibleFrom('lg'),
                 TextColumn::make('contrato.numero')->label('Contrato')
-                    ->formatStateUsing(fn (Fuec $record) => $record->datos['contrato']['numero'] ?? '—')
-                    ->description(fn (Fuec $record) => $record->datos['contrato']['contratante'] ?? null)
+                    ->formatStateUsing(fn (Fuec $record) => data_get($record->datos, 'contrato.numero', '—'))
+                    ->description(fn (Fuec $record) => data_get($record->datos, 'contrato.contratante'))
                     ->visibleFrom('md'),
                 TextColumn::make('fecha_inicio')->label('Vigencia')->sortable()
                     ->formatStateUsing(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y').' – '.$record->fecha_fin->format('d/m/Y')),

@@ -39,12 +39,12 @@ final class FuecInfolist
                         ->state(fn (Fuec $record) => $record->fecha_inicio->format('d/m/Y').' – '.$record->fecha_fin->format('d/m/Y'))
                         ->helperText(fn (Fuec $record) => 'Horario: '.$record->horario()->franjaTexto()),
                     TextEntry::make('contrato')->label('Contrato')
-                        ->state(fn (Fuec $record) => ($record->datos['contrato']['numero'] ?? '—').' · '.($record->datos['contrato']['contratante'] ?? '—'))
+                        ->state(fn (Fuec $record) => data_get($record->datos, 'contrato.numero', '—').' · '.data_get($record->datos, 'contrato.contratante', '—'))
                         ->url(fn (Fuec $record) => ContratoResource::getUrl('view', ['record' => $record->contrato_id]))
                         ->columnSpan(2),
-                    TextEntry::make('objeto')->label('Objeto')->state(fn (Fuec $record) => $record->datos['contrato']['objeto'] ?? '—')->columnSpan(2),
+                    TextEntry::make('objeto')->label('Objeto')->state(fn (Fuec $record) => data_get($record->datos, 'contrato.objeto', '—'))->columnSpan(2),
                     TextEntry::make('ruta')->label('Origen – destino')
-                        ->state(fn (Fuec $record) => ($record->datos['origen'] ?? '—').' – '.($record->datos['destino'] ?? '—'))->columnSpan(2),
+                        ->state(fn (Fuec $record) => data_get($record->datos, 'origen', '—').' – '.data_get($record->datos, 'destino', '—'))->columnSpan(2),
                     TextEntry::make('convenio')->label('Convenio')
                         ->state(fn (Fuec $record) => $record->datos['convenio']['razon_social'] ?? 'No aplica'),
                     TextEntry::make('usuario.name')->label('Expidió')
